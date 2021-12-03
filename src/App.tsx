@@ -1,16 +1,21 @@
 import React from 'react';
 import './App.css';
-
-interface AppProps {}
-interface AppState {}
+import GameManager from './GameManager';
 
 class App extends React.PureComponent {
-  state: AppState;
   refCanvas: React.RefObject<HTMLCanvasElement> = React.createRef();
+  gameManager!: GameManager;
 
-  constructor(props: AppProps) {
+  constructor(props: {}) {
     super(props);
-    this.state = {};
+  }
+
+  componentDidMount() {
+    this.gameManager = new GameManager(this.refCanvas.current!);
+  }
+
+  componentWillUnmount() {
+    this.gameManager.cleanup();
   }
 
   render() {
