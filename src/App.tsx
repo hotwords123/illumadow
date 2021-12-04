@@ -6,10 +6,6 @@ class App extends React.PureComponent {
   refCanvas: React.RefObject<HTMLCanvasElement> = React.createRef();
   gameManager!: GameManager;
 
-  constructor(props: {}) {
-    super(props);
-  }
-
   componentDidMount() {
     this.gameManager = new GameManager(this.refCanvas.current!);
   }

@@ -27,6 +27,8 @@ const TERRAINS: MapTerrainType[] = [
 
 export default class MapEditor extends React.Component<{}, MapEditorState> {
   terrainIds = new Map(TERRAINS.map(type => [type, { value: 0 }]));
+  toolbar = React.createRef<Toolbar>();
+  sidebar = React.createRef<Sidebar>();
 
   constructor(props: {}) {
     super(props);
@@ -167,6 +169,25 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
           this.update();
           break;
         }
+        case 'r': case 'R': {
+          const { selectedTerrain } = this.state;
+          if (selectedTerrain && selectedTerrain.type === MapTerrainType.spikes) {
+            const { data } = selectedTerrain;
+            data.side = ((data.side ?? 3) + (evt.key === 'R' ? 3 : 1)) % 4;
+            this.update();
+            this.sidebar.current!.terrainEditor.current!.update();
+          }
+          break;
+        }
+        case '1': case '2': case '3': case '4': {
+          this.switchTerrain([
+            MapTerrainType.brick,
+            MapTerrainType.spikes,
+            MapTerrainType.fragile,
+            MapTerrainType.supply
+          ][parseInt(evt.key) - 1]);
+          break;
+        }
         case 'Delete': {
           const { map, selectedTerrain } = this.state;
           if (selectedTerrain) {
@@ -204,17 +225,19 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       type: type,
       left: x, top: y,
       width: 1, height: 1,
-      data: this.state.terrainTemplates.get(type)
+      data: JSON.parse(JSON.stringify(this.state.terrainTemplates.get(type)))
     });
     this.update();
   }
 
-  selectTerrain(type: MapTerrainType) {
+  switchTerrain(type: MapTerrainType) {
     this.setState({ currentTerrain: type });
   }
 
   terrainClickHandler(terrain: MapTerrain) {
-    this.setState({ selectedTerrain: terrain });
+    this.setState({ selectedTerrain: terrain }, () => {
+      this.sidebar.current!.terrainEditor.current!.update();
+    });
   }
 
   terrainModifyHandler(data: TerrainEditorData) {
@@ -232,8 +255,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
 
     return (
       <div className="MapEditor">
-        <Toolbar parent={this} />
-        <Sidebar parent={this} />
+        <Toolbar ref={this.toolbar} parent={this} />
+        <Sidebar ref={this.sidebar} parent={this} />
         <div className="container"
           style={{
             width: PX(map.width),
@@ -257,6 +280,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
             const classList: string[] = ['terrain', terrain.type];
             if (terrain === state.selectedTerrain)
               classList.push('selected');
+            if (terrain.type === MapTerrainType.spikes)
+              classList.push(['left', 'top', 'right', 'bottom'][terrain.data.side ?? 3]);
             props.className = classList.join(' ');
 
             return <div {...props}></div>
@@ -284,7 +309,7 @@ class Toolbar extends React.Component<EditorChildProps> {
         <span className="gap"></span>
         {TERRAINS.map((type) => (
           <button key={type} className={type === currentTerrain ? 'terrain active' : 'terrain'}
-            onClick={() => parent.selectTerrain(type)}
+            onClick={() => parent.switchTerrain(type)}
           >{type}</button>
         ))}
       </div>
@@ -299,6 +324,8 @@ interface SidebarState {
 }
 
 class Sidebar extends React.Component<EditorChildProps, SidebarState> {
+  terrainEditor = React.createRef<TerrainEditor>();
+
   constructor(props: EditorChildProps) {
     super(props);
 
@@ -309,7 +336,7 @@ class Sidebar extends React.Component<EditorChildProps, SidebarState> {
 
   render() {
     const { parent } = this.props;
-    const { state } = parent;
+    const { selectedTerrain } = parent.state;
     return (
       <div className={`sidebar ${this.state.leftDocked ? 'left' : 'right'}`}>
         <div>
@@ -320,8 +347,8 @@ class Sidebar extends React.Component<EditorChildProps, SidebarState> {
             Dock to {this.state.leftDocked ? 'right' : 'left'}
           </button>
         </div>
-        {state.selectedTerrain &&
-          <TerrainEditor terrain={state.selectedTerrain} onModify={parent.terrainModifyHandler} />
+        {selectedTerrain &&
+          <TerrainEditor ref={this.terrainEditor} terrain={selectedTerrain} onModify={parent.terrainModifyHandler} />
         }
       </div>
     );
@@ -355,14 +382,23 @@ class TerrainEditor extends React.Component<TerrainEditorProps, TerrainEditorSta
   constructor(props: TerrainEditorProps) {
     super(props);
 
-    this.state = {
-      id: props.terrain.id,
-      class: props.terrain.class.join(','),
-      data: JSON.stringify(props.terrain.data, null, 2),
-      error: null
-    };
+    this.state = this.generateState();
 
     this.modifyHandler = this.modifyHandler.bind(this);
+  }
+
+  generateState() {
+    const { terrain } = this.props;
+    return {
+      id: terrain.id,
+      class: terrain.class.join(','),
+      data: JSON.stringify(terrain.data, null, 2),
+      error: null
+    };
+  }
+
+  update() {
+    this.setState(this.generateState());
   }
 
   modifyHandler(o: any) {

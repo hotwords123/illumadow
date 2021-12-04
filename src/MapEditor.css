@@ -111,8 +111,39 @@
   background-color: #4e993c;
 }
 
-.MapEditor .container .terrain.spikes {
+.MapEditor .container .terrain.spikes:before {
+  position: absolute;
+  display: block;
+  content: '';
   background-color: #fa0e0e;
+}
+
+.MapEditor .container .terrain.spikes.left:before {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 25%;
+}
+
+.MapEditor .container .terrain.spikes.top:before {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 25%;
+}
+
+.MapEditor .container .terrain.spikes.right:before {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 25%;
+}
+
+.MapEditor .container .terrain.spikes.bottom:before {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 25%;
 }
 
 .MapEditor .container .terrain.fragile {
