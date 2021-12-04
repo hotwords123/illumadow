@@ -1,4 +1,18 @@
 
+export enum Direction {
+  left = 0,
+  top = 1,
+  right = 2,
+  bottom = 3
+};
+
+export const SIDE_MASK = {
+  left: 1,
+  top: 2,
+  right: 4,
+  bottom: 8
+};
+
 export class Coord {
   constructor(public x: number, public y: number) {}
 

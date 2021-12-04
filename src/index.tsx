@@ -2,11 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
+import MapEditor from './MapEditor';
 import reportWebVitals from './reportWebVitals';
+
+const mapEditMode = window.location.search.includes('mapedit');
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    {mapEditMode ? <MapEditor /> : <App />}
   </React.StrictMode>,
   document.getElementById('root')
 );
