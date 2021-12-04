@@ -2,11 +2,6 @@ import { Direction } from "../base";
 
 export const MAP_GRID_SIZE = 8;
 
-export interface MapEntry {
-  id: string;
-  class: string[];
-}
-
 export enum MapTerrainType {
   brick = "brick",
   spikes = "spikes",
@@ -14,28 +9,21 @@ export enum MapTerrainType {
   supply = "supply"
 }
 
-export interface MapTerrain extends MapEntry {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
+export interface MapTerrain {
   type: MapTerrainType;
-  data?: any;
+  [key: string]: any;
 }
 
-export interface MapTerrainBrick {
+export interface MapTerrainBrick extends MapTerrain {
   texture: string;
 }
 
-export interface MapTerrainSpikes {
+export interface MapTerrainSpikes extends MapTerrain {
   side: Direction;
 }
 
-export interface MapTerrainFragile {
+export interface MapTerrainFragile extends MapTerrain {
   texture: string;
-}
-
-export interface MapTerrainSupply {
 }
 
 export enum MapEntityType {
@@ -47,32 +35,28 @@ export enum MapEntityType {
   boss = "boss"
 }
 
-export interface MapEntity extends MapEntry {
+export interface MapEntity {
+  tags: string[];
   x: number;
   y: number;
   type: MapEntityType;
-  data: any;
+  [key: string]: any;
 }
 
-export interface MapEntityPlayer {
+export interface MapEntityPlayer extends MapEntity {
   health: number;
   maxHealth: number;
 }
 
-export interface MapEntityScout {
-  health: number;
-  maxHealth: number;
-}
-
-export interface MapTrigger extends MapEntry {
-  criterion: null;
+export interface MapTrigger {
+  id: string;
 }
 
 export interface MapData {
   id: string;
   width: number;
   height: number;
-  terrains: MapTerrain[];
+  terrain: (MapTerrain | null)[][];
   entities: MapEntity[];
   triggers: MapTrigger[];
 }

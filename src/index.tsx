@@ -2,14 +2,19 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
-import MapEditor from './MapEditor';
+import ImageParser from './ImageParser';
+// import MapEditor from './MapEditor';
 import reportWebVitals from './reportWebVitals';
 
-const mapEditMode = window.location.search.includes('mapedit');
+const params = new URL(window.location.href).searchParams;
 
 ReactDOM.render(
   <React.StrictMode>
-    {mapEditMode ? <MapEditor /> : <App />}
+    {
+      params.has('imgparse') ? <ImageParser /> :
+//    params.has('mapedit') ? <MapEditor /> :
+      <App />
+    }
   </React.StrictMode>,
   document.getElementById('root')
 );
