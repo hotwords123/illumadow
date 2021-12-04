@@ -8,7 +8,6 @@ export interface MapEntry {
 }
 
 export enum MapTerrainType {
-  none = "",
   brick = "brick",
   spikes = "spikes",
   fragile = "fragile",
@@ -51,6 +50,7 @@ export enum MapEntityType {
 export interface MapEntity extends MapEntry {
   x: number;
   y: number;
+  type: MapEntityType;
   data: any;
 }
 

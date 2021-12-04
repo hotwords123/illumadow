@@ -1,15 +1,31 @@
 import React from 'react';
-import { MapData, MapTerrain, MapTerrainType } from './map/interfaces';
+import { MapData, MapEntity, MapEntityType, MapTerrain, MapTerrainType } from './map/interfaces';
 import './MapEditor.css';
 
 /******** MapEditor ********/
 
+type MapItem = {
+  type: 'terrain',
+  terrain: MapTerrain
+} | {
+  type: 'entity',
+  entity: MapEntity
+};
+
+type MapItemType = {
+  category: 'terrain',
+  type: MapTerrainType
+} | {
+  category: 'entity',
+  type: MapEntityType
+};
+
 interface MapEditorState {
   map: MapData;
   scale: number;
-  currentTerrain: MapTerrainType;
-  terrainTemplates: Map<MapTerrainType, any>;
-  selectedTerrain: MapTerrain | null;
+  currentTool: MapItemType;
+  itemTemplates: Map<string, any>;
+  selectedItem: MapItem | null;
 }
 
 class EditError extends Error {
@@ -25,8 +41,17 @@ const TERRAINS: MapTerrainType[] = [
   MapTerrainType.supply,
 ];
 
+const ENTITIES: MapEntityType[] = [
+  MapEntityType.player,
+  MapEntityType.scout,
+  MapEntityType.guard,
+  MapEntityType.archer,
+  MapEntityType.wizard,
+  MapEntityType.boss
+];
+
 export default class MapEditor extends React.Component<{}, MapEditorState> {
-  terrainIds = new Map(TERRAINS.map(type => [type, { value: 0 }]));
+  idPool = new Map([...TERRAINS, ...ENTITIES].map(type => [type as string, { value: 0 }]));
   toolbar = React.createRef<Toolbar>();
   sidebar = React.createRef<Sidebar>();
 
@@ -43,22 +68,29 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         triggers: []
       },
       scale: 1.5,
-      currentTerrain: MapTerrainType.brick,
-      terrainTemplates: new Map([
+      currentTool: {
+        category: 'terrain',
+        type: MapTerrainType.brick
+      },
+      itemTemplates: new Map<string, any>([
         [MapTerrainType.brick, {
           texture: "brick"
         }],
         [MapTerrainType.spikes, {
           side: 3
+        }],
+        [MapEntityType.player, {
+          health: 6,
+          maxHealth: 6
         }]
       ]),
-      selectedTerrain: null
+      selectedItem: null
     };
 
     this.mouseHandler = this.mouseHandler.bind(this);
     this.keyHandler = this.keyHandler.bind(this);
-    this.terrainClickHandler = this.terrainClickHandler.bind(this);
-    this.terrainModifyHandler = this.terrainModifyHandler.bind(this);
+    this.itemClickHandler = this.itemClickHandler.bind(this);
+    this.itemModifyHandler = this.itemModifyHandler.bind(this);
   }
 
   componentDidMount() {
@@ -82,9 +114,9 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     switch (evt.type) {
       case 'mouseup': {
         if (evt.button === 0) {
-          this.setState({ selectedTerrain: null });
+          this.setState({ selectedItem: null });
         } else if (evt.button === 2) {
-          this.placeTerrain(x, y);
+          this.placeItem(x, y);
         }
         break;
       }
@@ -101,98 +133,128 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         case 'ArrowRight':
         case 'ArrowDown': {
           const map = this.state.map;
-          const terrain = this.state.selectedTerrain;
-          if (!terrain) break;
-          if (evt.ctrlKey) {
-            switch (evt.key) {
-              case 'ArrowLeft':
-                if (evt.shiftKey) {
-                  if (terrain.left > 0) {
-                    terrain.left--; terrain.width++;
+          const item = this.state.selectedItem;
+          if (!item) break;
+          if (item.type === "terrain") {
+            const { terrain } = item;
+            if (evt.ctrlKey) {
+              switch (evt.key) {
+                case 'ArrowLeft':
+                  if (evt.shiftKey) {
+                    if (terrain.left > 0) {
+                      terrain.left--; terrain.width++;
+                    }
+                  } else {
+                    if (terrain.width > 1)
+                      terrain.width--;
                   }
-                } else {
-                  if (terrain.width > 1)
-                    terrain.width--;
-                }
-                break;
-              case 'ArrowRight':
-                if (evt.shiftKey) {
-                  if (terrain.width > 1) {
-                    terrain.left++; terrain.width--;
+                  break;
+                case 'ArrowRight':
+                  if (evt.shiftKey) {
+                    if (terrain.width > 1) {
+                      terrain.left++; terrain.width--;
+                    }
+                  } else {
+                    if (terrain.left + terrain.width < map.width)
+                      terrain.width++;
                   }
-                } else {
+                  break;
+                case 'ArrowUp':
+                  if (evt.shiftKey) {
+                    if (terrain.top > 0) {
+                      terrain.top--; terrain.height++;
+                    }
+                  } else {
+                    if (terrain.height > 1)
+                      terrain.height--;
+                  }
+                  break;
+                case 'ArrowDown':
+                  if (evt.shiftKey) {
+                    if (terrain.height > 1) {
+                      terrain.top++; terrain.height--;
+                    }
+                  } else {
+                    if (terrain.top + terrain.height < map.height)
+                      terrain.height++;
+                  }
+                  break;
+              }
+            } else {
+              switch (evt.key) {
+                case 'ArrowLeft':
+                  if (terrain.left > 0)
+                    terrain.left--;
+                  break;
+                case 'ArrowRight':
                   if (terrain.left + terrain.width < map.width)
-                    terrain.width++;
-                }
-                break;
-              case 'ArrowUp':
-                if (evt.shiftKey) {
-                  if (terrain.top > 0) {
-                    terrain.top--; terrain.height++;
-                  }
-                } else {
-                  if (terrain.height > 1)
-                    terrain.height--;
-                }
-                break;
-              case 'ArrowDown':
-                if (evt.shiftKey) {
-                  if (terrain.height > 1) {
-                    terrain.top++; terrain.height--;
-                  }
-                } else {
+                    terrain.left++;
+                  break;
+                case 'ArrowUp':
+                  if (terrain.top > 0)
+                    terrain.top--;
+                  break;
+                case 'ArrowDown':
                   if (terrain.top + terrain.height < map.height)
-                    terrain.height++;
-                }
-                break;
+                    terrain.top++;
+                  break;
+              }
             }
-          } else {
+            this.update();
+          } else if (item.type === "entity") {
+            const { entity } = item;
+            let step = evt.altKey ? 1 / 8 : 1;
             switch (evt.key) {
               case 'ArrowLeft':
-                if (terrain.left > 0)
-                  terrain.left--;
-                break;
+                entity.x -= step; break;
               case 'ArrowRight':
-                if (terrain.left + terrain.width < map.width)
-                  terrain.left++;
-                break;
+                entity.x += step; break;
               case 'ArrowUp':
-                if (terrain.top > 0)
-                  terrain.top--;
-                break;
+                entity.y -= step; break;
               case 'ArrowDown':
-                if (terrain.top + terrain.height < map.height)
-                  terrain.top++;
-                break;
+                entity.y += step; break;
             }
+            entity.x = Math.max(0, Math.min(map.width, entity.x));
+            entity.y = Math.max(0, Math.min(map.height, entity.y));
+            this.update();
           }
-          this.update();
           break;
         }
         case 'r': case 'R': {
-          const { selectedTerrain } = this.state;
-          if (selectedTerrain && selectedTerrain.type === MapTerrainType.spikes) {
-            const { data } = selectedTerrain;
-            data.side = ((data.side ?? 3) + (evt.key === 'R' ? 3 : 1)) % 4;
-            this.update();
-            this.sidebar.current!.terrainEditor.current!.update();
+          const { selectedItem } = this.state;
+          if (selectedItem?.type === 'terrain') {
+            const { terrain } = selectedItem;
+            if (terrain.type === MapTerrainType.spikes) {
+              const { data } = terrain;
+              data.side = ((data.side ?? 3) + (evt.key === 'R' ? 3 : 1)) % 4;
+              this.update();
+              this.sidebar.current!.itemEditor.current!.update();
+            }
           }
           break;
         }
         case '1': case '2': case '3': case '4': {
-          this.switchTerrain([
-            MapTerrainType.brick,
-            MapTerrainType.spikes,
-            MapTerrainType.fragile,
-            MapTerrainType.supply
-          ][parseInt(evt.key) - 1]);
+          this.switchTool({
+            category: 'terrain',
+            type :[
+              MapTerrainType.brick,
+              MapTerrainType.spikes,
+              MapTerrainType.fragile,
+              MapTerrainType.supply
+            ][parseInt(evt.key) - 1]
+          });
           break;
         }
         case 'Delete': {
-          const { map, selectedTerrain } = this.state;
-          if (selectedTerrain) {
-            map.terrains = map.terrains.filter(x => x !== selectedTerrain);
-            this.setState({ selectedTerrain: null });
+          const { map, selectedItem } = this.state;
+          if (selectedItem?.type === 'terrain') {
+            const { terrain } = selectedItem;
+            map.terrains = map.terrains.filter(x => x !== terrain);
+            this.setState({ selectedItem: null });
+          } else if (selectedItem?.type === 'entity') {
+            const { entity } = selectedItem;
+            map.entities = map.entities.filter(x => x !== entity);
+            this.setState({ selectedItem: null });
           }
           break;
         }
@@ -212,45 +274,66 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     this.setState({}); // force React to update
   }
 
-  generateTerrainId(type: MapTerrainType) {
-    return `${type}-${++this.terrainIds.get(type)!.value}`;
+  generateItemId(type: string) {
+    return `${type}-${++this.idPool.get(type)!.value}`;
   }
 
-  placeTerrain(x: number, y: number) {
-    const type = this.state.currentTerrain;
+  placeItem(x: number, y: number) {
+    const tool = this.state.currentTool;
 
-    this.state.map.terrains.push({
-      id: this.generateTerrainId(type),
-      class: [],
-      type: type,
-      left: x, top: y,
-      width: 1, height: 1,
-      data: JSON.parse(JSON.stringify(this.state.terrainTemplates.get(type)))
+    if (tool.category === 'terrain') {
+      const { type } = tool;
+      this.state.map.terrains.push({
+        id: this.generateItemId(type),
+        class: [],
+        type: type,
+        left: x, top: y,
+        width: 1, height: 1,
+        data: JSON.parse(JSON.stringify(this.state.itemTemplates.get(type) ?? '{}'))
+      });
+      this.update();
+    } else if (tool.category === 'entity') {
+      const { type } = tool;
+      this.state.map.entities.push({
+        id: this.generateItemId(type),
+        class: [],
+        type: type,
+        x: x + 0.5, y: y + 1,
+        data: JSON.parse(JSON.stringify(this.state.itemTemplates.get(type) ?? '{}'))
+      });
+    }
+  }
+
+  switchTool(tool: MapItemType) {
+    this.setState({ currentTool: tool });
+  }
+
+  itemClickHandler(item: MapItem) {
+    this.setState({ selectedItem: item }, () => {
+      this.sidebar.current!.itemEditor.current!.update();
     });
-    this.update();
   }
 
-  switchTerrain(type: MapTerrainType) {
-    this.setState({ currentTerrain: type });
-  }
-
-  terrainClickHandler(terrain: MapTerrain) {
-    this.setState({ selectedTerrain: terrain }, () => {
-      this.sidebar.current!.terrainEditor.current!.update();
-    });
-  }
-
-  terrainModifyHandler(data: TerrainEditorData) {
-    const terrain = this.state.selectedTerrain!;
-    if (this.state.map.terrains.some(x => x !== terrain && x.id === data.id))
-      throw new EditError('id', 'id already taken');
-    Object.assign(terrain, data);
-    this.update();
+  itemModifyHandler(data: ItemEditorData) {
+    const item = this.state.selectedItem;
+    if (item?.type === 'terrain') {
+      const { terrain } = item;
+      if (this.state.map.terrains.some(x => x !== terrain && x.id === data.id))
+        throw new EditError('id', 'id already taken');
+      Object.assign(terrain, data);
+      this.update();
+    } else if (item?.type === 'entity') {
+      const { entity } = item;
+      if (this.state.map.entities.some(x => x !== entity && x.id === data.id))
+        throw new EditError('id', 'id already taken');
+      Object.assign(entity, data);
+      this.update();
+    }
   }
 
   render() {
     const { state } = this;
-    const { map, scale } = state;
+    const { map, scale, selectedItem } = state;
     const PX = (px: number) => px * scale + 'em';
 
     return (
@@ -274,17 +357,27 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
                 width: PX(terrain.width),
                 height: PX(terrain.height)
               },
-              onClick: () => this.terrainClickHandler(terrain)
+              onClick: () => this.itemClickHandler({ type: 'terrain', terrain })
             };
 
             const classList: string[] = ['terrain', terrain.type];
-            if (terrain === state.selectedTerrain)
+            if (selectedItem?.type === 'terrain' && terrain === selectedItem.terrain)
               classList.push('selected');
             if (terrain.type === MapTerrainType.spikes)
               classList.push(['left', 'top', 'right', 'bottom'][terrain.data.side ?? 3]);
             props.className = classList.join(' ');
 
             return <div {...props}></div>
+          })}
+          {map.entities.map(entity => {
+            const props: any = {
+              key: entity.id,
+              style: {
+                left: PX(entity.x),
+                top: PX(entity.y)
+              },
+              onClick: () => this.itemClickHandler({ type: 'entity', entity })
+            };
           })}
         </div>
       </div>
@@ -301,15 +394,16 @@ interface EditorChildProps {
 class Toolbar extends React.Component<EditorChildProps> {
   render() {
     const { parent } = this.props;
-    const { map, currentTerrain } = parent.state;
+    const { map, currentTool: tool } = parent.state;
 
     return (
       <div className="toolbar">
         <button>{`Size: ${map.width} x ${map.height}`}</button>
         <span className="gap"></span>
         {TERRAINS.map((type) => (
-          <button key={type} className={type === currentTerrain ? 'terrain active' : 'terrain'}
-            onClick={() => parent.switchTerrain(type)}
+          <button key={type}
+            className={tool.category === 'terrain' && tool.type === type ? 'terrain active' : 'terrain'}
+            onClick={() => parent.switchTool({ category: 'terrain', type })}
           >{type}</button>
         ))}
       </div>
@@ -324,7 +418,7 @@ interface SidebarState {
 }
 
 class Sidebar extends React.Component<EditorChildProps, SidebarState> {
-  terrainEditor = React.createRef<TerrainEditor>();
+  itemEditor = React.createRef<ItemEditor>();
 
   constructor(props: EditorChildProps) {
     super(props);
@@ -336,7 +430,7 @@ class Sidebar extends React.Component<EditorChildProps, SidebarState> {
 
   render() {
     const { parent } = this.props;
-    const { selectedTerrain } = parent.state;
+    const { selectedItem } = parent.state;
     return (
       <div className={`sidebar ${this.state.leftDocked ? 'left' : 'right'}`}>
         <div>
@@ -347,28 +441,28 @@ class Sidebar extends React.Component<EditorChildProps, SidebarState> {
             Dock to {this.state.leftDocked ? 'right' : 'left'}
           </button>
         </div>
-        {selectedTerrain &&
-          <TerrainEditor ref={this.terrainEditor} terrain={selectedTerrain} onModify={parent.terrainModifyHandler} />
+        {selectedItem &&
+          <ItemEditor ref={this.itemEditor} item={selectedItem} onModify={parent.itemModifyHandler} />
         }
       </div>
     );
   }
 }
 
-/******** TerrainEditor ********/
+/******** ItemEditor ********/
 
-interface TerrainEditorData {
+interface ItemEditorData {
   id: string;
   class: string[];
   data: any;
 }
 
-interface TerrainEditorProps {
-  terrain: MapTerrain;
-  onModify: (data: TerrainEditorData) => void;
+interface ItemEditorProps {
+  item: MapItem;
+  onModify: (data: ItemEditorData) => void;
 };
 
-interface TerrainEditorState {
+interface ItemEditorState {
   id: string;
   class: string;
   data: string;
@@ -378,8 +472,8 @@ interface TerrainEditorState {
   } | null;
 };
 
-class TerrainEditor extends React.Component<TerrainEditorProps, TerrainEditorState> {
-  constructor(props: TerrainEditorProps) {
+class ItemEditor extends React.Component<ItemEditorProps, ItemEditorState> {
+  constructor(props: ItemEditorProps) {
     super(props);
 
     this.state = this.generateState();
@@ -388,13 +482,27 @@ class TerrainEditor extends React.Component<TerrainEditorProps, TerrainEditorSta
   }
 
   generateState() {
-    const { terrain } = this.props;
-    return {
-      id: terrain.id,
-      class: terrain.class.join(','),
-      data: JSON.stringify(terrain.data, null, 2),
-      error: null
-    };
+    const { item } = this.props;
+    switch (item.type) {
+      case 'terrain': {
+        const { terrain } = item;
+        return {
+          id: terrain.id,
+          class: terrain.class.join(','),
+          data: JSON.stringify(terrain.data, null, 2),
+          error: null
+        };
+      }
+      case 'entity': {
+        const { entity } = item;
+        return {
+          id: entity.id,
+          class: entity.class.join(','),
+          data: JSON.stringify(entity.data, null, 2),
+          error: null
+        };
+      }
+    }
   }
 
   update() {
@@ -435,7 +543,7 @@ class TerrainEditor extends React.Component<TerrainEditorProps, TerrainEditorSta
     return (
       <div className="TerrainEditor">
         <div>
-          <strong>Selected Terrain</strong>
+          <strong>Selected {{ terrain: 'Terrain', entity: 'Entity' }[this.props.item.type]}</strong>
         </div>
         <div>
           <input type="text" value={state.id}
