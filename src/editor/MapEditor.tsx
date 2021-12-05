@@ -34,7 +34,8 @@ const ENTITIES: MapEntityType[] = [...ENTITY_TEMPLATES.keys()];
 interface MapEditorState {
   loaded: boolean;
   // used for rendering terrain
-  mapId: number;
+  mapCounter: number;
+  mapId: string;
   // dimension of pixels
   width: number;
   height: number;
@@ -62,7 +63,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
 
     this.state = {
       loaded: false,
-      mapId: 0,
+      mapCounter: 0,
+      mapId: '',
       width: 0,
       height: 0,
       mapWidth: 0,
@@ -140,7 +142,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
   loadMap(map: MapData) {
     this.setState(state => ({
       loaded: true,
-      mapId: state.mapId + 1,
+      mapCounter: state.mapCounter + 1,
+      mapId: map.id,
       width: map.width * TERRAIN_SIZE,
       height: map.height * TERRAIN_SIZE,
       mapWidth: map.width,
@@ -157,8 +160,33 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     }));
   }
 
+  exportMap(): MapData {
+    const {
+      mapId, mapWidth, mapHeight,
+      terrains, items
+    } = this.state;
+    return {
+      id: mapId,
+      width: mapWidth,
+      height: mapHeight,
+      terrain: terrains,
+      entities: items.filter(x => x.category === 'entity').map(x => x.item as MapEntity),
+      decorations: items.filter(x => x.category === 'decoration').map(x => x.item as MapDecoration),
+      triggers: []
+    };
+  }
+
   exportHandler() {
-    //
+    const map = this.exportMap();
+    const blob = new Blob([JSON.stringify(map)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = map.id + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   toggleSidebarDock() {
@@ -234,7 +262,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
           onContextMenu={evt => evt.preventDefault()}
         >
           <TerrainCanvas
-            key={state.mapId}
+            key={state.mapCounter}
             width={state.mapWidth}
             height={state.mapHeight}
             scale={scale}
