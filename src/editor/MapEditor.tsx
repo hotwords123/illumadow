@@ -254,13 +254,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         <input ref={this.refFileInput} type="file" onInput={this.fileHandler} style={{ display: 'none' }} />
         <Toolbar ref={this.refToolbar} parent={this} />
         <Sidebar ref={this.refSidebar} parent={this} />
-        <div className="container"
-          style={{
-            width: PX(state.width),
-            height: PX(state.height)
-          }}
-          onContextMenu={evt => evt.preventDefault()}
-        >
+        <div className="container" onContextMenu={evt => evt.preventDefault()}>
           <TerrainCanvas
             key={state.mapCounter}
             width={state.mapWidth}
@@ -291,8 +285,6 @@ class Toolbar extends React.Component<EditorChildProps> {
       <div className="toolbar">
         <button onClick={parent.importHandler}>Import</button>
         <button onClick={parent.exportHandler}>Export</button>
-        <button>{`Map: ${state.mapWidth} x ${state.mapHeight}`}</button>
-        <button>{`Scene: ${state.width} x ${state.height}`}</button>
         <span className="gap"></span>
       </div>
     );
@@ -308,15 +300,19 @@ class Sidebar extends React.Component<EditorChildProps> {
 
   render() {
     const { parent } = this.props;
-    const { itemDraft, sidebarDock } = parent.state;
+    const { state } = parent;
+    const { itemDraft, sidebarDock } = state;
     const toggledSide = { l: 'right', r: 'left' }[sidebarDock];
     return (
       <div className="sidebar">
         <div>
-          <strong>Toolbar</strong>
+          <strong>Sidebar</strong>&nbsp;
+          <button onClick={() => parent.toggleSidebarDock()}>Dock to {toggledSide}</button>
         </div>
         <div>
-          <button onClick={() => parent.toggleSidebarDock()}>Dock to {toggledSide}</button>
+          <div><strong>Map Information</strong></div>
+          <div>Map: {state.mapWidth} x {state.mapHeight}</div>
+          <div>Scene: {state.width} x {state.height}</div>
         </div>
         {itemDraft &&
           <ItemEditor data={itemDraft} onModify={parent.itemModifyHandler} />

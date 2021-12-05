@@ -54,4 +54,9 @@
 .MapEditor .container {
   grid-area: main;
   padding: 10px;
+  overflow: scroll;
+}
+
+.MapEditor .container canvas {
+  border: 1px solid #ccc;
 }
