@@ -2,12 +2,32 @@ import { AABB } from "../base";
 import { RendererContext } from "./Renderer";
 
 export class Texture {
-  width: number;
-  height: number;
+  clips = new Map<string, TextureClip>();
 
-  constructor(public img: HTMLImageElement) {
-    this.width = img.naturalWidth;
-    this.height = img.naturalHeight;
+  constructor(public img: HTMLImageElement) {}
+
+  get width() { return this.img.naturalWidth; }
+  get height() { return this.img.naturalHeight; }
+
+  clip(clipArea: AABB) {
+    return new TextureClip(this.img, clipArea);
+  }
+
+  defineClip(name: string, left: number, top: number, width: number, height: number) {
+    this.clips.set(name, this.clip(AABB.offset(left, top, width, height)));
+    return this;
+  }
+
+  defineClips(names: (string | null)[][], width: number, height: number, offsetX: number = 0, offsetY: number = 0) {
+    names.forEach((row, y) => row.forEach((name, x) => {
+      if (name !== null) {
+        this.defineClip(name, offsetX + width * x, offsetY + height * y, width, height);
+      }
+    }));
+  }
+
+  getClip(name: string) {
+    return this.clips.get(name);
   }
 
   drawTo(rctx: RendererContext, x: number, y: number) {
@@ -16,17 +36,25 @@ export class Texture {
 }
 
 export class TextureClip {
-  constructor(public img: HTMLImageElement, public clipArea: AABB) {}
+  constructor(public img: HTMLImageElement, public clipArea: AABB) {
+    if (!clipArea.inside(AABB.origin(img.width, img.height)))
+      throw new Error("clipArea should be inside image box");
+  }
+
+  get width() { return this.clipArea.width; }
+  get height() { return this.clipArea.height; }
 
   drawTo(rctx: RendererContext, x: number, y: number) {
     const { left, top, width, height } = this.clipArea;
     rctx.ctx.drawImage(
       this.img,
-      x, y, width, height,
-      left, top, width, height
+      left, top, width, height,
+      x, y, width, height
     );
   }
 }
+
+export type TextureLike = Texture | TextureClip;
 
 class TextureManager {
   private tasks: Promise<Texture>[] = [];
@@ -42,6 +70,10 @@ class TextureManager {
     });
     this.tasks.push(promise);
     return promise;
+  }
+
+  loadTextures(paths: string[]): Promise<Texture[]> {
+    return Promise.all(paths.map(path => this.loadTexture(path)));
   }
 
   untilAllLoaded(): Promise<void> {

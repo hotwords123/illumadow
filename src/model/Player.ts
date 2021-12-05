@@ -14,7 +14,7 @@ export default class Player extends Entity {
     return this.position.expand(0, 0, 0, 0);
   }
 
-  get texture() {
+  getRenderInfo() {
     return null;
   }
 }

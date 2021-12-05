@@ -204,6 +204,8 @@ export default class ImageParser extends React.Component<{}, ImageParserState> {
       triggers: []
     };
 
+    console.log(map);
+
     return map;
   }
 

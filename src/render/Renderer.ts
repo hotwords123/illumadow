@@ -17,16 +17,18 @@ export default class Renderer {
   private memCanvas: HTMLCanvasElement;
   private memCtx: CanvasRenderingContext2D;
 
-  private timer: number | null = null;
-
   private canvasWidth: number = 0;
   private canvasHeight: number = 0;
   private pixelSize: number = 0;
 
-  private debugMode: boolean = false;
+  private scene: Scene | null = null;
 
-  constructor(private gameManager: GameManager) {
-    this.canvas = gameManager.getCanvas();
+  private timer: number | null = null;
+
+  private debugMode: boolean = true;
+
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
     this.ctx = this.canvas.getContext("2d")!;
 
     this.memCanvas = document.createElement("canvas");
@@ -80,6 +82,11 @@ export default class Renderer {
     this.canvas.style.top = (logicHeight - this.canvasHeight / pixelRatio) / 2 + 'px';
   }
 
+  setScene(scene: Scene) {
+    this.scene = scene;
+    this.render();
+  }
+
   renderHandler() {
     this.timer = null;
     this.render();
@@ -87,10 +94,11 @@ export default class Renderer {
   }
 
   render() {
-    const scene = this.gameManager.getScene();
+    if (!this.scene) return;
+    const startTime = performance.now();
     this.memCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
     this.memCtx.scale(this.pixelSize, this.pixelSize);
-    scene.render({
+    this.scene.render({
       ctx: this.memCtx,
       pixelSize: this.pixelSize,
       debug: this.debugMode
@@ -98,6 +106,12 @@ export default class Renderer {
     this.memCtx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
     this.ctx.drawImage(this.memCanvas, 0, 0);
+    const endTime = performance.now();
+    this.ctx.font = '16px Consolas';
+    this.ctx.textAlign = 'left';
+    this.ctx.textBaseline = 'top';
+    this.ctx.fillStyle = '#333';
+    this.ctx.fillText(`${(endTime - startTime).toFixed(1).padStart(4, ' ')} ms`, 0, 8);
   }
 
   setDebug(flag: boolean) {

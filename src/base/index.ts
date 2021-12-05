@@ -51,6 +51,27 @@ export class AABB {
     return center.expand(width / 2, height / 2)
   }
 
+  static offset(left: number, top: number, width: number, height: number) {
+    return new AABB(left, top, left + width, top + height);
+  }
+
+  static origin(width: number, height: number) {
+    return new AABB(0, 0, width, height);
+  }
+
   get width() { return this.right - this.left; }
   get height() { return this.bottom - this.top; }
+
+  inside(other: AABB) {
+    return this.left >= other.left && this.top >= other.top &&
+      this.right <= other.right && this.bottom <= other.bottom;
+  }
+
+  offset(x: number, y: number) {
+    return new AABB(this.left + x, this.top + y, this.right + x, this.bottom + y);
+  }
+
+  clone() {
+    return new AABB(this.left, this.top, this.right, this.bottom);
+  }
 }

@@ -1,4 +1,5 @@
 import { AABB, Coord, Vector } from "../base";
+import LevelScene from "../scene/LevelScene";
 import Sprite from "./Sprite";
 
 export interface MobInit {
@@ -52,4 +53,6 @@ export default abstract class Entity extends Sprite {
 
   onDamage(amount: number): void {}
   onDead(): void {}
+
+  tick(scene: LevelScene) {}
 }

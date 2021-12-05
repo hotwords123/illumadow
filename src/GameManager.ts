@@ -1,6 +1,8 @@
 import KeyboardManager from "./input/KeyboardManager";
+import levelManager from "./map/LevelManager";
 import Renderer from "./render/Renderer";
 import { textureManager } from "./render/TextureManager";
+import LevelScene from "./scene/LevelScene";
 import LoadingScene from "./scene/LoadingScene";
 import Scene from "./scene/Scene";
 import StartScene from "./scene/StartScene";
@@ -15,8 +17,10 @@ export default class GameManager {
 
   constructor(private canvas: HTMLCanvasElement) {
     this.scene = new LoadingScene(this);
-    this.renderer = new Renderer(this);
+    this.renderer = new Renderer(canvas);
     this.keyboardManager = new KeyboardManager(this);
+
+    this.renderer.setScene(this.scene);
 
     this.tickHandler = this.tickHandler.bind(this);
     this.resizeHandler = this.resizeHandler.bind(this);
@@ -71,9 +75,10 @@ export default class GameManager {
   switchScene(callback: () => Scene) {
     this.scene.cleanup();
     this.scene = callback();
+    this.renderer.setScene(this.scene);
   }
 
   startGame() {
-    //
+    this.switchScene(() => new LevelScene(this, levelManager.get('test')!));
   }
 }
