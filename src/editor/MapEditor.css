@@ -184,7 +184,7 @@
   top: -30px;
   width: 20px;
   height: 30px;
-  background-color: #a4c93e;
+  background-color: #9fc93e;
 }
 
 .Container .sprite.entity.guard .box {
@@ -200,7 +200,7 @@
   top: -30px;
   width: 20px;
   height: 30px;
-  background-color: #c9653e;
+  background-color: #c9473e;
 }
 
 .Container .sprite.entity.wizard .box {
@@ -208,7 +208,7 @@
   top: -30px;
   width: 20px;
   height: 30px;
-  background-color: #c93e61;
+  background-color: #c93e9f;
 }
 
 .Container .sprite.entity.boss .box {
@@ -216,5 +216,5 @@
   top: -30px;
   width: 20px;
   height: 30px;
-  background-color: #c93eb2;
+  background-color: #8a3ec9;
 }

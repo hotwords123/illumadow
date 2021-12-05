@@ -350,8 +350,10 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
           this.selectItems([item]);
         }
       }
+      evt.stopPropagation();
+    } else if (evt.type === 'mouseup') {
+      evt.stopPropagation();
     }
-    evt.stopPropagation();
   }
 
   makeItemDraft({ tags, ...more }: MapSprite): ItemEditorData {
