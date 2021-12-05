@@ -1,18 +1,18 @@
 import { AABB, Coord } from "../../base";
 import Entity from "../Entity";
-import imgScout from "../../assets/entity/scout.png";
+import imgGuard from "../../assets/entity/guard.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 
-let textureScout: Texture;
+let textureGuard: Texture;
 
-textureManager.loadTexture(imgScout).then(texture => {
-  textureScout = texture;
+textureManager.loadTexture(imgGuard).then(texture => {
+  textureGuard = texture;
 });
 
-const WALK_SPEED = 0.75;
+const WALK_SPEED = 0.375;
 
-export default class EnemyScout extends Entity {
+export default class EnemyGuard extends Entity {
   constructor(position: Coord) {
     super(position, { maxHealth: 20 });
   }
@@ -24,7 +24,7 @@ export default class EnemyScout extends Entity {
   getRenderInfo() {
     return {
       box: this.position.expand(4, 14, 4, 0),
-      texture: textureScout
+      texture: textureGuard
     };
   }
 

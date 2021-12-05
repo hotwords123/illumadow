@@ -23,6 +23,11 @@ export class Coord {
     return new Coord(this.x + vector.x, this.y + vector.y);
   }
 
+  /** operator + */
+  plus2(x: number, y: number) {
+    return new Coord(this.x + x, this.y + y);
+  }
+
   /** operator += */
   setPlus(vector: Vector) {
     this.x += vector.x;

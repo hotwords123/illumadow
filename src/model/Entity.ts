@@ -29,6 +29,11 @@ export default abstract class Entity extends Sprite {
   health: number;
   invulnerable: boolean;
 
+  /** ticks in air, used for jumping check */
+  airTicks = 0;
+  /** hurt immune ticks */
+  immuneTicks = 0;
+
   constructor(position: Coord, init: MobInit) {
     super(position);
 
@@ -44,12 +49,15 @@ export default abstract class Entity extends Sprite {
 
   get dead() { return this.health <= 0; }
 
+  get hurtImmuneTicks() { return 0; }
+
   damage(amount: number): boolean {
+    if (amount <= 0) return false;
     if (this.dead || this.invulnerable) return false;
+    if (this.immuneTicks > 0) return false;
     this.health -= amount;
-    this.onDamage(amount);
-    if (this.dead)
-      this.onDead();
+    if (this.dead) this.die();
+    this.immuneTicks = this.hurtImmuneTicks;
     return true;
   }
 
@@ -60,8 +68,7 @@ export default abstract class Entity extends Sprite {
       this.health = this.maxHealth;
   }
 
-  onDamage(amount: number): void {}
-  onDead(): void {}
+  die(): void {}
 
   /* ======== Movement ======== */
 
@@ -74,6 +81,11 @@ export default abstract class Entity extends Sprite {
    * Performs movement and terrain interaction logic.
    */
   tick(scene: LevelScene) {
+    if (this.dead) return;
+
+    if (this.immuneTicks > 0)
+      this.immuneTicks--;
+
     this.oldPosition = this.position.clone();
     this.oldCollisionBox = this.collisionBox;
 
@@ -82,8 +94,12 @@ export default abstract class Entity extends Sprite {
     this.onGround = false;
     this.interactTerrains(scene);
 
-    if (!this.onGround)
+    if (this.onGround) {
+      this.airTicks = 0;
+    } else {
+      this.airTicks++;
       this.velocity.y += GRAVITY;
+    }
   }
 
   /**
@@ -106,7 +122,7 @@ export default abstract class Entity extends Sprite {
       const { ctx, pixelSize } = rctx;
       const { collisionBox: cbox } = this;
       ctx.lineWidth = 2 / pixelSize;
-      ctx.strokeStyle = this.onGround ? '#0f0' : '#f00';
+      ctx.strokeStyle = this.onGround ? '#0f0' : '#00f';
       ctx.strokeRect(cbox.left, cbox.top, cbox.width, cbox.height);
     }
   }

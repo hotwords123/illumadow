@@ -7,6 +7,7 @@ import { MapTerrain, MapTerrainBrick, MapTerrainSpikes, MapTerrainType, TERRAIN_
 import Entity from "../model/Entity";
 import LevelScene from "./LevelScene";
 import Player from "../model/Player";
+import { RendererContext } from "../render/Renderer";
 
 let textureBrick: Texture;
 let textureSpikes: Texture
@@ -118,9 +119,16 @@ export class TerrainSpikes extends Terrain {
   }
 
   get hurtBox() {
-    return this.center
-      .plus(DIRECTION_VECTORS[this.side].scale(3))
-      .expand(4, 1, 4, 1);
+    switch (this.side) {
+      case Direction.left:
+        return this.center.plus2(-3, 0).expand(1, 4);
+      case Direction.top:
+        return this.center.plus2(0, -3).expand(4, 1);
+      case Direction.right:
+        return this.center.plus2(3, 0).expand(1, 4);
+      case Direction.bottom:
+        return this.center.plus2(0, 3).expand(4, 1);
+    }
   }
 
   hurtEntityAmount(entity: Entity) {
@@ -134,5 +142,16 @@ export class TerrainSpikes extends Terrain {
     const amount = this.hurtEntityAmount(entity);
     if (amount > 0 && this.hurtBox.intersects(entity.hurtBox))
       entity.damage(amount);
+  }
+
+  render(rctx: RendererContext) {
+    super.render(rctx);
+    if (rctx.debug) {
+      const { ctx, pixelSize } = rctx;
+      const { hurtBox: hbox } = this;
+      ctx.lineWidth = 2 / pixelSize;
+      ctx.strokeStyle = '#f00';
+      ctx.strokeRect(hbox.left, hbox.top, hbox.width, hbox.height);
+    }
   }
 }

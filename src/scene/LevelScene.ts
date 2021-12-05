@@ -8,6 +8,7 @@ import { MapData, MapEntity, MapEntityType, MapTerrain, MapTerrainBrick, MapTerr
 import { Terrain, TerrainBrick, TerrainSpikes } from "./Terrain";
 import Camera from "./Camera";
 import EnemyScout from "../model/enemy/Scout";
+import EnemyGuard from "../model/enemy/Guard";
 
 export default class LevelScene extends Scene {
   width: number;
@@ -67,6 +68,9 @@ export default class LevelScene extends Scene {
       case MapEntityType.scout:
         return new EnemyScout(pos);
 
+      case MapEntityType.guard:
+        return new EnemyGuard(pos);
+
       default:
         console.warn(`unknown entity type: ${data.type}`);
         return null;
@@ -85,6 +89,8 @@ export default class LevelScene extends Scene {
     ctx.save();
     ctx.translate(-this.camera.offset.x, -this.camera.offset.y);
     this.renderTerrain(rctx);
+    for (const entity of this.entities)
+      entity.render(rctx);
     this.player.render(rctx);
     ctx.restore();
   }
