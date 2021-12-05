@@ -339,7 +339,16 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
   itemMouseHandler(evt: React.MouseEvent, item: MapItem) {
     if (evt.type === 'mousedown') {
       if (evt.button === 0) {
-        this.selectItems(evt.ctrlKey ? [...this.state.selectedItems, item] : [item]);
+        if (evt.ctrlKey) {
+          const items = new Set(this.state.selectedItems);
+          if (items.has(item))
+            items.delete(item);
+          else
+            items.add(item);
+          this.selectItems([...items])
+        } else {
+          this.selectItems([item]);
+        }
       }
     }
     evt.stopPropagation();
@@ -494,7 +503,8 @@ function Container({ parent, refMain }: ContainerProps) {
             key: id,
             style: {
               left: PX(item.x),
-              top: PX(item.y)
+              top: PX(item.y),
+              '--label': ''
             },
             onMouseDown: handler,
             onMouseUp: handler,
@@ -507,14 +517,21 @@ function Container({ parent, refMain }: ContainerProps) {
             case 'entity': {
               const { type } = item as MapEntity;
               classList.push('entity', type);
+              props.style['--label'] = `"${type}"`;
               break;
             }
             case 'decoration':
               const { variant } = item as MapDecoration;
               classList.push('decoration', variant);
+              props.style['--label'] = `"${variant}"`;
               break;
           }
-          return <div className={classList.join(" ")} {...props}></div>;
+          console.info(props);
+          return (
+            <div className={classList.join(" ")} {...props}>
+              <div className="box"></div>
+            </div>
+          );
         })}
         {dragArea &&
           <div className="drag-area" style={{

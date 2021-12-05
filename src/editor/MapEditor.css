@@ -128,7 +128,24 @@
 }
 
 .Container .sprite:after {
-  content: '';
+  content: var(--label, "");
+  position: absolute;
+  left: 0;
+  top: 5px;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 0 2px rgba(192, 192, 192, 0.8);
+  font: 12px Consolas;
+  transform: translateX(-50%);
+  color: #000;
+}
+
+.Container .sprite.selected:after {
+  font-weight: bold;
+  text-shadow: 0 0 4px rgba(128, 128, 128, 0.8);
+}
+
+.Container .sprite .box {
   position: absolute;
   display: block;
   opacity: 0.7;
@@ -136,12 +153,12 @@
   z-index: 1;
 }
 
-.Container .sprite:hover:after {
+.Container .sprite:hover .box {
   opacity: 0.8;
   box-shadow: 0 0 6px rgba(64, 64, 64, 0.6);
 }
 
-.Container .sprite.selected:after {
+.Container .sprite.selected .box {
   opacity: 0.95;
   box-shadow: 0 0 8px rgba(64, 64, 64, 0.7);
 }
@@ -154,10 +171,50 @@
   background-color: #809c00;
 }
 
-.Container .sprite.entity.player:after {
+.Container .sprite.entity.player .box {
   left: -12px;
   top: -50px;
   width: 24px;
   height: 50px;
   background-color: #3ec973;
+}
+
+.Container .sprite.entity.scout .box {
+  left: -10px;
+  top: -30px;
+  width: 20px;
+  height: 30px;
+  background-color: #a4c93e;
+}
+
+.Container .sprite.entity.guard .box {
+  left: -10px;
+  top: -30px;
+  width: 20px;
+  height: 30px;
+  background-color: #c9983e;
+}
+
+.Container .sprite.entity.archer .box {
+  left: -10px;
+  top: -30px;
+  width: 20px;
+  height: 30px;
+  background-color: #c9653e;
+}
+
+.Container .sprite.entity.wizard .box {
+  left: -10px;
+  top: -30px;
+  width: 20px;
+  height: 30px;
+  background-color: #c93e61;
+}
+
+.Container .sprite.entity.boss .box {
+  left: -10px;
+  top: -30px;
+  width: 20px;
+  height: 30px;
+  background-color: #c93eb2;
 }
