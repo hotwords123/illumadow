@@ -21,42 +21,117 @@
                        "main sidebar";
 }
 
-.MapEditor .toolbar {
+/******** Toolbar ********/
+
+.Toolbar {
   grid-area: toolbar;
   padding: 5px 10px;
   border-bottom: 1px solid #999;
   background-color: #eee;
 }
 
-.MapEditor .toolbar .gap {
+.Toolbar .gap {
   display: inline-block;
   width: .5em;
 }
 
-.MapEditor .toolbar .terrain:not(.active) {
+.Toolbar .terrain:not(.active) {
   opacity: 0.5;
 }
 
-.MapEditor .sidebar {
+/******** Sidebar ********/
+
+.Sidebar {
   grid-area: sidebar;
   padding: 5px 10px;
   background-color: #e3f2f7;
 }
 
-.MapEditor.dock-l .sidebar {
+.MapEditor.dock-l .Sidebar {
   border-right: 1px solid #999;
 }
 
-.MapEditor.dock-r .sidebar {
+.MapEditor.dock-r .Sidebar {
   border-left: 1px solid #999;
 }
 
-.MapEditor .container {
+/******** Container ********/
+
+.Container {
+  position: relative;
   grid-area: main;
-  padding: 10px;
   overflow: scroll;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.MapEditor .container canvas {
+.ContainerBox {
+  position: relative;
+  margin: 10px;
+  padding: 0;
   border: 1px solid #ccc;
+  flex: 0 0;
+  cursor: crosshair;
+}
+
+.Container canvas {
+  margin: 0;
+  padding: 0;
+  z-index: 10;
+}
+
+.Container .sprite {
+  position: absolute;
+  z-index: 20;
+  cursor: pointer;
+}
+
+.Container .sprite:before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  display: block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #1c3d26;
+  box-sizing: border-box;
+  z-index: 2;
+}
+
+.Container .sprite:after {
+  content: '';
+  position: absolute;
+  display: block;
+  opacity: 0.7;
+  box-shadow: 0 0 4px rgba(64, 64, 64, 0.5);
+  z-index: 1;
+}
+
+.Container .sprite:hover:after {
+  opacity: 0.8;
+  box-shadow: 0 0 6px rgba(64, 64, 64, 0.6);
+}
+
+.Container .sprite.selected:after {
+  opacity: 0.95;
+  box-shadow: 0 0 8px rgba(64, 64, 64, 0.7);
+}
+
+.Container .sprite.entity:before {
+  background-color: #019b9b;
+}
+
+.Container .sprite.decoration:before {
+  background-color: #809c00;
+}
+
+.Container .sprite.entity.player:after {
+  left: -12px;
+  top: -50px;
+  width: 24px;
+  height: 50px;
+  background-color: #3ec973;
 }

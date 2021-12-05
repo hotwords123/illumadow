@@ -1,6 +1,6 @@
 import React from 'react';
-import { MapData, MapDecoration, MapEntity, MapEntityType, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
-import ItemEditor, { ItemEditorData } from './ItemEditor';
+import { MapData, MapDecoration, MapEntity, MapEntityType, MapSprite, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
+import ItemEditor, { EditError, ItemEditorData, ItemEditorDataEntry } from './ItemEditor';
 import './MapEditor.css';
 import parseImage from './parseImage';
 import TerrainCanvas from './TerrainCanvas';
@@ -8,11 +8,9 @@ import TerrainCanvas from './TerrainCanvas';
 /******** MapEditor ********/
 
 type MapItem = {
-  category: 'entity';
-  item: MapEntity;
-} | {
-  category: 'decoration';
-  item: MapDecoration;
+  id: number;
+  category: 'entity' | 'decoration';
+  item: MapSprite;
 }
 
 type MapItemType = {
@@ -44,6 +42,8 @@ interface MapEditorState {
   mapHeight: number;
   terrains: (MapTerrain | null)[][];
   scale: number;
+  pxAtom: number;
+  pxGrid: number;
   items: MapItem[];
   selectedItems: MapItem[];
   itemDraft: ItemEditorData | null;
@@ -52,11 +52,10 @@ interface MapEditorState {
 }
 
 export default class MapEditor extends React.Component<{}, MapEditorState> {
-  idPool = new Map([...ENTITIES, 'decoration'].map(type => [type, { value: 0 }]));
+  currentItemId = 0;
 
   refFileInput = React.createRef<HTMLInputElement>();
-  refToolbar = React.createRef<Toolbar>();
-  refSidebar = React.createRef<Sidebar>();
+  refContainer = React.createRef<HTMLDivElement>();
 
   constructor(props: {}) {
     super(props);
@@ -71,6 +70,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       mapHeight: 0,
       terrains: [],
       scale: 4,
+      pxAtom: 4 / window.devicePixelRatio,
+      pxGrid: 4 * TERRAIN_SIZE / window.devicePixelRatio,
       items: [],
       selectedItems: [],
       itemDraft: null,
@@ -86,7 +87,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     this.fileHandler = this.fileHandler.bind(this);
     this.mouseHandler = this.mouseHandler.bind(this);
     this.keyHandler = this.keyHandler.bind(this);
-    this.itemClickHandler = this.itemClickHandler.bind(this);
+    this.itemMouseHandler = this.itemMouseHandler.bind(this);
     this.itemModifyHandler = this.itemModifyHandler.bind(this);
   }
 
@@ -139,6 +140,10 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     }
   }
 
+  createItem<T extends MapSprite>(category: MapItem["category"], item: T): MapItem {
+    return { id: this.currentItemId++, category, item };
+  }
+
   loadMap(map: MapData) {
     this.setState(state => ({
       loaded: true,
@@ -150,10 +155,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       mapHeight: map.height,
       terrains: map.terrain,
       items: [
-        ...map.entities.map(entity =>
-          ({ category: 'entity', item: entity } as MapItem)),
-        ...map.decorations.map(decoration =>
-          ({ category: 'decoration', item: decoration } as MapItem))
+        ...map.entities.map(entity => this.createItem('entity', entity)),
+        ...map.decorations.map(decoration => this.createItem('decoration', decoration))
       ],
       selectedItems: [],
       itemDraft: null
@@ -197,8 +200,21 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
 
   mouseHandler(evt: React.MouseEvent<HTMLDivElement>) {
     evt.preventDefault();
+    const box = this.refContainer.current!.getBoundingClientRect();
+    const offsetX = evt.clientX - box.left;
+    const offsetY = evt.clientY - box.top;
+    const sceneX = Math.round(offsetX / this.state.pxAtom);
+    const sceneY = Math.round(offsetY / this.state.pxAtom);
 
-    //
+    if (evt.type === 'mousedown') {
+      if (evt.button === 0) {
+        this.selectItems([]);
+      } else if (evt.button === 2) {
+        this.placeItem(sceneX, sceneY);
+      }
+    } else if (evt.type === 'mousemove') {
+      //
+    }
   }
 
   keyHandler(evt: KeyboardEvent) {
@@ -209,12 +225,29 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       case 'ArrowUp':
       case 'ArrowRight':
       case 'ArrowDown': {
+        const [dx, dy] = {
+          L: [-1, 0], R: [1, 0],
+          U: [0, -1], D: [0, 1]
+        }[evt.key[5]]!;
+        const { selectedItems } = this.state;
+        for (const { item } of selectedItems) {
+          item.x += dx;
+          item.y += dy;
+        }
+        this.setState({
+          itemDraft: selectedItems.length === 1 ? this.makeItemDraft(selectedItems[0].item) : null
+        });
         break;
       }
       case '1': case '2': case '3': case '4': {
         break;
       }
       case 'Delete': {
+        const { selectedItems } = this.state;
+        this.selectItems([]);
+        this.setState(state => ({
+          items: state.items.filter(x => !selectedItems.includes(x))
+        }));
         break;
       }
       default: return;
@@ -226,44 +259,98 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     this.setState({}); // force React to update
   }
 
-  generateItemId(type: string) {
-    return `${type}-${++this.idPool.get(type)!.value}`;
+  getItemToPlace(x: number, y: number): MapItem | null {
+    const tool = this.state.currentTool;
+    switch (tool.category) {
+      case 'entity':
+        return this.createItem('entity', {
+          tags: [], x, y,
+          type: tool.type,
+          ...ENTITY_TEMPLATES.get(tool.type)!
+        });
+      case 'decoration':
+        return this.createItem('decoration', {
+          tags: [], x, y,
+          variant: ''
+        });
+      default:
+        return null;
+    }
   }
 
   placeItem(x: number, y: number) {
+    const item = this.getItemToPlace(x, y);
+    if (item) {
+      this.state.items.push(item);
+      this.selectItems([item]);
+    }
+  }
+
+  selectItems(items: MapItem[]) {
+    let itemDraft: ItemEditorData | null = null;
+    if (items.length === 1) {
+      const [{ item }] = items;
+      itemDraft = this.makeItemDraft(item);
+    }
+    this.setState({ selectedItems: items, itemDraft });
   }
 
   switchTool(tool: MapItemType) {
     this.setState({ currentTool: tool });
   }
 
-  itemClickHandler(item: MapItem) {
+  itemMouseHandler(evt: React.MouseEvent, item: MapItem) {
+    if (evt.type === 'mousedown') {
+      if (evt.button === 0) {
+        this.selectItems([item]);
+      }
+    }
+    evt.stopPropagation();
+  }
+
+  makeItemDraft({ tags, ...more }: MapSprite): ItemEditorData {
+    return [
+      ['tags', tags.join(',')],
+      ...Object.keys(more).map(key => [key, JSON.stringify((more as any)[key])] as ItemEditorDataEntry)
+    ];
   }
 
   itemModifyHandler(field: string, value: string) {
+    const entry = this.state.itemDraft!.find(x => x[0] === field);
+    if (!entry)
+      throw new EditError("field does not exist");
+    entry[1] = value;
+    this.update();
+
+    let parsed: any;
+    switch (field) {
+      case 'tags':
+        parsed = [...new Set(value.split(','))].filter(x => !!x);
+        break;
+      case 'x': case 'y':
+        parsed = parseInt(value);
+        if (isNaN(parsed))
+          throw new EditError("coordinate should be number");
+        break;
+      default:
+        try {
+          parsed = JSON.parse(value);
+        } catch (err: any) {
+          throw new EditError(err.message);
+        }
+    }
+
+    Object.assign(this.state.selectedItems[0].item, { [field]: parsed });
+    this.update();
   }
 
   render() {
-    const { state } = this;
-    const { scale, selectedItems } = state;
-    const PX = (px: number) => px * scale + 'px';
-    const GRID = (i: number) => i * scale * TERRAIN_SIZE + 'px';
-
     return (
-      <div className={`MapEditor dock-${state.sidebarDock}`}>
+      <div className={`MapEditor dock-${this.state.sidebarDock}`}>
         <input ref={this.refFileInput} type="file" onInput={this.fileHandler} style={{ display: 'none' }} />
-        <Toolbar ref={this.refToolbar} parent={this} />
-        <Sidebar ref={this.refSidebar} parent={this} />
-        <div className="container" onContextMenu={evt => evt.preventDefault()}>
-          <TerrainCanvas
-            key={state.mapCounter}
-            width={state.mapWidth}
-            height={state.mapHeight}
-            scale={scale}
-            terrains={state.terrains}
-          />
-          {}
-        </div>
+        <Toolbar parent={this} />
+        <Sidebar parent={this} />
+        <Container refMain={this.refContainer} parent={this} />
       </div>
     );
   }
@@ -275,49 +362,102 @@ interface EditorChildProps {
 
 /******** Toolbar ********/
 
-class Toolbar extends React.Component<EditorChildProps> {
-  render() {
-    const { parent } = this.props;
-    const { state } = parent;
-    const { currentTool: tool } = parent.state;
+function Toolbar({ parent }: EditorChildProps) {
+  const { state } = parent;
+  const { currentTool: tool } = parent.state;
 
-    return (
-      <div className="toolbar">
-        <button onClick={parent.importHandler}>Import</button>
-        <button onClick={parent.exportHandler}>Export</button>
-        <span className="gap"></span>
-      </div>
-    );
-  }
+  return (
+    <div className="Toolbar">
+      <button onClick={parent.importHandler}>Import</button>
+      <button onClick={parent.exportHandler}>Export</button>
+      <span className="gap"></span>
+    </div>
+  );
 }
 
 /******** Sidebar ********/
 
-class Sidebar extends React.Component<EditorChildProps> {
-  constructor(props: EditorChildProps) {
-    super(props);
-  }
+function Sidebar({ parent }: EditorChildProps) {
+  const { state } = parent;
+  const { itemDraft, sidebarDock } = state;
+  const toggledSide = { l: 'right', r: 'left' }[sidebarDock];
 
-  render() {
-    const { parent } = this.props;
-    const { state } = parent;
-    const { itemDraft, sidebarDock } = state;
-    const toggledSide = { l: 'right', r: 'left' }[sidebarDock];
-    return (
-      <div className="sidebar">
-        <div>
-          <strong>Sidebar</strong>&nbsp;
-          <button onClick={() => parent.toggleSidebarDock()}>Dock to {toggledSide}</button>
-        </div>
-        <div>
-          <div><strong>Map Information</strong></div>
-          <div>Map: {state.mapWidth} x {state.mapHeight}</div>
-          <div>Scene: {state.width} x {state.height}</div>
-        </div>
-        {itemDraft &&
-          <ItemEditor data={itemDraft} onModify={parent.itemModifyHandler} />
-        }
+  return (
+    <div className="Sidebar">
+      <div>
+        <strong>Sidebar</strong>&nbsp;
+        <button onClick={() => parent.toggleSidebarDock()}>Dock to {toggledSide}</button>
       </div>
-    );
-  }
+      <div>
+        <div><strong>Map Information</strong></div>
+        <div>Map: {state.mapWidth} x {state.mapHeight}</div>
+        <div>Scene: {state.width} x {state.height}</div>
+        <div>Entities: {state.items.filter(x => x.category === 'entity').length}</div>
+        <div>Decorations: {state.items.filter(x => x.category === 'decoration').length}</div>
+      </div>
+      {itemDraft &&
+        <ItemEditor data={itemDraft} onModify={parent.itemModifyHandler} />
+      }
+    </div>
+  );
+}
+
+/******** Container ********/
+
+interface ContainerProps extends EditorChildProps {
+  refMain: React.Ref<HTMLDivElement>;
+}
+
+function Container({ parent, refMain }: ContainerProps) {
+  const { state } = parent;
+  const { pxAtom, items, selectedItems } = state;
+  const PX = (x: number) => x * pxAtom + 'px';
+
+  return (
+    <div className="Container">
+      <div ref={refMain} className="ContainerBox"
+        onMouseDown={parent.mouseHandler}
+        onMouseMove={parent.mouseHandler}
+        onMouseUp={parent.mouseHandler}
+        onContextMenu={evt => evt.preventDefault()}
+      >
+        <TerrainCanvas
+          key={state.mapCounter}
+          width={state.mapWidth}
+          height={state.mapHeight}
+          scale={state.scale}
+          terrains={state.terrains}
+        />
+        {items.map((mapItem) => {
+          const { id, category, item } = mapItem;
+          const handler = (evt: React.MouseEvent) => parent.itemMouseHandler(evt, mapItem);
+          const props = {
+            key: id,
+            style: {
+              left: PX(item.x),
+              top: PX(item.y)
+            },
+            onMouseDown: handler,
+            onMouseUp: handler,
+            onMouseMove: handler
+          };
+          const classList = ['sprite'];
+          if (selectedItems.includes(mapItem))
+            classList.push('selected');
+          switch (category) {
+            case 'entity': {
+              const { type } = item as MapEntity;
+              classList.push('entity', type);
+              break;
+            }
+            case 'decoration':
+              const { variant } = item as MapDecoration;
+              classList.push('decoration', variant);
+              break;
+          }
+          return <div className={classList.join(" ")} {...props}></div>;
+        })}
+      </div>
+    </div>
+  );
 }

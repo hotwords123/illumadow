@@ -1,10 +1,17 @@
-.ItemEditor input {
-  width: 10em;
+.ItemEditor .field {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
 }
 
-.ItemEditor textarea {
-  width: 18em;
-  height: 5em;
+.ItemEditor .key {
+  font: 12px monospace;
+  line-height: 22px;
+}
+
+.ItemEditor input {
+  font: 10px monospace;
+  height: 22px;
+  box-sizing: border-box;
 }
 
 .ItemEditor .error {

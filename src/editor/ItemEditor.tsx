@@ -1,7 +1,8 @@
 import React from "react";
 import "./ItemEditor.css";
 
-export type ItemEditorData = [string, string][];
+export type ItemEditorDataEntry = [string, string];
+export type ItemEditorData = ItemEditorDataEntry[];
 
 interface ItemEditorProps {
   data: ItemEditorData;
@@ -42,10 +43,10 @@ export default class ItemEditor extends React.Component<ItemEditorProps, ItemEdi
         <div>
           <strong>Selected Item</strong>
         </div>
-        <div>
+        <div className="fields">
           {item.map(([field, value]) =>
-            <div>
-              <span>{field}</span>
+            <div key={field} className="field">
+              <span className="key">{field}</span>
               <input type="text" value={value}
                 className={state.error?.field === field ? 'error' : ''}
                 onInput={evt => this.modifyHandler(field, evt.currentTarget.value)} />

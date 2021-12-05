@@ -21,8 +21,9 @@ export default class TerrainCanvas extends React.PureComponent<TerrainCanvasProp
 
     const canvas = this.refCanvas.current!;
 
-    const canvasWidth = width * TERRAIN_SIZE * scale;
-    const canvasHeight = height * TERRAIN_SIZE * scale;
+    const pxGrid = TERRAIN_SIZE * scale;
+    const canvasWidth = width * pxGrid;
+    const canvasHeight = height * pxGrid;
     const ratio = window.devicePixelRatio;
 
     canvas.width = canvasWidth;
@@ -49,6 +50,19 @@ export default class TerrainCanvas extends React.PureComponent<TerrainCanvasProp
     }
 
     ctx.restore();
+
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = '#aaa';
+    ctx.beginPath();
+    for (let x = 0; x <= width; x++) {
+      ctx.moveTo(x * pxGrid, 0);
+      ctx.lineTo(x * pxGrid, canvasHeight);
+    }
+    for (let y = 0; y <= height; y++) {
+      ctx.moveTo(0, y * pxGrid);
+      ctx.lineTo(canvasWidth, y * pxGrid);
+    }
+    ctx.stroke();
   }
 
   render() {
