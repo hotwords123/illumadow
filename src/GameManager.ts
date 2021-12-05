@@ -48,7 +48,14 @@ export default class GameManager {
   }
 
   onKeyEvent(command: string, event: string) {
-    this.scene.onKeyEvent(command, event);
+    switch (command) {
+      case 'ui.debug':
+        if (event === 'down')
+          this.renderer.toggleDebug();
+        break;
+      default:
+        this.scene.onKeyEvent(command, event);
+    }
   }
 
   isKeyPressed(command: string) {

@@ -4,8 +4,8 @@ import Entity from "../model/Entity";
 import Player from "../model/Player";
 import { RendererContext } from "../render/Renderer";
 import GameManager from "../GameManager";
-import { MapData, MapTerrain, MapTerrainBrick, MapTerrainSpikes, MapTerrainType } from "../map/interfaces";
-import { Terrain, TerrainBrick, TerrainSpikes, TERRAIN_SIZE } from "./Terrain";
+import { MapData, MapTerrain, MapTerrainBrick, MapTerrainSpikes, MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
+import { Terrain, TerrainBrick, TerrainSpikes } from "./Terrain";
 import Camera from "./Camera";
 
 export default class LevelScene extends Scene {
@@ -22,28 +22,10 @@ export default class LevelScene extends Scene {
     this.width = map.width * TERRAIN_SIZE;
     this.height = map.height * TERRAIN_SIZE;
 
-    this.camera = new Camera(this);
+    this.camera = new Camera();
 
     this.player = new Player(new Coord(0, 0));
-    this.terrains = map.terrain.map((row, y) => row.map((cell, x) => this.createTerrain(x, y, cell)));
-  }
-
-  createTerrain(x: number, y: number, cell: MapTerrain | null): Terrain | null {
-    if (!cell) return null;
-    const coord = new Coord(x, y);
-    switch (cell.type) {
-      case MapTerrainType.brick: {
-        const c = cell as MapTerrainBrick;
-        return new TerrainBrick(coord, c.texture);
-      }
-      case MapTerrainType.spikes: {
-        const c = cell as MapTerrainSpikes;
-        return new TerrainSpikes(coord, c.side);
-      }
-      default:
-        console.warn(`terrain (${x}, ${y}): unknown type: ${cell.type}`);
-        return null;
-    }
+    this.terrains = map.terrain.map((row, y) => row.map((cell, x) => Terrain.create(x, y, cell)));
   }
 
   tick() {

@@ -1,0 +1,12 @@
+.ItemEditor input {
+  width: 10em;
+}
+
+.ItemEditor textarea {
+  width: 18em;
+  height: 5em;
+}
+
+.ItemEditor .error {
+  background-color: #ff8f8f;
+}

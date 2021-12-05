@@ -1,0 +1,57 @@
+.MapEditor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-rows: 40px auto;
+  gap: 0;
+}
+
+.MapEditor.dock-l {
+  grid-template-columns: 320px auto;
+  grid-template-areas: "toolbar toolbar"
+                       "sidebar main";
+}
+
+.MapEditor.dock-r {
+  grid-template-columns: auto 320px;
+  grid-template-areas: "toolbar toolbar"
+                       "main sidebar";
+}
+
+.MapEditor .toolbar {
+  grid-area: toolbar;
+  padding: 5px 10px;
+  border-bottom: 1px solid #999;
+  background-color: #eee;
+}
+
+.MapEditor .toolbar .gap {
+  display: inline-block;
+  width: .5em;
+}
+
+.MapEditor .toolbar .terrain:not(.active) {
+  opacity: 0.5;
+}
+
+.MapEditor .sidebar {
+  grid-area: sidebar;
+  padding: 5px 10px;
+  background-color: #e3f2f7;
+}
+
+.MapEditor.dock-l .sidebar {
+  border-right: 1px solid #999;
+}
+
+.MapEditor.dock-r .sidebar {
+  border-left: 1px solid #999;
+}
+
+.MapEditor .container {
+  grid-area: main;
+  padding: 10px;
+}

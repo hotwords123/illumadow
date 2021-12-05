@@ -25,7 +25,7 @@ export default class Renderer {
 
   private timer: number | null = null;
 
-  private debugMode: boolean = true;
+  private debugMode: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -107,14 +107,24 @@ export default class Renderer {
     this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
     this.ctx.drawImage(this.memCanvas, 0, 0);
     const endTime = performance.now();
-    this.ctx.font = '16px Consolas';
-    this.ctx.textAlign = 'left';
-    this.ctx.textBaseline = 'top';
-    this.ctx.fillStyle = '#333';
-    this.ctx.fillText(`${(endTime - startTime).toFixed(1).padStart(4, ' ')} ms`, 0, 8);
+    if (this.debugMode) {
+      this.ctx.font = '16px Consolas';
+      this.ctx.textAlign = 'left';
+      this.ctx.textBaseline = 'top';
+      this.ctx.fillStyle = '#333';
+      this.ctx.fillText(`${(endTime - startTime).toFixed(1).padStart(4, ' ')} ms`, 0, 8);
+
+      this.ctx.strokeStyle = '#999';
+      this.ctx.strokeRect(0, 0, this.canvasWidth, this.canvasHeight);
+    }
   }
 
   setDebug(flag: boolean) {
     this.debugMode = flag;
+    this.render();
+  }
+
+  toggleDebug() {
+    this.setDebug(!this.debugMode);
   }
 }

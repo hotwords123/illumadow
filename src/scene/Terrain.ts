@@ -3,8 +3,7 @@ import Sprite from "../model/Sprite";
 import imgBrick from "../assets/terrain/brick.png";
 import imgSpikes from "../assets/terrain/spikes.png";
 import { Texture, TextureLike, textureManager } from "../render/TextureManager";
-
-export const TERRAIN_SIZE = 8;
+import { MapTerrain, MapTerrainBrick, MapTerrainSpikes, MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
 
 let textureBrick: Texture;
 let textureSpikes: Texture
@@ -28,6 +27,24 @@ export abstract class Terrain extends Sprite {
         TERRAIN_SIZE, TERRAIN_SIZE
       ),
       texture: this.texture
+    }
+  }
+
+  static create(x: number, y: number, cell: MapTerrain | null): Terrain | null {
+    if (!cell) return null;
+    const coord = new Coord(x, y);
+    switch (cell.type) {
+      case MapTerrainType.brick: {
+        const c = cell as MapTerrainBrick;
+        return new TerrainBrick(coord, c.texture);
+      }
+      case MapTerrainType.spikes: {
+        const c = cell as MapTerrainSpikes;
+        return new TerrainSpikes(coord, c.side);
+      }
+      default:
+        console.warn(`terrain (${x}, ${y}): unknown type: ${cell.type}`);
+        return null;
     }
   }
 }

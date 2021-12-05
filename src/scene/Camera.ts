@@ -6,7 +6,7 @@ import { SCENE_WIDTH, SCENE_HEIGHT } from "./Scene";
 export default class Camera {
   offset: Coord;
 
-  constructor(private scene: LevelScene) {
+  constructor() {
     this.offset = new Coord(0, 0);
   }
 
