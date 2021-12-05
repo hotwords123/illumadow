@@ -8,13 +8,14 @@ interface TerrainCanvasProps {
   height: number;
   scale: number;
   terrains: (MapTerrain | null)[][];
+  debug: boolean;
 }
 
 export default class TerrainCanvas extends React.PureComponent<TerrainCanvasProps> {
   refCanvas = React.createRef<HTMLCanvasElement>();
 
   componentDidMount() {
-    const { width, height, scale, terrains } = this.props;
+    const { width, height, scale, terrains, debug } = this.props;
 
     if (width === 0 || height === 0)
       return;
@@ -34,7 +35,7 @@ export default class TerrainCanvas extends React.PureComponent<TerrainCanvasProp
 
     const ctx = canvas.getContext('2d')!;
     const rctx: RendererContext = {
-      ctx, pixelSize: scale, debug: true
+      ctx, pixelSize: scale, debug
     }
 
     ctx.imageSmoothingEnabled = false;

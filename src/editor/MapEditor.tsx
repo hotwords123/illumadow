@@ -35,6 +35,11 @@ const ENTITY_TEMPLATES = new Map([
 
 const ENTITY_TYPES: MapEntityType[] = [...ENTITY_TEMPLATES.keys()];
 
+const TOOLS: MapItemType[] = [
+  { category: 'decoration' },
+  ...ENTITY_TYPES.map(type => ({ category: 'entity', type } as MapItemType))
+];
+
 interface MapEditorState {
   loaded: boolean;
   // used for rendering terrain
@@ -57,6 +62,7 @@ interface MapEditorState {
   sidebarDock: 'l' | 'r';
   dragCorner: Coord | null;
   dragCorner2: Coord | null;
+  debugRender: boolean;
 }
 
 export default class MapEditor extends React.Component<{}, MapEditorState> {
@@ -89,7 +95,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       },
       sidebarDock: 'r',
       dragCorner: null,
-      dragCorner2: null
+      dragCorner2: null,
+      debugRender: true
     };
 
     this.importHandler = this.importHandler.bind(this);
@@ -276,7 +283,9 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         });
         break;
       }
-      case '1': case '2': case '3': case '4': {
+      case '1': case '2': case '3': case '4': case '5':
+      case '6': case '7': {
+        this.switchTool(TOOLS[parseInt(evt.key) - 1]);
         break;
       }
       case 'Delete': {
@@ -372,9 +381,15 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
 
     let parsed: any;
     switch (field) {
-      case 'tags':
-        parsed = [...new Set(value.split(','))].filter(x => !!x);
+      case 'tags': {
+        const tags = value === '' ? [] : value.split(',');
+        if (tags.some(x => !x.length))
+          throw new EditError("tag name should not be empty");
+        if (tags.length != new Set(tags).size)
+          throw new EditError("duplicate tag");
+        parsed = tags;
         break;
+      }
       case 'x': case 'y':
         parsed = parseInt(value);
         if (isNaN(parsed))
@@ -390,6 +405,13 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
 
     Object.assign(this.state.selectedItems[0].item, { [field]: parsed });
     this.update();
+  }
+
+  toggleDebugRender() {
+    this.setState(({ mapCounter, debugRender }) => ({
+      mapCounter: mapCounter + 1,
+      debugRender: !debugRender
+    }));
   }
 
   render() {
@@ -418,6 +440,10 @@ function Toolbar({ parent }: EditorChildProps) {
     <div className="Toolbar">
       <button onClick={parent.importHandler}>Import</button>
       <button onClick={parent.exportHandler}>Export</button>
+      <span className="gap"></span>
+      <button onClick={() => parent.toggleDebugRender()}>
+        Render: {state.debugRender ? "debug" : "normal"}
+      </button>
       <span className="gap"></span>
       <button
         className={tool.category === "decoration" ? "tool selected" : "tool"}
@@ -497,6 +523,7 @@ function Container({ parent, refMain }: ContainerProps) {
           height={state.mapHeight}
           scale={state.scale}
           terrains={state.terrains}
+          debug={state.debugRender}
         />
         {items.map((mapItem) => {
           const { id, category, item } = mapItem;
