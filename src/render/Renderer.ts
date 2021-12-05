@@ -25,7 +25,7 @@ export default class Renderer {
 
   private timer: number | null = null;
 
-  private debugMode: boolean = false;
+  private debugMode: boolean = true;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;

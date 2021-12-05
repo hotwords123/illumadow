@@ -1,4 +1,6 @@
 import { AABB, Coord, Vector } from "../base";
+import { TERRAIN_SIZE } from "../map/interfaces";
+import { RendererContext } from "../render/Renderer";
 import LevelScene from "../scene/LevelScene";
 import Sprite from "./Sprite";
 
@@ -8,11 +10,19 @@ export interface MobInit {
   invulnerable?: boolean;
 }
 
+const GRAVITY = 0.25;
+
 /**
- * 实体：可以移动，具有生命值，可以受到伤害，占据一定空间
+ * Entity:
+ * - moveable
+ * - has health
+ * - can be hurt
+ * - interacts with terrain
  */
 export default abstract class Entity extends Sprite {
   velocity: Vector;
+  oldPosition!: Coord;
+  oldCollisionBox!: AABB;
   onGround: boolean;
 
   maxHealth: number;
@@ -30,8 +40,7 @@ export default abstract class Entity extends Sprite {
     this.invulnerable = init.invulnerable ?? false;
   }
 
-  abstract get collisionBox(): AABB;
-  get hurtBox() { return this.collisionBox; }
+  /* ======== Health ======== */
 
   get dead() { return this.health <= 0; }
 
@@ -39,7 +48,7 @@ export default abstract class Entity extends Sprite {
     if (this.dead || this.invulnerable) return false;
     this.health -= amount;
     this.onDamage(amount);
-    if (this.health < 0)
+    if (this.dead)
       this.onDead();
     return true;
   }
@@ -54,5 +63,51 @@ export default abstract class Entity extends Sprite {
   onDamage(amount: number): void {}
   onDead(): void {}
 
-  tick(scene: LevelScene) {}
+  /* ======== Movement ======== */
+
+  abstract get collisionBox(): AABB;
+  get hurtBox() { return this.collisionBox; }
+
+  /* ======== Logic ======== */
+
+  /**
+   * Performs movement and terrain interaction logic.
+   */
+  tick(scene: LevelScene) {
+    this.oldPosition = this.position.clone();
+    this.oldCollisionBox = this.collisionBox;
+
+    this.position.setPlus(this.velocity);
+
+    this.onGround = false;
+    this.interactTerrains(scene);
+
+    if (!this.onGround)
+      this.velocity.y += GRAVITY;
+  }
+
+  /**
+   * Interacts with terrain.
+   */
+  interactTerrains(scene: LevelScene) {
+    const box = scene.fitTerrain(this.collisionBox.grow(1));
+
+    for (let y = box.top; y < box.bottom; y++) {
+      for (let x = box.left; x < box.right; x++) {
+        const terrain = scene.terrains[y][x];
+        terrain?.interactEntity(scene, this);
+      }
+    }
+  }
+
+  render(rctx: RendererContext) {
+    super.render(rctx);
+    if (rctx.debug) {
+      const { ctx, pixelSize } = rctx;
+      const { collisionBox: cbox } = this;
+      ctx.lineWidth = 2 / pixelSize;
+      ctx.strokeStyle = this.onGround ? '#0f0' : '#f00';
+      ctx.strokeRect(cbox.left, cbox.top, cbox.width, cbox.height);
+    }
+  }
 }

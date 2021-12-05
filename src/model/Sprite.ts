@@ -8,7 +8,9 @@ export interface RenderInfo {
 }
 
 /**
- * 精灵：场景中的元素，渲染为矩形贴图
+ * Sprite:
+ * - elements in scene
+ * - rendered with rectangular texture
  */
 export default abstract class Sprite implements Drawable {
   visible: boolean = true;
@@ -21,10 +23,13 @@ export default abstract class Sprite implements Drawable {
   set y(value: number) { this.position.y = value; }
 
   /**
-   * 返回渲染所用的贴图与渲染位置。
-   * 渲染坐标会被自动取整。
+   * Returns necessary information for rendering.
+   * Coordinates will be automatically rounded to integers.
+   * Derived classes should implement this method.
    */
-  abstract getRenderInfo(): RenderInfo | null;
+  getRenderInfo(): RenderInfo | null {
+    return null;
+  }
 
   render(rctx: RendererContext) {
     if (this.visible) {

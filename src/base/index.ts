@@ -16,6 +16,19 @@ export const SIDE_MASK = {
 export class Coord {
   constructor(public x: number, public y: number) {}
 
+  clone() { return new Coord(this.x, this.y); }
+
+  /** operator + */
+  plus(vector: Vector) {
+    return new Coord(this.x + vector.x, this.y + vector.y);
+  }
+
+  /** operator += */
+  setPlus(vector: Vector) {
+    this.x += vector.x;
+    this.y += vector.y;
+  }
+
   expand(left: number, top: number, right: number = left, bottom: number = top) {
     return new AABB(
       this.x - left, this.y - top,
@@ -35,6 +48,10 @@ export class Dimension {
 
 export class Segment {
   constructor(public l: number, public r: number) {}
+
+  intersects(other: Segment) {
+    return this.l < other.r && other.l < this.r;
+  }
 }
 
 export class Vector {
@@ -44,10 +61,32 @@ export class Vector {
     return new Vector(coord.x, coord.y);
   }
 
-  clone() {
-    return new Vector(this.x, this.y);
+  clone() { return new Vector(this.x, this.y); }
+
+  /** operator += */
+  setPlus(vector: Vector) {
+    this.x += vector.x;
+    this.y += vector.y;
+  }
+
+  /** operator += */
+  setPlus2(x: number, y: number) {
+    this.x += x;
+    this.y += y;
+  }
+
+  /** operator * */
+  scale(k: number) {
+    return new Vector(this.x * k, this.y * k);
   }
 }
+
+export const DIRECTION_VECTORS = [
+  new Vector(-1, 0),
+  new Vector(0, -1),
+  new Vector(1, 0),
+  new Vector(0, 1)
+];
 
 function sort2(a: number, b: number): [number, number] {
   return a < b ? [a, b] : [b, a];
@@ -77,6 +116,13 @@ export class AABB {
   get width() { return this.right - this.left; }
   get height() { return this.bottom - this.top; }
 
+  get horizontal() { return new Segment(this.left, this.right); }
+  get vertical() { return new Segment(this.top, this.bottom); }
+
+  clone() {
+    return new AABB(this.left, this.top, this.right, this.bottom);
+  }
+
   inside(other: AABB) {
     return this.left >= other.left && this.top >= other.top &&
       this.right <= other.right && this.bottom <= other.bottom;
@@ -86,7 +132,15 @@ export class AABB {
     return new AABB(this.left + x, this.top + y, this.right + x, this.bottom + y);
   }
 
-  clone() {
-    return new AABB(this.left, this.top, this.right, this.bottom);
+  intersects(other: AABB) {
+    return (this.left < other.right && other.left < this.right &&
+      this.top < other.bottom && other.top < this.bottom);
+  }
+
+  grow(x: number, y: number = x) {
+    return new AABB(
+      this.left - x, this.top - y,
+      this.right + x, this.bottom + y
+    );
   }
 }

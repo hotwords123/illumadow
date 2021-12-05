@@ -13,7 +13,7 @@ const COMMAND_MAP: Record<string, string[]> = {
   "move.left":   ["A", "ArrowLeft"],
   "move.down":   ["S", "ArrowDown"],
   "move.right":  ["D", "ArrowRight"],
-  "move.jump":   ["Space"],
+  "move.jump":   [" "],
   "skill.melee": ["J"],
   "skill.dash":  ["K"]
 };

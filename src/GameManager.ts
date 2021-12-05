@@ -7,7 +7,7 @@ import LoadingScene from "./scene/LoadingScene";
 import Scene from "./scene/Scene";
 import StartScene from "./scene/StartScene";
 
-export const TICK_ELAPSE = 1 / 60;
+export const TICK_ELAPSE = 1000 / 60;
 
 export default class GameManager {
   private scene: Scene;
@@ -64,7 +64,7 @@ export default class GameManager {
 
   start() {
     if (this.timer === null) {
-      this.timer = window.setInterval(this.tickHandler);
+      this.timer = window.setInterval(this.tickHandler, TICK_ELAPSE);
     }
   }
 
