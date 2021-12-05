@@ -22,6 +22,11 @@ export class Coord {
       this.x + right, this.y + bottom
     );
   }
+
+  inside(rect: AABB) {
+    return this.x >= rect.left && this.x <= rect.right &&
+      this.y >= rect.top && this.y <= rect.bottom;
+  }
 }
 
 export class Dimension {
@@ -44,6 +49,10 @@ export class Vector {
   }
 }
 
+function sort2(a: number, b: number): [number, number] {
+  return a < b ? [a, b] : [b, a];
+}
+
 export class AABB {
   constructor(public left: number, public top: number, public right: number, public bottom: number) {}
 
@@ -57,6 +66,12 @@ export class AABB {
 
   static origin(width: number, height: number) {
     return new AABB(0, 0, width, height);
+  }
+
+  static cornered(a: Coord, b: Coord) {
+    const [left, right] = sort2(a.x, b.x);
+    const [top, bottom] = sort2(a.y, b.y);
+    return new AABB(left, top, right, bottom);
   }
 
   get width() { return this.right - this.left; }

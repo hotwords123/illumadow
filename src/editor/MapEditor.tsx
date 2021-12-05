@@ -1,4 +1,5 @@
 import React from 'react';
+import { AABB, Coord } from '../base';
 import { MapData, MapDecoration, MapEntity, MapEntityType, MapSprite, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
 import ItemEditor, { EditError, ItemEditorData, ItemEditorDataEntry } from './ItemEditor';
 import './MapEditor.css';
@@ -24,10 +25,15 @@ const ENTITY_TEMPLATES = new Map([
   [MapEntityType.player, {
     health: 6,
     maxHealth: 6
-  }]
+  }],
+  [MapEntityType.scout, {}],
+  [MapEntityType.guard, {}],
+  [MapEntityType.archer, {}],
+  [MapEntityType.wizard, {}],
+  [MapEntityType.boss, {}],
 ]);
 
-const ENTITIES: MapEntityType[] = [...ENTITY_TEMPLATES.keys()];
+const ENTITY_TYPES: MapEntityType[] = [...ENTITY_TEMPLATES.keys()];
 
 interface MapEditorState {
   loaded: boolean;
@@ -49,6 +55,8 @@ interface MapEditorState {
   itemDraft: ItemEditorData | null;
   currentTool: MapItemType;
   sidebarDock: 'l' | 'r';
+  dragCorner: Coord | null;
+  dragCorner2: Coord | null;
 }
 
 export default class MapEditor extends React.Component<{}, MapEditorState> {
@@ -79,7 +87,9 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         category: 'entity',
         type: MapEntityType.player
       },
-      sidebarDock: 'r'
+      sidebarDock: 'r',
+      dragCorner: null,
+      dragCorner2: null
     };
 
     this.importHandler = this.importHandler.bind(this);
@@ -203,18 +213,45 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     const box = this.refContainer.current!.getBoundingClientRect();
     const offsetX = evt.clientX - box.left;
     const offsetY = evt.clientY - box.top;
-    const sceneX = Math.round(offsetX / this.state.pxAtom);
-    const sceneY = Math.round(offsetY / this.state.pxAtom);
 
     if (evt.type === 'mousedown') {
       if (evt.button === 0) {
         this.selectItems([]);
+        this.setState({
+          dragCorner: new Coord(offsetX, offsetY)
+        });
       } else if (evt.button === 2) {
+        const sceneX = Math.round(offsetX / this.state.pxAtom);
+        const sceneY = Math.round(offsetY / this.state.pxAtom);
         this.placeItem(sceneX, sceneY);
       }
     } else if (evt.type === 'mousemove') {
-      //
+      if (this.state.dragCorner) {
+        this.setState({
+          dragCorner2: new Coord(offsetX, offsetY)
+        });
+      }
+    } else if (evt.type === 'mouseup') {
+      if (evt.button === 0) {
+        const { dragCorner: corner, dragCorner2: corner2 } = this.state;
+        this.selectItems([]);
+        if (corner) {
+          if (corner2) {
+            const rect = AABB.cornered(corner, corner2);
+            this.selectItems(this.getItemsInRect(rect));
+          }
+          this.setState({
+            dragCorner: null,
+            dragCorner2: null
+          });
+        }
+      }
     }
+  }
+
+  getItemsInRect(rect: AABB) {
+    const { items, pxAtom } = this.state;
+    return items.filter(({ item }) => new Coord(item.x * pxAtom, item.y * pxAtom).inside(rect));
   }
 
   keyHandler(evt: KeyboardEvent) {
@@ -266,7 +303,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         return this.createItem('entity', {
           tags: [], x, y,
           type: tool.type,
-          ...ENTITY_TEMPLATES.get(tool.type)!
+          ...(ENTITY_TEMPLATES.get(tool.type) ?? {})
         });
       case 'decoration':
         return this.createItem('decoration', {
@@ -302,7 +339,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
   itemMouseHandler(evt: React.MouseEvent, item: MapItem) {
     if (evt.type === 'mousedown') {
       if (evt.button === 0) {
-        this.selectItems([item]);
+        this.selectItems(evt.ctrlKey ? [...this.state.selectedItems, item] : [item]);
       }
     }
     evt.stopPropagation();
@@ -364,13 +401,30 @@ interface EditorChildProps {
 
 function Toolbar({ parent }: EditorChildProps) {
   const { state } = parent;
-  const { currentTool: tool } = parent.state;
+  const { currentTool: tool } = state;
 
   return (
     <div className="Toolbar">
       <button onClick={parent.importHandler}>Import</button>
       <button onClick={parent.exportHandler}>Export</button>
       <span className="gap"></span>
+      <button
+        className={tool.category === "decoration" ? "tool selected" : "tool"}
+        onClick={() => parent.switchTool({ category: 'decoration' })}
+      >decoration</button>
+      {ENTITY_TYPES.map(type => {
+        const classList = ["tool"];
+        if (tool.category === "entity" && tool.type === type)
+          classList.push("selected");
+        return (
+          <button key={type}
+            className={classList.join(' ')}
+            onClick={() => parent.switchTool({ category: 'entity', type })}
+          >
+            {type}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -379,7 +433,7 @@ function Toolbar({ parent }: EditorChildProps) {
 
 function Sidebar({ parent }: EditorChildProps) {
   const { state } = parent;
-  const { itemDraft, sidebarDock } = state;
+  const { itemDraft, sidebarDock, selectedItems } = state;
   const toggledSide = { l: 'right', r: 'left' }[sidebarDock];
 
   return (
@@ -394,6 +448,9 @@ function Sidebar({ parent }: EditorChildProps) {
         <div>Scene: {state.width} x {state.height}</div>
         <div>Entities: {state.items.filter(x => x.category === 'entity').length}</div>
         <div>Decorations: {state.items.filter(x => x.category === 'decoration').length}</div>
+        {selectedItems.length > 0 &&
+          <div>Selected: {`${selectedItems.length} ${selectedItems.length > 1 ? 'items' : 'item'}`}</div>
+        }
       </div>
       {itemDraft &&
         <ItemEditor data={itemDraft} onModify={parent.itemModifyHandler} />
@@ -410,15 +467,17 @@ interface ContainerProps extends EditorChildProps {
 
 function Container({ parent, refMain }: ContainerProps) {
   const { state } = parent;
-  const { pxAtom, items, selectedItems } = state;
+  const { pxAtom, items, selectedItems, dragCorner, dragCorner2 } = state;
   const PX = (x: number) => x * pxAtom + 'px';
+  const dragArea = dragCorner2 && AABB.cornered(dragCorner!, dragCorner2);
 
   return (
-    <div className="Container">
+    <div className="Container"
+      onMouseDown={parent.mouseHandler}
+      onMouseUp={parent.mouseHandler}
+      onMouseMove={parent.mouseHandler}
+    >
       <div ref={refMain} className="ContainerBox"
-        onMouseDown={parent.mouseHandler}
-        onMouseMove={parent.mouseHandler}
-        onMouseUp={parent.mouseHandler}
         onContextMenu={evt => evt.preventDefault()}
       >
         <TerrainCanvas
@@ -457,6 +516,14 @@ function Container({ parent, refMain }: ContainerProps) {
           }
           return <div className={classList.join(" ")} {...props}></div>;
         })}
+        {dragArea &&
+          <div className="drag-area" style={{
+            left: dragArea.left + 'px',
+            top: dragArea.top + 'px',
+            width: dragArea.width + 'px',
+            height: dragArea.height + 'px'
+          }}></div>
+        }
       </div>
     </div>
   );
