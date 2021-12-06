@@ -38,6 +38,8 @@ export default class Player extends Entity {
   /** player state */
   state = State.walk;
 
+  jumpedAt = -1;
+
   constructor(position: Coord, init: PlayerInit) {
     super(position, init);
   }
@@ -66,6 +68,15 @@ export default class Player extends Entity {
     return x;
   }
 
+  receiveInput(scene: LevelScene, command: string, event: string) {
+    switch (command) {
+      case "move.jump":
+        if (event === "down")
+          this.jumpedAt = scene.ticks;
+        break;
+    }
+  }
+
   tick(scene: LevelScene) {
     if (this.dead) return;
 
@@ -87,7 +98,7 @@ export default class Player extends Entity {
     if (movement < 0 && velocity.x > -maxSpeed)
       velocity.x = Math.max(-maxSpeed, velocity.x - acceleration);
 
-    if (this.airTicks <= 3 && scene.jumpPressed === scene.ticks) {
+    if (this.airTicks <= 3 && this.jumpedAt === scene.ticks) {
       velocity.y = movement === 0 ? -JUMP_SPEED_Y_UP : -JUMP_SPEED_Y_SIDE;
       if (movement > 0)
         velocity.x = JUMP_SPEED_X;

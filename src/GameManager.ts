@@ -95,4 +95,8 @@ export default class GameManager {
   startGame() {
     this.startLevel('1-1');
   }
+
+  backToTitle() {
+    this.switchScene(() => new StartScene(this));
+  }
 }

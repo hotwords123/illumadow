@@ -121,11 +121,12 @@ export default abstract class Entity extends Sprite {
   render(rctx: RendererContext) {
     super.render(rctx);
     if (rctx.debug) {
-      const { ctx, pixelSize } = rctx;
-      const { collisionBox: cbox } = this;
-      ctx.lineWidth = 2 / pixelSize;
-      ctx.strokeStyle = this.onGround ? '#0f0' : '#00f';
-      ctx.strokeRect(cbox.left, cbox.top, cbox.width, cbox.height);
+      rctx.run(({ ctx, pixelSize }) => {
+        const { collisionBox: cbox } = this;
+        ctx.lineWidth = 2 / pixelSize;
+        ctx.strokeStyle = this.onGround ? '#0f0' : '#00f';
+        ctx.strokeRect(cbox.left, cbox.top, cbox.width, cbox.height);
+      });
     }
   }
 }

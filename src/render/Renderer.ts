@@ -1,10 +1,18 @@
 import GameManager from "../GameManager";
+import LevelScene from "../scene/LevelScene";
 import Scene, { SCENE_HEIGHT, SCENE_WIDTH } from "../scene/Scene";
 
-export interface RendererContext {
-  ctx: CanvasRenderingContext2D;
-  pixelSize: number;
-  debug: boolean;
+export class RendererContext {
+  constructor(public ctx: CanvasRenderingContext2D, public pixelSize: number, public debug: boolean) {}
+
+  run(callback: (rctx: RendererContext) => void) {
+    this.ctx.save();
+    try {
+      callback(this);
+    } finally {
+      this.ctx.restore();
+    }
+  }
 }
 
 export interface Drawable {
@@ -95,18 +103,20 @@ export default class Renderer {
 
   render() {
     if (!this.scene) return;
+
     const startTime = performance.now();
+  
+    this.memCtx.save();
     this.memCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
     this.memCtx.scale(this.pixelSize, this.pixelSize);
-    this.scene.render({
-      ctx: this.memCtx,
-      pixelSize: this.pixelSize,
-      debug: this.debugMode
-    });
-    this.memCtx.setTransform(1, 0, 0, 1, 0, 0);
+    this.scene.render(new RendererContext(this.memCtx, this.pixelSize, this.debugMode));
+    this.memCtx.restore();
+
     this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
     this.ctx.drawImage(this.memCanvas, 0, 0);
+
     const endTime = performance.now();
+
     if (this.debugMode) {
       const debugText: string[] = [
         [
@@ -115,10 +125,12 @@ export default class Renderer {
         ].join(' '),
         ...this.scene.debugText
       ];
+      this.ctx.save();
       this.ctx.font = '18px Consolas';
       this.ctx.textAlign = 'left';
       this.ctx.textBaseline = 'top';
-      this.ctx.fillStyle = '#333';
+      this.ctx.fillStyle =
+        this.scene instanceof LevelScene && this.scene.paused ? '#ddd' : '#333';
 
       let textY = 8;
       for (const text of debugText) {
@@ -128,6 +140,7 @@ export default class Renderer {
 
       this.ctx.strokeStyle = '#999';
       this.ctx.strokeRect(0, 0, this.canvasWidth, this.canvasHeight);
+      this.ctx.restore();
     }
   }
 

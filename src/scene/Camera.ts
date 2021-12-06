@@ -132,21 +132,21 @@ export default class Camera {
     }
   }
 
-  render({ ctx, pixelSize, debug }: RendererContext, callback: () => void) {
-    ctx.save();
-    const { x, y } = this.offset;
-    ctx.translate(-Math.round(x), -Math.round(y));
-    try {
+  render(rctx: RendererContext, callback: () => void) {
+    rctx.run(({ ctx }) => {
+      const { x, y } = this.offset;
+      ctx.translate(-Math.round(x), -Math.round(y));
       callback();
-    } finally {
-      ctx.restore();
-      if (debug) {
+    });
+
+    if (rctx.debug) {
+      rctx.run(({ ctx, pixelSize }) => {
         // Draw anchor lines
 
         ctx.strokeStyle =
-          this.stateX === CameraState.accelerating ? '#afa' :
-          this.stateX === CameraState.decelerating ? '#faa' : '#aaa';
-  
+        this.stateX === CameraState.accelerating ? '#afa' :
+        this.stateX === CameraState.decelerating ? '#faa' : '#aaa';
+
         ctx.lineWidth = (this.facing === Facing.right ? 4 : 2) / pixelSize;
         ctx.beginPath();
         ctx.moveTo(FOCUS_ANCHOR_L, SCENE_HEIGHT * 0.3);
@@ -154,7 +154,7 @@ export default class Camera {
         ctx.moveTo(WINDOW_ANCHOR_L, SCENE_HEIGHT * 0.25);
         ctx.lineTo(WINDOW_ANCHOR_L, SCENE_HEIGHT * 0.75);
         ctx.stroke();
-  
+
         ctx.lineWidth = (this.facing === Facing.left ? 4 : 2) / pixelSize;
         ctx.beginPath();
         ctx.moveTo(FOCUS_ANCHOR_R, SCENE_HEIGHT * 0.3);
@@ -171,7 +171,7 @@ export default class Camera {
         ctx.moveTo(SCENE_WIDTH * 0.3, WINDOW_ANCHOR_Y);
         ctx.lineTo(SCENE_WIDTH * 0.64, WINDOW_ANCHOR_Y);
         ctx.stroke();
-      }
+      });
     }
   }
 }

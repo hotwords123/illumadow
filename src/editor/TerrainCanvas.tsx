@@ -34,9 +34,7 @@ export default class TerrainCanvas extends React.PureComponent<TerrainCanvasProp
     canvas.style.height = canvasHeight / ratio + 'px';
 
     const ctx = canvas.getContext('2d')!;
-    const rctx: RendererContext = {
-      ctx, pixelSize: scale, debug
-    }
+    const rctx = new RendererContext(ctx, scale, debug);
 
     ctx.imageSmoothingEnabled = false;
 

@@ -6,9 +6,11 @@ export const SCENE_WIDTH = 320;
 export const SCENE_HEIGHT = 180;
 
 type KeyHandler = (event: string) => void;
+type KeyGlobalHandler = (command: string, event: string) => void;
 
 export default abstract class Scene implements Drawable {
   keyHandlers: Map<string, KeyHandler[]> = new Map();
+  globalKeyHandlers: KeyGlobalHandler[] = [];
 
   constructor(protected gameManager: GameManager) {}
 
@@ -23,7 +25,17 @@ export default abstract class Scene implements Drawable {
     handlers.push(handler);
   }
 
+  listenAllKeys(handler: KeyGlobalHandler) {
+    this.globalKeyHandlers.push(handler);
+  }
+
+  removeGlobalListener(handler: KeyGlobalHandler) {
+    this.globalKeyHandlers = this.globalKeyHandlers.filter(fn => fn !== handler);
+  }
+
   onKeyEvent(command: string, event: string) {
+    for (const handler of this.globalKeyHandlers)
+      handler(command, event);
     for (const handler of this.keyHandlers.get(command) ?? [])
       handler(event);
   }
