@@ -12,8 +12,9 @@ const
   FOCUS_ANCHOR_R = 200,
   WINDOW_ANCHOR_L = 130,
   WINDOW_ANCHOR_R = 170,
+  WINDOW_ANCHOR_Y = 120,
   MAX_ACCEL = 3,
-  MIN_SPEED = 0.03,
+  MIN_SPEED = 0.3,
   MAX_SPEED = 4,
   LERP_PROPORTION = 0.08;
 
@@ -24,9 +25,12 @@ export default class Camera {
   offset = new Vector(0, 0);
   velocity = new Vector(0, 0);
   facing = Facing.right;
-  state = CameraState.still;
+  stateX = CameraState.still;
+  stateY = CameraState.still;
+  snappedY: number;
 
   constructor(private scene: LevelScene) {
+    this.snappedY = this.scene.player.y;
     this.update(true);
   }
 
@@ -39,9 +43,10 @@ export default class Camera {
    * @param init Whether to ignore previous position and facing.
    */
   update(init = false) {
+    const player = this.scene.player;
     /** Player position  */
-    const playerPos = this.scene.player.position;
-    const playerPosOld = this.scene.player.oldPosition;
+    const playerPos = player.position;
+    const playerPosOld = player.oldPosition;
     /** Player position relative to the camera */
     const playerOffset = playerPos.minus(this.offset);
     const playerOffsetOld = playerPosOld.minus(this.offset);
@@ -50,7 +55,7 @@ export default class Camera {
     if (sceneWidth <= SCENE_WIDTH) {
       // Scene too small, just put it in the center
       this.offset.x = (SCENE_WIDTH - sceneWidth) / 2;
-      this.state = CameraState.still;
+      this.stateX = CameraState.still;
     } else {
       // Decide facing
       if (init) {
@@ -73,7 +78,7 @@ export default class Camera {
 
       if (init) {
         this.offset.x = target;
-        this.state = CameraState.still;
+        this.stateX = CameraState.still;
       } else {
         const delta = target - this.offset.x;
         const signFacing = this.facing === Facing.right ? 1 : -1;
@@ -85,53 +90,88 @@ export default class Camera {
         if (Math.abs(accel) > MAX_ACCEL)
           speed = this.velocity.x + signAccel * MAX_ACCEL;
 
-        if (Math.abs(speed) < MIN_SPEED) {
-          if (speed !== 0) this.offset.x = target;
+        if (Math.abs(delta) < MIN_SPEED) {
+          if (speed !== 0)
+            this.offset.x = target;
           this.velocity.x = 0;
-          this.state = CameraState.still;
-        } else {
-          if (Math.abs(speed) > MAX_SPEED)
-            speed = signAccel * MAX_SPEED;
+          this.stateX = CameraState.still;
+        } else  {
+          speed = Math.sign(speed) * Math.max(MIN_SPEED, Math.min(MAX_SPEED, Math.abs(speed)));
           this.offset.x += speed;
           this.velocity.x = speed;
-          this.state = signDelta === signAccel ? CameraState.accelerating : CameraState.decelerating;
+          this.stateX = signDelta === signAccel ? CameraState.accelerating : CameraState.decelerating;
         }
       }
     }
 
-    this.offset.y = playerPos.y - 135;
+    if (sceneHeight <= SCENE_HEIGHT) {
+      this.offset.y = (SCENE_HEIGHT - sceneHeight) / 2;
+      this.stateY = CameraState.still;
+    } else {
+      if (player.onGround)
+        this.snappedY = playerPos.y;
+
+      const target = Math.max(0, Math.min(sceneHeight - SCENE_HEIGHT, this.snappedY - WINDOW_ANCHOR_Y));
+
+      if (init) {
+        this.offset.y = target;
+        this.stateY = CameraState.still;
+      } else {
+        const delta = target - this.offset.y;
+        let speed = delta * LERP_PROPORTION;
+
+        if (Math.abs(delta) < MIN_SPEED) {
+          this.offset.y = target;
+          this.stateY = CameraState.still;
+        } else {
+          speed = Math.sign(speed) * Math.max(MIN_SPEED, Math.min(MAX_SPEED, Math.abs(speed)));
+          this.offset.y += speed;
+          this.stateY = CameraState.accelerating;
+        }
+      }
+    }
   }
 
   render({ ctx, pixelSize, debug }: RendererContext, callback: () => void) {
-    if (debug) {
-      // Draw anchor lines
-      ctx.strokeStyle =
-        this.state === CameraState.accelerating ? '#afa' :
-        this.state === CameraState.decelerating ? '#faa' : '#aaa';
-
-      ctx.lineWidth = (this.facing === Facing.right ? 4 : 2) / pixelSize;
-      ctx.beginPath();
-      ctx.moveTo(FOCUS_ANCHOR_L, SCENE_HEIGHT * 0.3);
-      ctx.lineTo(FOCUS_ANCHOR_L, SCENE_HEIGHT * 0.7);
-      ctx.moveTo(WINDOW_ANCHOR_L, SCENE_HEIGHT * 0.25);
-      ctx.lineTo(WINDOW_ANCHOR_L, SCENE_HEIGHT * 0.75);
-      ctx.stroke();
-
-      ctx.lineWidth = (this.facing === Facing.left ? 4 : 2) / pixelSize;
-      ctx.beginPath();
-      ctx.moveTo(FOCUS_ANCHOR_R, SCENE_HEIGHT * 0.3);
-      ctx.lineTo(FOCUS_ANCHOR_R, SCENE_HEIGHT * 0.7);
-      ctx.moveTo(WINDOW_ANCHOR_R, SCENE_HEIGHT * 0.25);
-      ctx.lineTo(WINDOW_ANCHOR_R, SCENE_HEIGHT * 0.75);
-      ctx.stroke();
-    }
     ctx.save();
     const { x, y } = this.offset;
-    ctx.translate(-Math.round(x * pixelSize) / pixelSize, -Math.round(y * pixelSize) / pixelSize);
+    ctx.translate(-Math.round(x), -Math.round(y));
     try {
       callback();
     } finally {
       ctx.restore();
+      if (debug) {
+        // Draw anchor lines
+
+        ctx.strokeStyle =
+          this.stateX === CameraState.accelerating ? '#afa' :
+          this.stateX === CameraState.decelerating ? '#faa' : '#aaa';
+  
+        ctx.lineWidth = (this.facing === Facing.right ? 4 : 2) / pixelSize;
+        ctx.beginPath();
+        ctx.moveTo(FOCUS_ANCHOR_L, SCENE_HEIGHT * 0.3);
+        ctx.lineTo(FOCUS_ANCHOR_L, SCENE_HEIGHT * 0.7);
+        ctx.moveTo(WINDOW_ANCHOR_L, SCENE_HEIGHT * 0.25);
+        ctx.lineTo(WINDOW_ANCHOR_L, SCENE_HEIGHT * 0.75);
+        ctx.stroke();
+  
+        ctx.lineWidth = (this.facing === Facing.left ? 4 : 2) / pixelSize;
+        ctx.beginPath();
+        ctx.moveTo(FOCUS_ANCHOR_R, SCENE_HEIGHT * 0.3);
+        ctx.lineTo(FOCUS_ANCHOR_R, SCENE_HEIGHT * 0.7);
+        ctx.moveTo(WINDOW_ANCHOR_R, SCENE_HEIGHT * 0.25);
+        ctx.lineTo(WINDOW_ANCHOR_R, SCENE_HEIGHT * 0.75);
+        ctx.stroke();
+
+        ctx.strokeStyle =
+          this.stateY === CameraState.accelerating ? '#7bf' : '#aaa';
+
+        ctx.lineWidth = 3 / pixelSize;
+        ctx.beginPath();
+        ctx.moveTo(SCENE_WIDTH * 0.3, WINDOW_ANCHOR_Y);
+        ctx.lineTo(SCENE_WIDTH * 0.64, WINDOW_ANCHOR_Y);
+        ctx.stroke();
+      }
     }
   }
 }
