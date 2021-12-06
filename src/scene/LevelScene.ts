@@ -14,10 +14,11 @@ export default class LevelScene extends Scene {
   width: number;
   height: number;
 
-  camera: Camera;
   terrains: (Terrain | null)[][];
   player: Player;
   entities: Entity[];
+
+  camera: Camera;
 
   ticks: number = 0;
 
@@ -28,8 +29,6 @@ export default class LevelScene extends Scene {
 
     this.width = map.width * TERRAIN_SIZE;
     this.height = map.height * TERRAIN_SIZE;
-
-    this.camera = new Camera();
 
     this.terrains = map.terrain.map((row, y) => row.map((cell, x) => Terrain.create(x, y, cell)));
 
@@ -53,6 +52,8 @@ export default class LevelScene extends Scene {
     if (!player)
       throw new Error("player not found in map");
     this.player = player;
+
+    this.camera = new Camera(this);
   }
 
   createEntity(data: MapEntity): Entity | null {
@@ -81,18 +82,17 @@ export default class LevelScene extends Scene {
     this.player.tick(this);
     for (const entity of this.entities)
       entity.tick(this);
+    this.camera.update();
     this.ticks++;
   }
 
   render(rctx: RendererContext) {
-    const { ctx, debug } = rctx;
-    ctx.save();
-    ctx.translate(-this.camera.offset.x, -this.camera.offset.y);
-    this.renderTerrain(rctx);
-    for (const entity of this.entities)
-      entity.render(rctx);
-    this.player.render(rctx);
-    ctx.restore();
+    this.camera.render(rctx, () => {
+      this.renderTerrain(rctx);
+      for (const entity of this.entities)
+        entity.render(rctx);
+      this.player.render(rctx);
+    });
   }
 
   fitTerrain(box: AABB) {
@@ -119,6 +119,7 @@ export default class LevelScene extends Scene {
     return [
       `${this.width}*${this.height} | ${this.map.width}*${this.map.height} ${this.map.id}`,
       `X: ${this.player.x.toFixed(1)} Y: ${this.player.y.toFixed(1)}`,
+      `Camera: (${this.camera.offset.x.toFixed(0)}, ${this.camera.offset.y.toFixed(0)})`,
       `Health: ${this.player.health}/${this.player.maxHealth} Immune: ${this.player.immuneTicks}`
     ];
   }

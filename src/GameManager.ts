@@ -85,7 +85,14 @@ export default class GameManager {
     this.renderer.setScene(this.scene);
   }
 
+  startLevel(name: string) {
+    const level = levelManager.get(name);
+    if (!level)
+      throw new Error(`level "${name}" can't be found`);
+    this.switchScene(() => new LevelScene(this, level));
+  }
+
   startGame() {
-    this.switchScene(() => new LevelScene(this, levelManager.get('test')!));
+    this.startLevel('1-1');
   }
 }

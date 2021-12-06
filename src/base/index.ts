@@ -28,6 +28,16 @@ export class Coord {
     return new Coord(this.x + x, this.y + y);
   }
 
+  /** operator - */
+  minus(vector: Vector) {
+    return new Coord(this.x - vector.x, this.y - vector.y);
+  }
+
+  /** operator - */
+  diff(base: Coord) {
+    return new Vector(this.x - base.x, this.y - base.y);
+  }
+
   /** operator += */
   setPlus(vector: Vector) {
     this.x += vector.x;

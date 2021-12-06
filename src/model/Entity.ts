@@ -21,7 +21,7 @@ const GRAVITY = 0.25;
  */
 export default abstract class Entity extends Sprite {
   velocity: Vector;
-  oldPosition!: Coord;
+  oldPosition: Coord;
   oldCollisionBox!: AABB;
   onGround: boolean;
 
@@ -39,6 +39,8 @@ export default abstract class Entity extends Sprite {
 
     this.velocity = new Vector(0, 0);
     this.onGround = true;
+
+    this.oldPosition = this.position;
 
     this.maxHealth = init.maxHealth;
     this.health = init.health ?? this.maxHealth;
