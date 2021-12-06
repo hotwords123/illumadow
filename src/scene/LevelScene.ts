@@ -114,4 +114,12 @@ export default class LevelScene extends Scene {
       }
     }
   }
+
+  get debugText() {
+    return [
+      `${this.width}*${this.height} | ${this.map.width}*${this.map.height} ${this.map.id}`,
+      `X: ${this.player.x.toFixed(1)} Y: ${this.player.y.toFixed(1)}`,
+      `Health: ${this.player.health}/${this.player.maxHealth} Immune: ${this.player.immuneTicks}`
+    ];
+  }
 }

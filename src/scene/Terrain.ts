@@ -121,13 +121,13 @@ export class TerrainSpikes extends Terrain {
   get hurtBox() {
     switch (this.side) {
       case Direction.left:
-        return this.center.plus2(-3, 0).expand(1, 4);
+        return this.center.plus2(-3, 0).expand(1, 3);
       case Direction.top:
-        return this.center.plus2(0, -3).expand(4, 1);
+        return this.center.plus2(0, -3).expand(3, 1);
       case Direction.right:
-        return this.center.plus2(3, 0).expand(1, 4);
+        return this.center.plus2(3, 0).expand(1, 3);
       case Direction.bottom:
-        return this.center.plus2(0, 3).expand(4, 1);
+        return this.center.plus2(0, 3).expand(3, 1);
     }
   }
 

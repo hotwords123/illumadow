@@ -28,14 +28,15 @@ interface PlayerInit {
   maxHealth: number;
 }
 
-enum Posture {
-  normal = 0,
-  duck = 1
+enum State {
+  walk = 0,
+  duck = 1,
+  dash = 2,
 }
 
 export default class Player extends Entity {
-  /** player posture */
-  posture = Posture.normal;
+  /** player state */
+  state = State.walk;
 
   constructor(position: Coord, init: PlayerInit) {
     super(position, init);

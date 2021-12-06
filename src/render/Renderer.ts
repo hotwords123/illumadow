@@ -108,11 +108,23 @@ export default class Renderer {
     this.ctx.drawImage(this.memCanvas, 0, 0);
     const endTime = performance.now();
     if (this.debugMode) {
-      this.ctx.font = '16px Consolas';
+      const debugText: string[] = [
+        [
+          `${this.canvasWidth}*${this.canvasHeight} ${this.pixelSize}x`,
+          `[${(endTime - startTime).toFixed(1).padStart(4, ' ')} ms]`
+        ].join(' '),
+        ...this.scene.debugText
+      ];
+      this.ctx.font = '18px Consolas';
       this.ctx.textAlign = 'left';
       this.ctx.textBaseline = 'top';
       this.ctx.fillStyle = '#333';
-      this.ctx.fillText(`${(endTime - startTime).toFixed(1).padStart(4, ' ')} ms`, 0, 8);
+
+      let textY = 8;
+      for (const text of debugText) {
+        this.ctx.fillText(text, 8, textY);
+        textY += 20;
+      }
 
       this.ctx.strokeStyle = '#999';
       this.ctx.strokeRect(0, 0, this.canvasWidth, this.canvasHeight);

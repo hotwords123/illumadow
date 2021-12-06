@@ -7,7 +7,7 @@ import Sprite from "./Sprite";
 export interface MobInit {
   maxHealth: number;
   health?: number;
-  invulnerable?: boolean;
+  invincible?: boolean;
 }
 
 const GRAVITY = 0.25;
@@ -27,7 +27,7 @@ export default abstract class Entity extends Sprite {
 
   maxHealth: number;
   health: number;
-  invulnerable: boolean;
+  invincible: boolean;
 
   /** ticks in air, used for jumping check */
   airTicks = 0;
@@ -42,7 +42,7 @@ export default abstract class Entity extends Sprite {
 
     this.maxHealth = init.maxHealth;
     this.health = init.health ?? this.maxHealth;
-    this.invulnerable = init.invulnerable ?? false;
+    this.invincible = init.invincible ?? false;
   }
 
   /* ======== Health ======== */
@@ -53,7 +53,7 @@ export default abstract class Entity extends Sprite {
 
   damage(amount: number): boolean {
     if (amount <= 0) return false;
-    if (this.dead || this.invulnerable) return false;
+    if (this.dead || this.invincible) return false;
     if (this.immuneTicks > 0) return false;
     this.health -= amount;
     if (this.dead) this.die();

@@ -35,4 +35,6 @@ export default abstract class Scene implements Drawable {
   tick() {}
 
   abstract render(rctx: RendererContext): void;
+
+  get debugText(): string[] { return []; }
 }
