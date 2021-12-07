@@ -1,11 +1,13 @@
-import { MapData, MapTerrain, MapTerrainType } from "../map/interfaces";
+import { MapData, MapDecoration, MapTerrain, MapTerrainType } from "../map/interfaces";
 
 const COLORS = {
   'none': '#ffffff',
   'brick': '#880015',
   'dirt': '#b97a57',
   'grass': '#22b14c',
-  'spikes': '#ed1c24'
+  'spikes': '#ed1c24',
+  'trunk': '#382b18',
+  'branch': '#987849',
 };
 
 function parseHexColor(hex: string) {
@@ -16,13 +18,16 @@ function toHexColor(color: number) {
   return '#' + color.toString(16).padStart(6, '0');
 }
 
-interface RawMatchPattern {
+interface PatternContent {
   terrain: MapTerrain | null;
+  decoration?: Omit<MapDecoration, keyof MapTerrain>;
+}
+
+interface RawMatchPattern extends PatternContent {
   pixels: (keyof typeof COLORS)[];
 }
 
-interface MatchPattern {
-  terrain: MapTerrain | null;
+interface MatchPattern extends PatternContent {
   pixels: number[];
 }
 
@@ -107,6 +112,70 @@ const PATTERNS_RAW: RawMatchPattern[] = [
     pixels: [
       'none', 'none',
       'spikes', 'spikes'
+    ]
+  },
+
+  // Trunk
+  {
+    terrain: null,
+    decoration: {
+      variant: "trunk-mid"
+    },
+    pixels: [
+      'trunk', 'trunk',
+      'trunk', 'trunk'
+    ]
+  },
+  {
+    terrain: null,
+    decoration: {
+      variant: "trunk-branch-r"
+    },
+    pixels: [
+      'trunk', 'trunk',
+      'trunk', 'none'
+    ]
+  },
+  {
+    terrain: null,
+    decoration: {
+      variant: "trunk-branch-l"
+    },
+    pixels: [
+      'trunk', 'trunk',
+      'none', 'trunk'
+    ]
+  },
+
+  // Branch
+  {
+    terrain: null,
+    decoration: {
+      variant: "branch"
+    },
+    pixels: [
+      'branch', 'branch',
+      'branch', 'branch'
+    ]
+  },
+  {
+    terrain: null,
+    decoration: {
+      variant: "branch-end-r"
+    },
+    pixels: [
+      'branch', 'none',
+      'branch', 'none'
+    ]
+  },
+  {
+    terrain: null,
+    decoration: {
+      variant: "branch-end-l"
+    },
+    pixels: [
+      'none', 'branch',
+      'none', 'branch'
     ]
   },
 ];

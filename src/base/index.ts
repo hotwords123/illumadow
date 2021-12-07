@@ -6,6 +6,10 @@ export enum Direction {
   bottom = 3
 };
 
+export enum Axis {
+  x = 0, y = 1
+}
+
 export const SIDE_MASK = {
   left: 1,
   top: 2,

@@ -41,7 +41,7 @@ export default class Player extends Entity {
   }
 
   get collisionBox() {
-    return this.position.expand(3, 18, 3, 0);
+    return this.position.expand(4, 10, 3, 0);
   }
 
   get hurtImmuneTicks() { return 60; }
@@ -50,7 +50,7 @@ export default class Player extends Entity {
     if (this.immuneTicks % 10 >= 5)
       return null;
     return {
-      box: this.position.expand(5, 20, 5, 0),
+      box: this.position.expand(4, 10, 4, 0),
       texture: texturePlayer
     };
   }

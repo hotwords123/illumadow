@@ -1,4 +1,4 @@
-import { AABB, Coord, Vector } from "../base";
+import { AABB, Axis, Coord, Vector } from "../base";
 import { MapEntity, TERRAIN_SIZE } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import LevelScene from "../scene/LevelScene";
@@ -88,12 +88,7 @@ export default abstract class Entity extends Model {
     if (this.immuneTicks > 0)
       this.immuneTicks--;
 
-    this.oldPosition = this.position.clone();
-    this.oldCollisionBox = this.collisionBox;
-
-    this.position.setPlus(this.velocity);
-
-    this.onGround = false;
+    this.move(scene);
     this.interactTerrains(scene);
 
     if (this.onGround) {
@@ -101,6 +96,34 @@ export default abstract class Entity extends Model {
     } else {
       this.airTicks++;
       this.velocity.y += GRAVITY;
+    }
+  }
+
+  /**
+   * Move the entity and do the collision check.
+   */
+  move(scene: LevelScene) {
+    this.onGround = false;
+
+    this.oldPosition = this.position.clone();
+    this.oldCollisionBox = this.collisionBox;
+    this.position.x += this.velocity.x;
+    this.collideTerrains(scene, Axis.x);
+
+    this.oldPosition = this.position.clone();
+    this.oldCollisionBox = this.collisionBox;
+    this.position.y += this.velocity.y;
+    this.collideTerrains(scene, Axis.y);
+  }
+
+  collideTerrains(scene: LevelScene, axis: Axis) {
+    const box = scene.fitTerrain(this.collisionBox.grow(1));
+
+    for (let y = box.top; y < box.bottom; y++) {
+      for (let x = box.left; x < box.right; x++) {
+        const terrain = scene.terrains[y][x];
+        terrain?.collideEntity(scene, this, axis);
+      }
     }
   }
 

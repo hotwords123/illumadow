@@ -190,7 +190,7 @@ export default class LevelScene extends Scene {
     rctx.run(({ ctx }) => {
       if (!this.pauseMenu) return;
 
-      ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
       ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
 
       let x = SCENE_WIDTH / 2, y = 30;

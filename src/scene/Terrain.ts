@@ -1,4 +1,4 @@
-import { AABB, Coord, Direction, DIRECTION_VECTORS, Vector } from "../base";
+import { AABB, Axis, Coord, Direction, DIRECTION_VECTORS, Vector } from "../base";
 import Sprite from "../model/Sprite";
 import imgBrick from "../assets/terrain/brick.png";
 import imgSpikes from "../assets/terrain/spikes.png";
@@ -49,6 +49,14 @@ export abstract class Terrain extends Sprite {
     return AABB.offset(this.x * TERRAIN_SIZE, this.y * TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_SIZE);
   }
 
+  canCollideWith(entity: Entity) {
+    return true;
+  }
+
+  get collisionBox(): AABB | null {
+    return null;
+  }
+
   setTexture(texture: TextureLike) {
     this.texture = texture;
   }
@@ -65,30 +73,21 @@ export abstract class Terrain extends Sprite {
   }
 
   interactEntity(scene: LevelScene, entity: Entity) {}
-}
 
-export class TerrainBrick extends Terrain {
-  constructor(position: Coord, texture: string) {
-    super(position, textureBrick.getClip(texture)!);
-  }
+  collideEntity(scene: LevelScene, entity: Entity, axis: Axis) {
+    if (!this.canCollideWith(entity)) return;
 
-  canCollideWith(entity: Entity) {
-    return true;
-  }
+    const selfBox = this.collisionBox;
+    if (!selfBox) return;
 
-  get collisionBox() {
-    return this.boundingBox;
-  }
+    const
+      vel = entity.velocity,
+      pos = entity.position,
+      oldBox = entity.oldCollisionBox,
+      newBox = entity.collisionBox;
 
-  interactEntity(scene: LevelScene, entity: Entity) {
-    if (this.canCollideWith(entity)) {
-      const
-        vel = entity.velocity,
-        pos = entity.position,
-        oldBox = entity.oldCollisionBox,
-        newBox = entity.collisionBox,
-        selfBox = this.collisionBox;
-
+    if (axis === Axis.x) {
+      // horizontal movement
       if (newBox.vertical.intersects(selfBox.vertical)) {
         if (oldBox.right <= selfBox.left && newBox.right >= selfBox.left) {
           vel.x = 0;
@@ -98,7 +97,8 @@ export class TerrainBrick extends Terrain {
           pos.x -= newBox.left - selfBox.right;
         }
       }
-
+    } else {
+      // vertical movement
       if (newBox.horizontal.intersects(selfBox.horizontal)) {
         if (oldBox.bottom <= selfBox.top && newBox.bottom >= selfBox.top) {
           vel.y = 0;
@@ -110,6 +110,16 @@ export class TerrainBrick extends Terrain {
         }
       }
     }
+  }
+}
+
+export class TerrainBrick extends Terrain {
+  constructor(position: Coord, texture: string) {
+    super(position, textureBrick.getClip(texture)!);
+  }
+
+  get collisionBox() {
+    return this.boundingBox;
   }
 }
 
