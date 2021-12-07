@@ -106,11 +106,11 @@ export default abstract class Entity extends Model {
     this.onGround = false;
 
     this.oldPosition = this.position.clone();
+
     this.oldCollisionBox = this.collisionBox;
     this.position.x += this.velocity.x;
     this.collideTerrains(scene, Axis.x);
 
-    this.oldPosition = this.position.clone();
     this.oldCollisionBox = this.collisionBox;
     this.position.y += this.velocity.y;
     this.collideTerrains(scene, Axis.y);
