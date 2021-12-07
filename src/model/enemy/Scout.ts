@@ -19,12 +19,12 @@ export default class EnemyScout extends Entity {
   }
 
   get collisionBox() {
-    return this.position.expand(3, 14, 3, 0);
+    return this.position.expand(4, 10, 4, 0);
   }
 
   getRenderInfo() {
     return {
-      box: this.position.expand(4, 14, 4, 0),
+      box: this.position.expand(4, 10, 4, 0),
       texture: textureScout
     };
   }
