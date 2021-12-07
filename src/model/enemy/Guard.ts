@@ -3,6 +3,7 @@ import Entity from "../Entity";
 import imgGuard from "../../assets/entity/guard.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
+import { MapEntity } from "../../map/interfaces";
 
 let textureGuard: Texture;
 
@@ -13,8 +14,8 @@ textureManager.loadTexture(imgGuard).then(texture => {
 const WALK_SPEED = 0.375;
 
 export default class EnemyGuard extends Entity {
-  constructor(position: Coord) {
-    super(position, { maxHealth: 20 });
+  constructor(data: MapEntity) {
+    super(data, { maxHealth: 20 });
   }
 
   get collisionBox() {

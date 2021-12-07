@@ -5,6 +5,7 @@ import Entity from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import { RendererContext } from "../render/Renderer";
 import LevelScene from "../scene/LevelScene";
+import { MapEntityPlayer } from "../map/interfaces";
 
 let texturePlayer: Texture;
 
@@ -23,11 +24,6 @@ textureManager.loadTexture(imgPlayer).then(texture => {
   texturePlayer = texture;
 });
 
-interface PlayerInit {
-  health: number;
-  maxHealth: number;
-}
-
 enum State {
   walk = 0,
   duck = 1,
@@ -40,8 +36,8 @@ export default class Player extends Entity {
 
   jumpedAt = -1;
 
-  constructor(position: Coord, init: PlayerInit) {
-    super(position, init);
+  constructor({ health, maxHealth, ...data }: MapEntityPlayer) {
+    super(data, { health, maxHealth });
   }
 
   get collisionBox() {

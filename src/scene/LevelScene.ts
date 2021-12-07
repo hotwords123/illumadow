@@ -4,7 +4,7 @@ import Entity from "../model/Entity";
 import Player from "../model/Player";
 import { RendererContext } from "../render/Renderer";
 import GameManager from "../GameManager";
-import { MapData, MapEntity, MapEntityType, MapTerrain, MapTerrainBrick, MapTerrainSpikes, MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
+import { MapData, MapEntity, MapEntityPlayer, MapEntityType, MapTerrain, MapTerrainBrick, MapTerrainSpikes, MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
 import { Terrain, TerrainBrick, TerrainSpikes } from "./Terrain";
 import Camera from "./Camera";
 import EnemyScout from "../model/enemy/Scout";
@@ -86,20 +86,15 @@ export default class LevelScene extends Scene {
   }
 
   createEntity(data: MapEntity): Entity | null {
-    const pos = new Coord(data.x, data.y);
-
     switch (data.type) {
       case MapEntityType.player:
-        return new Player(pos, {
-          health: data.health,
-          maxHealth: data.maxHealth
-        });
+        return new Player(data as MapEntityPlayer);
 
       case MapEntityType.scout:
-        return new EnemyScout(pos);
+        return new EnemyScout(data as MapEntity);
 
       case MapEntityType.guard:
-        return new EnemyGuard(pos);
+        return new EnemyGuard(data as MapEntity);
 
       default:
         console.warn(`unknown entity type: ${data.type}`);

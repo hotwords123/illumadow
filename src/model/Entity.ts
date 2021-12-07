@@ -1,8 +1,8 @@
 import { AABB, Coord, Vector } from "../base";
-import { TERRAIN_SIZE } from "../map/interfaces";
+import { MapEntity, TERRAIN_SIZE } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import LevelScene from "../scene/LevelScene";
-import Sprite from "./Sprite";
+import Model from "./Model";
 
 export interface MobInit {
   maxHealth: number;
@@ -19,7 +19,7 @@ const GRAVITY = 0.25;
  * - can be hurt
  * - interacts with terrain
  */
-export default abstract class Entity extends Sprite {
+export default abstract class Entity extends Model {
   velocity: Vector;
   oldPosition: Coord;
   oldCollisionBox!: AABB;
@@ -34,8 +34,8 @@ export default abstract class Entity extends Sprite {
   /** hurt immune ticks */
   immuneTicks = 0;
 
-  constructor(position: Coord, init: MobInit) {
-    super(position);
+  constructor(data: MapEntity, init: MobInit) {
+    super(data);
 
     this.velocity = new Vector(0, 0);
     this.onGround = true;
