@@ -4,12 +4,13 @@ import Entity from "../model/Entity";
 import Player from "../model/Player";
 import { RendererContext } from "../render/Renderer";
 import GameManager from "../GameManager";
-import { MapData, MapEntity, MapEntityPlayer, MapEntityType, MapTerrain, MapTerrainBrick, MapTerrainSpikes, MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
-import { Terrain, TerrainBrick, TerrainSpikes } from "./Terrain";
+import { MapData, MapEntity, MapEntityPlayer, MapEntityType, TERRAIN_SIZE } from "../map/interfaces";
+import { Terrain } from "./Terrain";
 import Camera from "./Camera";
 import EnemyScout from "../model/enemy/Scout";
 import EnemyGuard from "../model/enemy/Guard";
 import SelectMenu from "./SelectMenu";
+import Decoration from "../model/Decoration";
 
 interface MenuItem {
   action: string;
@@ -26,6 +27,7 @@ export default class LevelScene extends Scene {
   terrains!: (Terrain | null)[][];
   player!: Player;
   entities!: Entity[];
+  decorations!: Decoration[];
 
   camera!: Camera;
 
@@ -63,22 +65,18 @@ export default class LevelScene extends Scene {
     this.height = map.height * TERRAIN_SIZE;
 
     this.terrains = map.terrain.map((row, y) => row.map((cell, x) => Terrain.create(x, y, cell)));
-
-    let player: Player | null = null;
     this.entities = [];
-
     for (const data of map.entities) {
       const entity = this.createEntity(data);
       if (entity instanceof Player) {
-        player = entity;
+        this.player = entity;
       } else if (entity) {
         this.entities.push(entity);
       }
     }
-
-    if (!player)
+    if (!this.player)
       throw new Error("player not found in map");
-    this.player = player;
+    this.decorations = map.decorations.map(data => new Decoration(data));
 
     this.camera = new Camera(this);
 
@@ -158,6 +156,8 @@ export default class LevelScene extends Scene {
     rctx.run(() => {
       this.camera.render(rctx, () => {
         this.renderTerrain(rctx);
+        for (const decoration of this.decorations)
+          decoration.render(rctx);
         for (const entity of this.entities)
           entity.render(rctx);
         this.player.render(rctx);

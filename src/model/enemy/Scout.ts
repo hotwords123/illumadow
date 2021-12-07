@@ -7,7 +7,7 @@ import { MapEntity } from "../../map/interfaces";
 
 let textureScout: Texture;
 
-textureManager.loadTexture(imgScout).then(texture => {
+textureManager.loadTexture("entity/scout", imgScout).then(texture => {
   textureScout = texture;
 });
 

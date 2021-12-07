@@ -1,6 +1,47 @@
 import { AABB } from "../base";
 import { RendererContext } from "./Renderer";
 
+export type TextureLike = Texture | TextureClip;
+
+class TextureManager {
+  private tasks: Promise<Texture>[] = [];
+  private textures = new Map<string, Texture>();
+
+  constructor() {}
+
+  loadTexture(name: string, path: string): Promise<Texture> {
+    const promise = new Promise<Texture>((resolve, reject) => {
+      const img = new Image();
+      img.src = path;
+      img.onload = () => {
+        const texture = new Texture(img);
+        this.textures.set(name, texture);
+        resolve(texture);
+      };
+      img.onerror = ((evt: ErrorEvent) => reject(new Error(evt.message))) as any;
+    });
+    this.tasks.push(promise);
+    return promise;
+  }
+
+  loadTextures(items: [name: string, path: string][]): Promise<Texture[]> {
+    return Promise.all(items.map(([name, path]) => this.loadTexture(name, path)));
+  }
+
+  untilAllLoaded(): Promise<void> {
+    return Promise.all(this.tasks).then(() => {});
+  }
+
+  get(name: string): TextureLike | null {
+    const [textureName, clipName] = name.split(':');
+    const texture = this.textures.get(textureName);
+    if (!texture) return null;
+    return clipName ? texture.getClip(clipName) : texture;
+  }
+}
+
+export const textureManager = new TextureManager();
+
 export class Texture {
   clips = new Map<string, TextureClip>();
 
@@ -27,7 +68,7 @@ export class Texture {
   }
 
   getClip(name: string) {
-    return this.clips.get(name);
+    return this.clips.get(name) ?? null;
   }
 
   drawTo(rctx: RendererContext, x: number, y: number) {
@@ -53,32 +94,3 @@ export class TextureClip {
     );
   }
 }
-
-export type TextureLike = Texture | TextureClip;
-
-class TextureManager {
-  private tasks: Promise<Texture>[] = [];
-
-  constructor() {}
-
-  loadTexture(path: string): Promise<Texture> {
-    const promise = new Promise<Texture>((resolve, reject) => {
-      const img = new Image();
-      img.src = path;
-      img.onload = () => resolve(new Texture(img));
-      img.onerror = ((evt: ErrorEvent) => reject(new Error(evt.message))) as any;
-    });
-    this.tasks.push(promise);
-    return promise;
-  }
-
-  loadTextures(paths: string[]): Promise<Texture[]> {
-    return Promise.all(paths.map(path => this.loadTexture(path)));
-  }
-
-  untilAllLoaded(): Promise<void> {
-    return Promise.all(this.tasks).then(() => {});
-  }
-}
-
-export const textureManager = new TextureManager();

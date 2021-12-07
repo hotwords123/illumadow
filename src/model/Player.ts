@@ -20,7 +20,7 @@ const
   JUMP_SPEED_Y_SIDE = 3,
   JUMP_SPEED_Y_UP = 3.5;
 
-textureManager.loadTexture(imgPlayer).then(texture => {
+textureManager.loadTexture("entity/player", imgPlayer).then(texture => {
   texturePlayer = texture;
 });
 

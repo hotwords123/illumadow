@@ -1,4 +1,4 @@
-import { MapData, MapDecoration, MapTerrain, MapTerrainType } from "../map/interfaces";
+import { MapData, MapDecoration, MapTerrain, MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
 
 const COLORS = {
   'none': '#ffffff',
@@ -20,7 +20,11 @@ function toHexColor(color: number) {
 
 interface PatternContent {
   terrain: MapTerrain | null;
-  decoration?: Omit<MapDecoration, keyof MapTerrain>;
+  decoration?: {
+    x: number;
+    y: number;
+    variant: string;
+  };
 }
 
 interface RawMatchPattern extends PatternContent {
@@ -119,7 +123,8 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: null,
     decoration: {
-      variant: "trunk-mid"
+      x: 4, y: 4,
+      variant: "trunk"
     },
     pixels: [
       'trunk', 'trunk',
@@ -129,6 +134,7 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: null,
     decoration: {
+      x: 4, y: 4,
       variant: "trunk-branch-r"
     },
     pixels: [
@@ -139,6 +145,7 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: null,
     decoration: {
+      x: 4, y: 4,
       variant: "trunk-branch-l"
     },
     pixels: [
@@ -151,6 +158,7 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: null,
     decoration: {
+      x: 4, y: 4,
       variant: "branch"
     },
     pixels: [
@@ -161,6 +169,7 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: null,
     decoration: {
+      x: 4, y: 4,
       variant: "branch-end-r"
     },
     pixels: [
@@ -171,6 +180,7 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: null,
     decoration: {
+      x: 4, y: 4,
       variant: "branch-end-l"
     },
     pixels: [
@@ -180,8 +190,8 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   },
 ];
 
-const PATTERNS: MatchPattern[] = PATTERNS_RAW.map(({ terrain, pixels }) => ({
-  terrain,
+const PATTERNS: MatchPattern[] = PATTERNS_RAW.map(({ pixels, ...more }) => ({
+  ...more,
   pixels: pixels.map(s => parseHexColor(COLORS[s]))
 }));
 
@@ -210,6 +220,8 @@ function parseImage(img: HTMLImageElement, name: string): MapData {
       imgData.data[offset + 2];
   };
 
+  const mapDecorations: MapDecoration[] = [];
+
   const mapTerrain: (MapTerrain | null)[][] = new Array(mapHeight).fill(null)
     .map((_, y) => new Array(mapWidth).fill(null)
     .map((_, x) => {
@@ -218,9 +230,18 @@ function parseImage(img: HTMLImageElement, name: string): MapData {
       const C = pixelAt(2 * x, 2 * y + 1);
       const D = pixelAt(2 * x + 1, 2 * y + 1);
 
-      for (const { terrain, pixels } of PATTERNS) {
-        if (pixels[0] === A && pixels[1] === B && pixels[2] === C && pixels[3] === D)
+      for (const { terrain, decoration, pixels } of PATTERNS) {
+        if (pixels[0] === A && pixels[1] === B && pixels[2] === C && pixels[3] === D) {
+          if (decoration) {
+            mapDecorations.push({
+              x: x * TERRAIN_SIZE + decoration.x,
+              y: y * TERRAIN_SIZE + decoration.y,
+              tags: [],
+              variant: decoration.variant
+            });
+          }
           return terrain;
+        }
       }
 
       console.warn(`unknown pixel at (${x}, ${y}): ${[A, B, C, D].map(x => toHexColor(x)).join(' ')}`);
@@ -233,7 +254,7 @@ function parseImage(img: HTMLImageElement, name: string): MapData {
     height: mapHeight,
     terrain: mapTerrain,
     entities: [],
-    decorations: [],
+    decorations: mapDecorations,
     triggers: []
   };
 

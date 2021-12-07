@@ -7,7 +7,7 @@ import SelectMenu from "./SelectMenu";
 
 let textureBg: Texture;
 
-textureManager.loadTexture(bg)
+textureManager.loadTexture("start-scene/bg", bg)
   .then(result => { textureBg = result; });
 
 interface Button {

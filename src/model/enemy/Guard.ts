@@ -7,7 +7,7 @@ import { MapEntity } from "../../map/interfaces";
 
 let textureGuard: Texture;
 
-textureManager.loadTexture(imgGuard).then(texture => {
+textureManager.loadTexture("entity/guard", imgGuard).then(texture => {
   textureGuard = texture;
 });
 

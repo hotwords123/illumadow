@@ -12,7 +12,10 @@ import { RendererContext } from "../render/Renderer";
 let textureBrick: Texture;
 let textureSpikes: Texture
 
-textureManager.loadTextures([imgBrick, imgSpikes]).then(textures => {
+textureManager.loadTextures([
+  ["terrain/brick", imgBrick],
+  ["terrain/spikes", imgSpikes]
+]).then(textures => {
   [textureBrick, textureSpikes] = textures;
   textureBrick.defineClips([['brick', 'dirt', 'grass']], TERRAIN_SIZE, TERRAIN_SIZE);
   textureSpikes.defineClips([['bottom', 'left', 'top', 'right']], TERRAIN_SIZE, TERRAIN_SIZE);
