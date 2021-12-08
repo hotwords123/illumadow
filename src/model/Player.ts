@@ -35,7 +35,7 @@ export default class Player extends EntityWithFacing {
   /** damage of single melee attack */
   meleeDamage = 1;
   /** cooldown ticks after each melee attack */
-  meleeSpeed = 40;
+  meleeSpeed = 30;
 
   /** tick index when the corresponding key was pressed */
   jumpedAt = -1;
@@ -48,7 +48,7 @@ export default class Player extends EntityWithFacing {
   }
 
   get collisionBoxR() {
-    return new AABB(-4, -10, 3, 0);
+    return new AABB(-4, -10, 1, 0);
   }
 
   get hurtImmuneTicks() { return 60; }
@@ -62,7 +62,7 @@ export default class Player extends EntityWithFacing {
     if (this.immuneTicks % 10 >= 5)
       return null;
     return {
-      box: new AABB(-4, -10, 4, 0),
+      box: new AABB(-6, -12, 6, 0),
       texture: texturePlayer
     };
   }
@@ -132,7 +132,7 @@ export default class Player extends EntityWithFacing {
       for (const target of targets) {
         if (target.damage(scene, this.meleeDamage)) {
           hit = true;
-          target.knockback(this.coordByFacing2(-2, 0), 5);
+          target.knockback(this.coordByFacing2(-2, 0), 3);
         }
       }
 
