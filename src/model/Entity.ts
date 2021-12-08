@@ -55,24 +55,26 @@ export default abstract class Entity extends Model {
 
   get hurtImmuneTicks() { return 0; }
 
-  damage(amount: number): boolean {
+  damage(scene: LevelScene, amount: number): boolean {
     if (amount <= 0) return false;
     if (this.dead || this.invincible) return false;
     if (this.immuneTicks > 0) return false;
     this.health -= amount;
-    if (this.dead) this.die();
+    if (this.dead) this.die(scene);
     this.immuneTicks = this.hurtImmuneTicks;
     return true;
   }
 
-  cure(amount: number) {
+  cure(scene: LevelScene, amount: number) {
     if (this.dead) return;
     this.health += amount;
     if (this.health > this.maxHealth)
       this.health = this.maxHealth;
   }
 
-  die(): void {}
+  die(scene: LevelScene): void {
+    scene.deleteEntity(this);
+  }
 
   /* ======== Movement ======== */
 
@@ -99,6 +101,21 @@ export default abstract class Entity extends Model {
       this.airTicks++;
       this.velocity.y += GRAVITY;
     }
+  }
+
+  knockback(source: Coord, speed: number) {
+    let dir = this.collisionBox.center.diff(source);
+    let length = dir.length;
+
+    if (length < 1e-3) {
+      let theta = Math.random() * Math.PI;
+      dir.x = Math.cos(theta);
+      dir.y = Math.sin(theta);
+    } else {
+      dir.setScale(1 / length);
+    }
+
+    this.velocity.setPlus(dir.scale(speed));
   }
 
   /**
@@ -158,8 +175,12 @@ export default abstract class Entity extends Model {
 
 /**
  * Entity with facing (left or right).
+ * 
  * This class functions as a middleware to deal with logic related to facing.
- * Methods with names ended with 'R' assume that the entity is facing right.
+ * 
+ * Note that all methods with names ended with 'R' should:
+ * - Assume that the entity is facing right, and
+ * - Return coordinates relative to `this.position`.
  */
 export abstract class EntityWithFacing extends Entity {
   /** The facing of the entity. */
@@ -167,18 +188,25 @@ export abstract class EntityWithFacing extends Entity {
 
   /**
    * Flip coordinates if facing left.
-   * Note that `box` should be relative to `this.position`.
+   * 
+   * Note that `vector` should be relative to `this.position`,
+   * and the coordinates returned will be absolute.
    */
-  coordByFacing(coord: Coord) {
-    return this.facing === Facing.right ? coord : new Coord(2 * this.x - coord.x, coord.y);
+  coordByFacing(vector: Vector) {
+    return this.position.plus2(this.facing === Facing.right ? vector.x : -vector.x, vector.y);
+  }
+  coordByFacing2(x: number, y: number) {
+    return this.position.plus2(this.facing === Facing.right ? x : -x, y);
   }
 
   /**
    * Flip box if facing left.
-   * Note that `box` should be relative to `this.position`.
+   * 
+   * Note that `box` should be relative to `this.position`,
+   * and the box returned will contain absolute coordinates.
    */
   boxByFacing(box: AABB) {
-    return this.facing === Facing.right ? box : box.flipX(this.x);
+    return (this.facing === Facing.right ? box : box.flipX(0)).offset(this.position);
   }
 
   get collisionBox() {

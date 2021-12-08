@@ -91,12 +91,13 @@ export class Vector {
 
   clone() { return new Vector(this.x, this.y); }
 
+  get length() { return Math.sqrt(this.x ** 2 + this.y ** 2); }
+
   /** operator += */
   setPlus(vector: Vector) {
     this.x += vector.x;
     this.y += vector.y;
   }
-
   /** operator += */
   setPlus2(x: number, y: number) {
     this.x += x;
@@ -106,6 +107,11 @@ export class Vector {
   /** operator * */
   scale(k: number) {
     return new Vector(this.x * k, this.y * k);
+  }
+  /** operator *= */
+  setScale(k: number) {
+    this.x *= k;
+    this.y *= k;
   }
 }
 
@@ -146,6 +152,8 @@ export class AABB {
 
   get horizontal() { return new Segment(this.left, this.right); }
   get vertical() { return new Segment(this.top, this.bottom); }
+
+  get center() { return new Coord((this.left + this.right) / 2, (this.top + this.bottom) / 2); }
 
   clone() {
     return new AABB(this.left, this.top, this.right, this.bottom);

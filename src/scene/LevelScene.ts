@@ -3,7 +3,7 @@ import Scene, { SCENE_HEIGHT, SCENE_WIDTH } from "./Scene";
 import Entity from "../model/Entity";
 import Player from "../model/Player";
 import { RendererContext } from "../render/Renderer";
-import GameManager from "../GameManager";
+import GameManager, { TICK_ELAPSE } from "../GameManager";
 import { MapData, MapEntity, MapEntityPlayer, MapEntityType, TERRAIN_SIZE } from "../map/interfaces";
 import { Terrain } from "./Terrain";
 import Camera from "./Camera";
@@ -11,6 +11,7 @@ import EnemyScout from "../model/enemy/Scout";
 import EnemyGuard from "../model/enemy/Guard";
 import SelectMenu from "./SelectMenu";
 import Decoration from "../model/Decoration";
+import Subtitle from "./Subtitle";
 
 interface MenuItem {
   action: string;
@@ -30,6 +31,7 @@ export default class LevelScene extends Scene {
   decorations!: Decoration[];
 
   camera!: Camera;
+  subtitle!: Subtitle;
 
   /** Ticks passed since level started, reset when retry */
   ticks: number = 0;
@@ -81,6 +83,9 @@ export default class LevelScene extends Scene {
     this.decorations = map.decorations.map(data => new Decoration(data));
 
     this.camera = new Camera(this);
+    this.subtitle = new Subtitle(this);
+
+    this.showSubtitle("game start", 2000);
 
     this.ticks = 0;
   }
@@ -100,6 +105,14 @@ export default class LevelScene extends Scene {
         console.warn(`unknown entity type: ${data.type}`);
         return null;
     }
+  }
+
+  getEntitiesInArea(box: AABB): Entity[] {
+    return this.entities.filter(entity => box.intersects(entity.collisionBox));
+  }
+
+  deleteEntity(entity: Entity) {
+    this.entities = this.entities.filter(e => e !== entity);
   }
 
   togglePause() {
@@ -139,6 +152,10 @@ export default class LevelScene extends Scene {
     }
   }
 
+  showSubtitle(text: string, ms: number) {
+    this.subtitle.show({ text }, Math.round(ms / TICK_ELAPSE));
+  }
+
   retry() {
     // TODO: animation
     this.init();
@@ -152,6 +169,7 @@ export default class LevelScene extends Scene {
       for (const entity of this.entities)
         entity.tick(this);
       this.camera.update();
+      this.subtitle.tick();
       this.ticks++;
     }
     const endTime = performance.now();
@@ -168,6 +186,7 @@ export default class LevelScene extends Scene {
           entity.render(rctx);
         this.player.render(rctx);
       });
+      this.subtitle.render(rctx);
       this.renderPauseMenu(rctx);
     });
   }

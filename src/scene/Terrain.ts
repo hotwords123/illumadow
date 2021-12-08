@@ -154,7 +154,7 @@ export class TerrainSpikes extends Terrain {
   interactEntity(scene: LevelScene, entity: Entity) {
     const amount = this.hurtEntityAmount(entity);
     if (amount > 0 && this.hurtBox.intersects(entity.hurtBox))
-      entity.damage(amount);
+      entity.damage(scene, amount);
   }
 
   render(rctx: RendererContext) {

@@ -19,7 +19,7 @@ export default class EnemyScout extends EntityWithFacing {
   }
 
   get collisionBoxR() {
-    return this.position.expand(4, 10, 4, 0);
+    return new AABB(-4, -10, 4, 0);
   }
 
   getRenderInfoR() {
@@ -31,10 +31,10 @@ export default class EnemyScout extends EntityWithFacing {
 
   tick(scene: LevelScene) {
     if (scene.player.x > this.position.x) {
-      this.velocity.x = WALK_SPEED;
+      // this.velocity.x = WALK_SPEED;
       this.facing = Facing.right;
     } else {
-      this.velocity.x = -WALK_SPEED;
+      // this.velocity.x = -WALK_SPEED;
       this.facing = Facing.left;
     }
 
