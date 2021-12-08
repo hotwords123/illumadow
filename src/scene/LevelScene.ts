@@ -36,6 +36,8 @@ export default class LevelScene extends Scene {
   /** Ticks passed since scene created */
   totalTicks: number = 0;
 
+  tickTime = 0;
+
   paused = false;
   pauseMenu: SelectMenu<MenuItem> | null = null;
 
@@ -143,13 +145,17 @@ export default class LevelScene extends Scene {
   }
 
   tick() {
+    const startTime = performance.now();
     this.totalTicks++;
-    if (this.paused) return;
-    this.player.tick(this);
-    for (const entity of this.entities)
-      entity.tick(this);
-    this.camera.update();
-    this.ticks++;
+    if (!this.paused) {
+      this.player.tick(this);
+      for (const entity of this.entities)
+        entity.tick(this);
+      this.camera.update();
+      this.ticks++;
+    }
+    const endTime = performance.now();
+    this.tickTime = endTime - startTime;
   }
 
   render(rctx: RendererContext) {
@@ -217,6 +223,7 @@ export default class LevelScene extends Scene {
 
   get debugText() {
     return [
+      `Tick: ${this.tickTime.toFixed(1)} ms`,
       `${this.width}*${this.height} | ${this.map.width}*${this.map.height} ${this.map.id}`,
       `X: ${this.player.x.toFixed(1)} Y: ${this.player.y.toFixed(1)}`,
       `Camera: (${this.camera.offset.x.toFixed(0)}, ${this.camera.offset.y.toFixed(0)})`,

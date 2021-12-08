@@ -162,12 +162,21 @@ export default abstract class Entity extends Model {
  * Methods with names ended with 'R' assume that the entity is facing right.
  */
 export abstract class EntityWithFacing extends Entity {
+  /** The facing of the entity. */
   facing = Facing.right;
 
+  /**
+   * Flip coordinates if facing left.
+   * Note that `box` should be relative to `this.position`.
+   */
   coordByFacing(coord: Coord) {
     return this.facing === Facing.right ? coord : new Coord(2 * this.x - coord.x, coord.y);
   }
 
+  /**
+   * Flip box if facing left.
+   * Note that `box` should be relative to `this.position`.
+   */
   boxByFacing(box: AABB) {
     return this.facing === Facing.right ? box : box.flipX(this.x);
   }
@@ -175,6 +184,9 @@ export abstract class EntityWithFacing extends Entity {
   get collisionBox() {
     return this.boxByFacing(this.collisionBoxR);
   }
+  /**
+   * Returns collision box of entity, assuming it is facing right.
+   */
   abstract get collisionBoxR(): AABB;
 
   get hurtBox() {
@@ -194,6 +206,10 @@ export abstract class EntityWithFacing extends Entity {
       texture: info.texture
     };
   }
+  /**
+   * Returns information used for rendering, assuming entity is facing right.
+   * Note that `box` should be **relative to** `this.position`.
+   */
   abstract getRenderInfoR(): RenderInfoR | null;
 }
 
