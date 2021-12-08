@@ -6,6 +6,11 @@ export enum Direction {
   bottom = 3
 };
 
+export enum Facing {
+  left = 0,
+  right = 1
+}
+
 export enum Axis {
   x = 0, y = 1
 }
@@ -58,6 +63,10 @@ export class Coord {
   inside(rect: AABB) {
     return this.x >= rect.left && this.x <= rect.right &&
       this.y >= rect.top && this.y <= rect.bottom;
+  }
+
+  round() {
+    return new Coord(Math.round(this.x), Math.round(this.y));
   }
 }
 
@@ -147,7 +156,11 @@ export class AABB {
       this.right <= other.right && this.bottom <= other.bottom;
   }
 
-  offset(x: number, y: number) {
+  offset(offset: Coord | Vector) {
+    return this.offset2(offset.x, offset.y);
+  }
+
+  offset2(x: number, y: number) {
     return new AABB(this.left + x, this.top + y, this.right + x, this.bottom + y);
   }
 
@@ -160,6 +173,13 @@ export class AABB {
     return new AABB(
       this.left - x, this.top - y,
       this.right + x, this.bottom + y
+    );
+  }
+
+  flipX(x: number) {
+    return new AABB(
+      2 * x - this.right, this.top,
+      2 * x - this.left, this.bottom
     );
   }
 }

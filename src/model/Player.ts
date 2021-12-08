@@ -1,9 +1,7 @@
-import { AABB, Coord, Vector } from "../base";
+import { AABB, Facing } from "../base";
 import { Texture, textureManager } from "../render/TextureManager";
-import { RenderInfo } from "./Sprite";
-import Entity from "./Entity";
+import Entity, { EntityWithFacing } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
-import { RendererContext } from "../render/Renderer";
 import LevelScene from "../scene/LevelScene";
 import { MapEntityPlayer } from "../map/interfaces";
 
@@ -30,27 +28,29 @@ enum State {
   dash = 2,
 }
 
-export default class Player extends Entity {
+export default class Player extends EntityWithFacing {
   /** player state */
   state = State.walk;
 
+  /** tick index when jump key was pressed */
   jumpedAt = -1;
 
   constructor({ health, maxHealth, ...data }: MapEntityPlayer) {
     super(data, { health, maxHealth });
   }
 
-  get collisionBox() {
+  get collisionBoxR() {
     return this.position.expand(4, 10, 3, 0);
   }
 
   get hurtImmuneTicks() { return 60; }
 
-  getRenderInfo() {
+  getRenderInfoR() {
+    // blink after hurt
     if (this.immuneTicks % 10 >= 5)
       return null;
     return {
-      box: this.position.expand(4, 10, 4, 0),
+      box: new AABB(-4, -10, 4, 0),
       texture: texturePlayer
     };
   }
@@ -77,6 +77,9 @@ export default class Player extends Entity {
     if (this.dead) return;
 
     const movement = this.getMovement(scene);
+    if (movement !== 0)
+      this.facing = movement > 0 ? Facing.right : Facing.left;
+
     const
       maxSpeed = this.onGround ? MAX_GROUND_SPEED : MAX_AIR_SPEED,
       acceleration = this.onGround ? GROUND_ACCELERATION : AIR_ACCELERATION,

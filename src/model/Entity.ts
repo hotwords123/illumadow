@@ -1,8 +1,10 @@
-import { AABB, Axis, Coord, Vector } from "../base";
+import { AABB, Axis, Coord, Facing, Vector } from "../base";
 import { MapEntity, TERRAIN_SIZE } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
+import { TextureLike } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
 import Model from "./Model";
+import { RenderInfo } from "./Sprite";
 
 export interface MobInit {
   maxHealth: number;
@@ -152,4 +154,50 @@ export default abstract class Entity extends Model {
       });
     }
   }
+}
+
+/**
+ * Entity with facing (left or right).
+ * This class functions as a middleware to deal with logic related to facing.
+ * Methods with names ended with 'R' assume that the entity is facing right.
+ */
+export abstract class EntityWithFacing extends Entity {
+  facing = Facing.right;
+
+  coordByFacing(coord: Coord) {
+    return this.facing === Facing.right ? coord : new Coord(2 * this.x - coord.x, coord.y);
+  }
+
+  boxByFacing(box: AABB) {
+    return this.facing === Facing.right ? box : box.flipX(this.x);
+  }
+
+  get collisionBox() {
+    return this.boxByFacing(this.collisionBoxR);
+  }
+  abstract get collisionBoxR(): AABB;
+
+  get hurtBox() {
+    return this.boxByFacing(this.hurtBoxR);
+  }
+  get hurtBoxR(): AABB {
+    return this.collisionBoxR;
+  }
+
+  getRenderInfo() {
+    const info = this.getRenderInfoR();
+    if (!info) return null;
+    const flipped = this.facing === Facing.left;
+    return {
+      box: (flipped ? info.box.flipX(0) : info.box).offset(this.position.round()),
+      flipped,
+      texture: info.texture
+    };
+  }
+  abstract getRenderInfoR(): RenderInfoR | null;
+}
+
+export interface RenderInfoR {
+  box: AABB;
+  texture: TextureLike;
 }

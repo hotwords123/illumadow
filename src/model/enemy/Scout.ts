@@ -1,5 +1,5 @@
-import { AABB, Coord } from "../../base";
-import Entity from "../Entity";
+import { AABB, Coord, Facing } from "../../base";
+import Entity, { EntityWithFacing } from "../Entity";
 import imgScout from "../../assets/entity/scout.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
@@ -13,18 +13,18 @@ textureManager.loadTexture("entity/scout", imgScout).then(texture => {
 
 const WALK_SPEED = 0.75;
 
-export default class EnemyScout extends Entity {
+export default class EnemyScout extends EntityWithFacing {
   constructor(data: MapEntity) {
     super(data, { maxHealth: 20 });
   }
 
-  get collisionBox() {
+  get collisionBoxR() {
     return this.position.expand(4, 10, 4, 0);
   }
 
-  getRenderInfo() {
+  getRenderInfoR() {
     return {
-      box: this.position.expand(4, 10, 4, 0),
+      box: new AABB(-4, -10, 4, 0),
       texture: textureScout
     };
   }
@@ -32,8 +32,10 @@ export default class EnemyScout extends Entity {
   tick(scene: LevelScene) {
     if (scene.player.x > this.position.x) {
       this.velocity.x = WALK_SPEED;
+      this.facing = Facing.right;
     } else {
       this.velocity.x = -WALK_SPEED;
+      this.facing = Facing.left;
     }
 
     super.tick(scene);

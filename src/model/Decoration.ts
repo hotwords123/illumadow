@@ -52,7 +52,7 @@ export default class Decoration extends Model {
   getRenderInfo() {
     return this.texture && {
       texture: this.texture,
-      box: this.position.expand(...this.variantMeta!.box)
+      box: this.position.round().expand(...this.variantMeta!.box)
     };
   }
 }

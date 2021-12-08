@@ -3,7 +3,11 @@ import { Drawable, RendererContext } from "../render/Renderer";
 import { TextureLike } from "../render/TextureManager";
 
 export interface RenderInfo {
+  /** The bounding box of texture relative to the position */
   box: AABB;
+  /** Whether texture and box should be flipped horizontally */
+  flipped?: boolean;
+  /** The Texture or TextureClip to render */
   texture: TextureLike;
 }
 
@@ -35,7 +39,12 @@ export default abstract class Sprite implements Drawable {
     if (this.visible) {
       const info = this.getRenderInfo();
       if (info) {
-        info.texture.drawTo(rctx, Math.round(info.box.left), Math.round(info.box.top));
+        const { box, flipped = false, texture } = info;
+        if (!Number.isInteger(box.left) || !Number.isInteger(box.top))
+          throw new Error(`render area should have integer coordinates: got (${box.left},${box.top})`);
+        if (box.width !== texture.width || box.height !== texture.height)
+          throw new Error(`texture size does not match: expected ${box.width}x${box.height}, actual ${texture.width}x${texture.height}`);
+        texture.drawTo(rctx, flipped ? box.right : box.left, box.top, flipped);
       }
     }
   }

@@ -1,5 +1,5 @@
 
-import { AABB, Coord, Vector } from "../base";
+import { AABB, Coord, Vector, Facing } from "../base";
 import { RendererContext } from "../render/Renderer";
 import LevelScene from "./LevelScene";
 import { SCENE_WIDTH, SCENE_HEIGHT } from "./Scene";
@@ -18,7 +18,6 @@ const
   MAX_SPEED = 4,
   LERP_PROPORTION = 0.08;
 
-enum Facing { left, right }
 enum CameraState { still, accelerating, decelerating }
 
 export default class Camera {
@@ -35,7 +34,7 @@ export default class Camera {
   }
 
   get viewBox() {
-    return ORIGIN_BOX.offset(this.offset.x, this.offset.y);
+    return ORIGIN_BOX.offset2(this.offset.x, this.offset.y);
   }
 
   /**

@@ -24,7 +24,7 @@ export default class EnemyGuard extends Entity {
 
   getRenderInfo() {
     return {
-      box: this.position.expand(4, 14, 4, 0),
+      box: this.position.round().expand(4, 14, 4, 0),
       texture: textureGuard
     };
   }

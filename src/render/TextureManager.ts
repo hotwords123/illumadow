@@ -71,8 +71,12 @@ export class Texture {
     return this.clips.get(name) ?? null;
   }
 
-  drawTo(rctx: RendererContext, x: number, y: number) {
-    rctx.ctx.drawImage(this.img, x, y);
+  drawTo(rctx: RendererContext, x: number, y: number, flipped = false) {
+    rctx.run(({ ctx }) => {
+      ctx.translate(x, y);
+      if (flipped) ctx.scale(-1, 1);
+      ctx.drawImage(this.img, 0, 0, this.width, this.height);
+    });
   }
 }
 
@@ -85,12 +89,16 @@ export class TextureClip {
   get width() { return this.clipArea.width; }
   get height() { return this.clipArea.height; }
 
-  drawTo(rctx: RendererContext, x: number, y: number) {
-    const { left, top, width, height } = this.clipArea;
-    rctx.ctx.drawImage(
-      this.img,
-      left, top, width, height,
-      x, y, width, height
-    );
+  drawTo(rctx: RendererContext, x: number, y: number, flipped = false) {
+    rctx.run(({ ctx }) => {
+      const { left, top, width, height } = this.clipArea;
+      ctx.translate(x, y);
+      if (flipped) ctx.scale(-1, 1);
+      ctx.drawImage(
+        this.img,
+        left, top, width, height,
+        0, 0, width, height
+      );
+    });
   }
 }
