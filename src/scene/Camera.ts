@@ -53,7 +53,7 @@ export default class Camera {
 
     if (sceneWidth <= SCENE_WIDTH) {
       // Scene too small, just put it in the center
-      this.offset.x = (SCENE_WIDTH - sceneWidth) / 2;
+      this.offset.x = -(SCENE_WIDTH - sceneWidth) / 2;
       this.stateX = CameraState.still;
     } else {
       // Decide facing
@@ -104,7 +104,7 @@ export default class Camera {
     }
 
     if (sceneHeight <= SCENE_HEIGHT) {
-      this.offset.y = (SCENE_HEIGHT - sceneHeight) / 2;
+      this.offset.y = -(SCENE_HEIGHT - sceneHeight) / 2;
       this.stateY = CameraState.still;
     } else {
       if (player.onGround)
