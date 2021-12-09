@@ -28,7 +28,7 @@ export default class PlatformWalkGoal {
   }
 
   checkEmptyArea(scene: LevelScene, x: number, y: number) {
-    let boxHeight = this.self.collisionBox.height;
+    let boxHeight = Math.ceil(this.self.collisionBox.height / TERRAIN_SIZE);
     for (let i = 1; i <= boxHeight && y - i >= 0; i++)
       if (!this.canPassThrough(scene.terrains[y - i][x]))
         return false;

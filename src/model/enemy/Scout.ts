@@ -48,7 +48,7 @@ export default class EnemyScout extends EntityWithFacing {
 
     this.applyFriction(this.onGround ? 0.75 : 0.25);
 
-    this.platformWalkGoal.walkTowards(scene, player, 1, WALK_SPEED, 10);
+    this.platformWalkGoal.walkTowards(scene, player, this.onGround ? 1 : 0.25, WALK_SPEED, 10);
 
     const playerInTouch = this.attackBox.intersects(scene.player.hurtBox);
     if (playerInTouch)
