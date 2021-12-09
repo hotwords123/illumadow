@@ -4,6 +4,7 @@ import Entity, { EntityWithFacing } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
 import { MapEntityPlayer } from "../map/interfaces";
+import { RendererContext } from "../render/Renderer";
 
 let texturePlayer: Texture;
 
@@ -63,7 +64,7 @@ export default class Player extends EntityWithFacing {
   get hurtImmuneTicks() { return 60; }
 
   get meleeBoxHorizontal() {
-    return this.boxByFacing(new AABB(0, -10, 18, 0));
+    return this.boxByFacing(new AABB(0, -12, 18, 0));
   }
 
   get diveBoxCenter() {
@@ -79,9 +80,6 @@ export default class Player extends EntityWithFacing {
   }
 
   getRenderInfoR() {
-    // blink after hurt
-    if (this.immuneTicks % 10 >= 5)
-      return null;
     return {
       box: new AABB(-6, -12, 6, 0),
       texture: texturePlayer
@@ -194,5 +192,14 @@ export default class Player extends EntityWithFacing {
     scene.gameOver();
 
     // don't call super.die(scene) here as it would try to remove player from the scene
+  }
+
+  render(rctx: RendererContext) {
+    rctx.run(({ ctx, pixelSize, debug }) => {
+      // blink when hurt
+      if (this.immuneTicks % 10 >= 5)
+        ctx.globalAlpha = 0.25;
+      super.render(rctx);
+    });
   }
 }

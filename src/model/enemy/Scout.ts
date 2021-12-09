@@ -4,6 +4,8 @@ import imgScout from "../../assets/entity/scout.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import { MapEntity } from "../../map/interfaces";
+import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
+import { RendererContext } from "../../render/Renderer";
 
 let textureScout: Texture;
 
@@ -20,6 +22,8 @@ export default class EnemyScout extends EntityWithFacing {
   attackSpeed = 45;
   attackDamage = 1;
 
+  platformWalkGoal = new PlatformWalkGoal(this);
+
   constructor(data: MapEntity) {
     super(data, { maxHealth: 5 });
   }
@@ -29,7 +33,7 @@ export default class EnemyScout extends EntityWithFacing {
   }
 
   get attackBox() {
-    return this.boxByFacing(new AABB(-2, -8, 10, 0));
+    return this.boxByFacing(new AABB(-2, -12, 10, 0));
   }
 
   getRenderInfoR() {
@@ -44,13 +48,7 @@ export default class EnemyScout extends EntityWithFacing {
 
     this.applyFriction(this.onGround ? 0.75 : 0.25);
 
-    if (player.x > this.position.x) {
-      // this.velocity.x = WALK_SPEED;
-      this.facing = Facing.right;
-    } else {
-      // this.velocity.x = -WALK_SPEED;
-      this.facing = Facing.left;
-    }
+    this.platformWalkGoal.walkTowards(scene, player, 1, WALK_SPEED, 10);
 
     const playerInTouch = this.attackBox.intersects(scene.player.hurtBox);
     if (playerInTouch)

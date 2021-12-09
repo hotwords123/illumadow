@@ -60,6 +60,9 @@ export default class LevelScene extends Scene {
     this.pauseMenu?.cleanup();
   }
 
+  get mapWidth() { return this.map.width; }
+  get mapHeight() { return this.map.height; }
+
   /**
    * Initialize scene using data specified in the level map.
    * Called on creation and retrials.

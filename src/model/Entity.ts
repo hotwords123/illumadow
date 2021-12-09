@@ -126,10 +126,12 @@ export default abstract class Entity extends Model {
   }
 
   knockback(source: Coord, facing: Facing, speed: number, ticks: number = 4) {
-    const deltaY = this.collisionBox.bottom - source.y;
-    const impulseY = deltaY <= 1 ? -0.5 : deltaY >= 3 ? 0.5 : 0;
-    const impulseX = (facing === Facing.right ? 1 : -1) * Math.sqrt(1 - impulseY ** 2);
+    let deltaY = this.collisionBox.bottom - source.y;
+    let impulseY = deltaY <= 1 ? -0.5 : deltaY >= 3 ? 0.5 : 0;
+    impulseY += Math.random() * 0.2 - 0.1;
+    let impulseX = (facing === Facing.right ? 1 : -1) * Math.sqrt(1 - impulseY ** 2);
 
+    speed = speed * (0.8 + Math.random() * 0.4);
     this.setImpulse(speed * impulseX, speed * impulseY, ticks);
   }
 
