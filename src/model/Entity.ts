@@ -12,7 +12,7 @@ export interface MobInit {
   invincible?: boolean;
 }
 
-const GRAVITY = 0.2;
+export const GRAVITY = 0.2;
 
 /**
  * Entity:

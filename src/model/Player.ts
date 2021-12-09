@@ -1,6 +1,6 @@
 import { AABB, Facing, Vector } from "../base";
 import { Texture, textureManager } from "../render/TextureManager";
-import Entity, { EntityWithFacing } from "./Entity";
+import Entity, { EntityWithFacing, GRAVITY } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
 import { MapEntityPlayer } from "../map/interfaces";
@@ -13,12 +13,12 @@ const
   MAX_AIR_SPEED = 1.25,
   MAX_FALL_SPEED = 3,
   GROUND_ACCELERATION = 1,
-  AIR_ACCELERATION = 0.4,
+  AIR_ACCELERATION = 0.45,
   GROUND_FRICTION = 0.6,
-  AIR_FRICTION = 0.1,
+  AIR_FRICTION = 0.15,
   JUMP_SPEED_X = 2.5,
-  JUMP_SPEED_Y_SIDE = 3,
-  JUMP_SPEED_Y_UP = 3.25,
+  JUMP_SPEED_Y_SIDE = 2.75,
+  JUMP_SPEED_Y_UP = 3,
   MELEE_KNOCKBACK = 3,
   DIVE_ATTACK_PUSH_X = 3,
   DIVE_ATTACK_PUSH_Y = 3,
@@ -44,9 +44,12 @@ export default class Player extends EntityWithFacing {
   /** cooldown ticks after each melee attack */
   meleeSpeed = 20;
 
-  /** tick index when the corresponding key was pressed */
-  jumpedAt = -1;
-  meleedAt = -1;
+  /** tick index when the corresponding key was pressed / released */
+  jumpPressedAt = -1;
+  jumpReleasedAt = -1;
+  meleePressedAt = -1;
+
+  jumpedAt = -99;
 
   meleeCooldown = 0;
 
@@ -99,12 +102,14 @@ export default class Player extends EntityWithFacing {
     switch (command) {
       case "move.jump":
         if (event === "down")
-          this.jumpedAt = scene.ticks;
+          this.jumpPressedAt = scene.ticks;
+        else if (event === "up")
+          this.jumpReleasedAt = scene.ticks;
         break;
 
       case "skill.melee":
         if (event === "down") {
-          this.meleedAt = scene.ticks;
+          this.meleePressedAt = scene.ticks;
           scene.shortPause(2);
         }
         break;
@@ -131,16 +136,22 @@ export default class Player extends EntityWithFacing {
       this.accelerate(movement > 0 ? Facing.right : Facing.left, acceleration, maxSpeed);
 
     // Jump
-    if (this.airTicks <= 3 && this.jumpedAt === scene.ticks) {
+    if (this.airTicks <= 3 && this.jumpPressedAt === scene.ticks) {
       velocity.y = movement === 0 ? -JUMP_SPEED_Y_UP : -JUMP_SPEED_Y_SIDE;
       if (movement > 0)
         velocity.x = JUMP_SPEED_X;
       if (movement < 0)
         velocity.x = -JUMP_SPEED_X;
+      this.jumpedAt = scene.ticks;
+    }
+
+    const ticksAfterJumped = scene.ticks - this.jumpPressedAt;
+    if (ticksAfterJumped >= 6 && ticksAfterJumped <= 12 && this.jumpReleasedAt < this.jumpPressedAt) {
+      this.velocity.y -= GRAVITY;
     }
 
     // Melee attack
-    if (scene.ticks === this.meleedAt && this.meleeCooldown === 0) {
+    if (scene.ticks === this.meleePressedAt && this.meleeCooldown === 0) {
       this.meleeAttack(scene);
     } else {
       if (this.meleeCooldown > 0)
