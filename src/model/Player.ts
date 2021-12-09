@@ -40,7 +40,7 @@ export default class Player extends EntityWithFacing {
   }
 
   get collisionBoxR() {
-    return this.position.expand(4, 10, 3, 0);
+    return this.position.expand(4, 8, 4, 0);
   }
 
   get hurtImmuneTicks() { return 60; }
@@ -50,7 +50,7 @@ export default class Player extends EntityWithFacing {
     if (this.immuneTicks % 10 >= 5)
       return null;
     return {
-      box: new AABB(-4, -10, 4, 0),
+      box: new AABB(-6, -12, 6, 0),
       texture: texturePlayer
     };
   }
