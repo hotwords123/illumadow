@@ -1,9 +1,16 @@
 
-export enum Direction {
+export enum Side {
   left = 0,
   top = 1,
   right = 2,
-  bottom = 3
+  bottom = 3,
+};
+
+export enum Direction {
+  left = 0,
+  up = 1,
+  right = 2,
+  down = 3
 };
 
 export enum Facing {

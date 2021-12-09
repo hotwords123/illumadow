@@ -22,6 +22,7 @@ class LevelManager {
 const levelManager = new LevelManager();
 
 levelManager.addLevels([
+  levelTest,
   level1_1
 ] as any);
 

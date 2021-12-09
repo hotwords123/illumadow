@@ -124,6 +124,10 @@ export default class LevelScene extends Scene {
     this.pauseTicks = ticks;
   }
 
+  deleteTerrain({ x, y }: Coord) {
+    this.terrains[y][x] = null;
+  }
+
   togglePause() {
     if (this.paused) {
       this.paused = false;
@@ -177,9 +181,19 @@ export default class LevelScene extends Scene {
       if (this.pauseTicks > 0) {
         this.pauseTicks--;
       } else {
+        // Terrain
+        for (const row of this.terrains)
+          for (const cell of row)
+            cell?.tick(this);
+
+        // Player
         this.player.tick(this);
+
+        // Entities
         for (const entity of this.entities)
           entity.tick(this);
+
+        // Misc
         this.camera.update();
         this.subtitle.tick();
         this.ticks++;

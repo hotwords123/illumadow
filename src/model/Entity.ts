@@ -61,10 +61,10 @@ export default abstract class Entity extends Model {
 
   get hurtImmuneTicks() { return 0; }
 
-  damage(scene: LevelScene, amount: number): boolean {
+  damage(scene: LevelScene, amount: number, evenIfInvincible: boolean = false): boolean {
     if (amount <= 0) return false;
-    if (this.dead || this.invincible) return false;
-    if (this.immuneTicks > 0) return false;
+    if (this.dead) return false;
+    if (!evenIfInvincible && (this.invincible || this.immuneTicks > 0)) return false;
     this.health -= amount;
     if (this.dead) this.die(scene);
     this.immuneTicks = this.hurtImmuneTicks;
@@ -158,6 +158,7 @@ export default abstract class Entity extends Model {
       this.impulseX = this.impulseY = null;
     }
 
+    // Terrain
     this.oldPosition = this.position.clone();
 
     this.oldCollisionBox = this.collisionBox;
@@ -168,9 +169,12 @@ export default abstract class Entity extends Model {
     this.position.y += this.velocity.y;
     this.collideTerrains(scene, Axis.y);
 
+    // Map border
     const { collisionBox } = this;
     this.position.x += Math.max(0, 0 - collisionBox.left);
     this.position.x -= Math.max(0, collisionBox.right - scene.width);
+    if (this.position.y > scene.height)
+      this.damage(scene, Infinity, true);
   }
 
   collideTerrains(scene: LevelScene, axis: Axis) {

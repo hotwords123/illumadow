@@ -8,6 +8,7 @@ const COLORS = {
   'spikes': '#ed1c24',
   'trunk': '#382b18',
   'branch': '#987849',
+  'water': '#99d9ea',
 };
 
 function parseHexColor(hex: string) {
@@ -186,6 +187,28 @@ const PATTERNS_RAW: RawMatchPattern[] = [
     pixels: [
       'none', 'branch',
       'none', 'branch'
+    ]
+  },
+
+  // Water
+  {
+    terrain: {
+      type: MapTerrainType.water,
+      surface: true
+    },
+    pixels: [
+      'none', 'none',
+      'water', 'water'
+    ]
+  },
+  {
+    terrain: {
+      type: MapTerrainType.water,
+      surface: false
+    },
+    pixels: [
+      'water', 'water',
+      'water', 'water'
     ]
   },
 ];

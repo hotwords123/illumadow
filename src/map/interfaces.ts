@@ -1,4 +1,4 @@
-import { Direction } from "../base";
+import { Side } from "../base";
 
 /* ======== Map ======== */
 
@@ -39,7 +39,7 @@ export enum MapTerrainType {
   brick = "brick",
   spikes = "spikes",
   fragile = "fragile",
-  supply = "supply"
+  water = "water"
 }
 
 export interface MapTerrain {
@@ -56,12 +56,18 @@ export interface MapTerrainBrick extends MapTerrain {
 /** 尖刺 */
 export interface MapTerrainSpikes extends MapTerrain {
   /** 尖刺吸附的边 */
-  side: Direction;
+  side: Side;
 }
 
 /** 通行后坍塌的方块 */
 export interface MapTerrainFragile extends MapTerrain {
   texture: string;
+}
+
+/** 水体 */
+export interface MapTerrainWater extends MapTerrain {
+  /** 是否为水面 */
+  surface: boolean;
 }
 
 /* ======== Entity ======== */
