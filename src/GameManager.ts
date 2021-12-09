@@ -49,9 +49,15 @@ export default class GameManager {
 
   onKeyEvent(command: string, event: string) {
     switch (command) {
-      case 'ui.debug':
+      case 'debug.toggle':
         if (event === 'down')
           this.renderer.toggleDebug();
+        break;
+      case 'debug.level':
+        if (event === 'down') {
+          const name = prompt("Enter level name to enter:");
+          if (name) this.startLevel(name);
+        }
         break;
       default:
         this.scene.onKeyEvent(command, event);

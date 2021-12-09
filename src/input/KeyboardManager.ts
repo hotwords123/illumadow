@@ -8,14 +8,15 @@ const COMMAND_MAP: Record<string, string[]> = {
   "ui.confirm":  ["C", "Enter"],
   "ui.cancel":   ["X"],
   "ui.pause":    ["Escape"],
-  "ui.debug":    ["F3"],
   "move.up":     ["W", "ArrowUp"],
   "move.left":   ["A", "ArrowLeft"],
   "move.down":   ["S", "ArrowDown"],
   "move.right":  ["D", "ArrowRight"],
   "move.jump":   [" "],
   "skill.melee": ["J"],
-  "skill.dash":  ["K"]
+  "skill.dash":  ["K"],
+  "debug.toggle": ["F3"],
+  "debug.level":  ["F4"]
 };
 
 const COMMANDS = Object.keys(COMMAND_MAP);
