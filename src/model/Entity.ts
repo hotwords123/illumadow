@@ -167,6 +167,10 @@ export default abstract class Entity extends Model {
     this.oldCollisionBox = this.collisionBox;
     this.position.y += this.velocity.y;
     this.collideTerrains(scene, Axis.y);
+
+    const { collisionBox } = this;
+    this.position.x += Math.max(0, 0 - collisionBox.left);
+    this.position.x -= Math.max(0, collisionBox.right - scene.width);
   }
 
   collideTerrains(scene: LevelScene, axis: Axis) {
