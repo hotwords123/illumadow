@@ -1,12 +1,12 @@
 import { AABB, Axis, Coord, Direction, DIRECTION_VECTORS, Vector } from "../base";
-import Sprite from "../model/Sprite";
+import Sprite from "./Sprite";
 import imgBrick from "../assets/terrain/brick.png";
 import imgSpikes from "../assets/terrain/spikes.png";
 import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import { MapTerrain, MapTerrainBrick, MapTerrainSpikes, MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
-import Entity from "../model/Entity";
-import LevelScene from "./LevelScene";
-import Player from "../model/Player";
+import Entity from "./Entity";
+import LevelScene from "../scene/LevelScene";
+import Player from "./Player";
 import { RendererContext } from "../render/Renderer";
 
 let textureBrick: Texture;

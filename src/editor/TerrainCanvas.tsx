@@ -1,7 +1,7 @@
 import React from "react";
 import { MapTerrain, TERRAIN_SIZE } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
-import { Terrain } from "../scene/Terrain";
+import { Terrain } from "../model/Terrain";
 
 interface TerrainCanvasProps {
   width: number;

@@ -5,7 +5,7 @@ import Player from "../model/Player";
 import { RendererContext } from "../render/Renderer";
 import GameManager, { TICK_ELAPSE } from "../GameManager";
 import { MapData, MapEntity, MapEntityPlayer, MapEntityType, TERRAIN_SIZE } from "../map/interfaces";
-import { Terrain } from "./Terrain";
+import { Terrain } from "../model/Terrain";
 import Camera from "./Camera";
 import EnemyScout from "../model/enemy/Scout";
 import EnemyGuard from "../model/enemy/Guard";
