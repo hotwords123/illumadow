@@ -48,11 +48,7 @@ export default class Player extends EntityWithFacing {
   }
 
   get collisionBoxR() {
-<<<<<<< HEAD
-    return this.position.expand(4, 8, 4, 0);
-=======
     return new AABB(-4, -10, 1, 0);
->>>>>>> 1a6d9311b318268fbc4e3d3a460a1289dee4787f
   }
 
   get hurtImmuneTicks() { return 60; }
