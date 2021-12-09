@@ -28,12 +28,13 @@ export default abstract class Sprite implements Drawable {
 
   /**
    * Returns necessary information for rendering.
-   * Coordinates will be automatically rounded to integers.
+   * 
    * Derived classes should implement this method.
+   * 
+   * Note that `box` field accepts integer coordinates only,
+   * and that it should contain absolute coordinates.
    */
-  getRenderInfo(): RenderInfo | null {
-    return null;
-  }
+  abstract getRenderInfo(): RenderInfo | null;
 
   render(rctx: RendererContext) {
     if (this.visible) {
