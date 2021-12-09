@@ -15,15 +15,15 @@ const
   GROUND_ACCELERATION = 1,
   AIR_ACCELERATION = 0.4,
   GROUND_FRICTION = 0.6,
-  AIR_FRICTION = 0.05,
-  JUMP_SPEED_X = 2,
+  AIR_FRICTION = 0.1,
+  JUMP_SPEED_X = 2.5,
   JUMP_SPEED_Y_SIDE = 3,
-  JUMP_SPEED_Y_UP = 3.5,
+  JUMP_SPEED_Y_UP = 3.25,
   MELEE_KNOCKBACK = 3,
   DIVE_ATTACK_PUSH_X = 3,
   DIVE_ATTACK_PUSH_Y = 3,
-  DIVE_ATTACK_REBOUNCE_X = 3.5,
-  DIVE_ATTACK_REBOUNCE_Y = 3.5;
+  DIVE_ATTACK_REBOUNCE_X = 4,
+  DIVE_ATTACK_REBOUNCE_Y = 3.25;
 
 textureManager.loadTexture("entity/player", imgPlayer).then(texture => {
   texturePlayer = texture;
