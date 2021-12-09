@@ -12,7 +12,7 @@ export interface MobInit {
   invincible?: boolean;
 }
 
-const GRAVITY = 0.25;
+const GRAVITY = 0.2;
 
 /**
  * Entity:
@@ -26,6 +26,12 @@ export default abstract class Entity extends Model {
   oldPosition: Coord;
   oldCollisionBox!: AABB;
   onGround: boolean;
+
+  /** impulse applied to the entity, will override velocity in a few ticks */
+  impulseX: number | null = null;
+  impulseY: number | null = null;
+  /** ticks left when the impulse will apply */
+  impulseTicks: number = 0;
 
   maxHealth: number;
   health: number;
@@ -81,6 +87,22 @@ export default abstract class Entity extends Model {
   abstract get collisionBox(): AABB;
   get hurtBox() { return this.collisionBox; }
 
+  accelerate(facing: Facing, accel: number, maxSpeed: number) {
+    const v = this.velocity;
+    if (facing === Facing.right && v.x < maxSpeed) 
+      v.x = Math.min(maxSpeed, v.x + accel);
+    if (facing === Facing.left && v.x > -maxSpeed) 
+      v.x = Math.max(-maxSpeed, v.x - accel);
+  }
+
+  applyFriction(friction: number) {
+    const v = this.velocity;
+    if (v.x > 0)
+      v.x = Math.max(0, v.x - friction);
+    if (v.x < 0)
+      v.x = Math.min(0, v.x + friction);
+  }
+
   /* ======== Logic ======== */
 
   /**
@@ -103,19 +125,18 @@ export default abstract class Entity extends Model {
     }
   }
 
-  knockback(source: Coord, speed: number) {
-    let dir = this.collisionBox.center.diff(source);
-    let length = dir.length;
+  knockback(source: Coord, facing: Facing, speed: number, ticks: number = 4) {
+    const deltaY = this.collisionBox.bottom - source.y;
+    const impulseY = deltaY <= 1 ? -0.5 : deltaY >= 3 ? 0.5 : 0;
+    const impulseX = (facing === Facing.right ? 1 : -1) * Math.sqrt(1 - impulseY ** 2);
 
-    if (length < 1e-3) {
-      let theta = Math.random() * Math.PI;
-      dir.x = Math.cos(theta);
-      dir.y = Math.sin(theta);
-    } else {
-      dir.setScale(1 / length);
-    }
+    this.setImpulse(speed * impulseX, speed * impulseY, ticks);
+  }
 
-    this.velocity.setPlus(dir.scale(speed));
+  setImpulse(impulseX: number | null, impulseY: number | null, ticks: number) {
+    this.impulseX = impulseX;
+    this.impulseY = impulseY;
+    this.impulseTicks = ticks;
   }
 
   /**
@@ -123,6 +144,17 @@ export default abstract class Entity extends Model {
    */
   move(scene: LevelScene) {
     this.onGround = false;
+
+    // Impulse
+    if (this.impulseTicks > 0) {
+      if (this.impulseX !== null)
+        this.velocity.x = this.impulseX;
+      if (this.impulseY !== null)
+        this.velocity.y = this.impulseY;
+      this.impulseTicks--;
+    } else {
+      this.impulseX = this.impulseY = null;
+    }
 
     this.oldPosition = this.position.clone();
 

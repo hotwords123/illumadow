@@ -89,6 +89,12 @@ export class Vector {
     return new Vector(coord.x, coord.y);
   }
 
+  /** operator = */
+  set(vector: Vector) {
+    this.x = vector.x;
+    this.y = vector.y;
+  }
+
   clone() { return new Vector(this.x, this.y); }
 
   get length() { return Math.sqrt(this.x ** 2 + this.y ** 2); }

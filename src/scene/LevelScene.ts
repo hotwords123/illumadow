@@ -131,7 +131,7 @@ export default class LevelScene extends Scene {
         {
           action: "retry",
           text: "Retry",
-          disabled: this.player.dead
+          disabled: this.player.respawning
         },
         {
           action: "title",
@@ -174,6 +174,10 @@ export default class LevelScene extends Scene {
     }
     const endTime = performance.now();
     this.tickTime = endTime - startTime;
+  }
+
+  gameOver() {
+    this.showSubtitle("Game Over", 3000);
   }
 
   render(rctx: RendererContext) {
@@ -232,8 +236,9 @@ export default class LevelScene extends Scene {
 
       ctx.font = "5px sans-serif";
       for (const item of this.pauseMenu.getItems()) {
-        ctx.fillStyle = item !== selectedItem ? '#fff':
-          this.totalTicks % 12 < 6 ? '#90d060' : '#f0e080';
+        ctx.fillStyle = item === selectedItem ?
+          (this.totalTicks % 12 < 6 ? '#90d060' : '#f0e080') :
+          (item.disabled ? '#999' : '#fff');
         ctx.fillText(item.text, x, y);
         y += 10;
       }
