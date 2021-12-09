@@ -37,6 +37,8 @@ export default class LevelScene extends Scene {
   ticks: number = 0;
   /** Ticks passed since scene created */
   totalTicks: number = 0;
+  /** Ticks left to pause when trigger skills */
+  pauseTicks: number = 0;
 
   tickTime = 0;
 
@@ -115,6 +117,10 @@ export default class LevelScene extends Scene {
     this.entities = this.entities.filter(e => e !== entity);
   }
 
+  shortPause(ticks: number) {
+    this.pauseTicks = ticks;
+  }
+
   togglePause() {
     if (this.paused) {
       this.paused = false;
@@ -165,12 +171,16 @@ export default class LevelScene extends Scene {
     const startTime = performance.now();
     this.totalTicks++;
     if (!this.paused) {
-      this.player.tick(this);
-      for (const entity of this.entities)
-        entity.tick(this);
-      this.camera.update();
-      this.subtitle.tick();
-      this.ticks++;
+      if (this.pauseTicks > 0) {
+        this.pauseTicks--;
+      } else {
+        this.player.tick(this);
+        for (const entity of this.entities)
+          entity.tick(this);
+        this.camera.update();
+        this.subtitle.tick();
+        this.ticks++;
+      }
     }
     const endTime = performance.now();
     this.tickTime = endTime - startTime;

@@ -61,7 +61,7 @@ export default class EnemyScout extends EntityWithFacing {
     if (this.attackCooldown > 0) {
       this.attackCooldown--;
     } else {
-      if (playerInTouch && this.playerInTouchTicks >= 10) {
+      if (playerInTouch && this.playerInTouchTicks >= 5) {
         if (player.damage(scene, this.attackDamage)) {
           player.knockback(this.position, this.facing, 2.5);
           this.attackCooldown = this.attackSpeed;

@@ -4,7 +4,6 @@ import Entity, { EntityWithFacing } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
 import { MapEntityPlayer } from "../map/interfaces";
-import { RendererContext } from "../render/Renderer";
 
 let texturePlayer: Texture;
 
@@ -68,15 +67,15 @@ export default class Player extends EntityWithFacing {
   }
 
   get diveBoxCenter() {
-    return this.position.expand(8, 0, 8, 12);
+    return this.position.expand(8, 0, 8, 10);
   }
 
   get diveBoxLeft() {
-    return this.position.expand(14, 0, 2, 10);
+    return this.position.expand(14, 0, 2, 9);
   }
 
   get diveBoxRight() {
-    return this.position.expand(2, 0, 14, 10);
+    return this.position.expand(2, 0, 14, 9);
   }
 
   getRenderInfoR() {
@@ -106,8 +105,10 @@ export default class Player extends EntityWithFacing {
         break;
 
       case "skill.melee":
-        if (event === "down")
+        if (event === "down") {
           this.meleedAt = scene.ticks;
+          scene.shortPause(2);
+        }
         break;
     }
   }
@@ -141,7 +142,7 @@ export default class Player extends EntityWithFacing {
     }
 
     // Melee attack
-    if (scene.ticks === this.meleedAt + 2 && this.meleeCooldown === 0) {
+    if (scene.ticks === this.meleedAt && this.meleeCooldown === 0) {
       this.meleeAttack(scene);
     } else {
       if (this.meleeCooldown > 0)
@@ -170,19 +171,17 @@ export default class Player extends EntityWithFacing {
         }
       }
 
+      this.meleeCooldown = this.meleeSpeed;
       if (hit) {
-        this.meleeCooldown = this.meleeSpeed;
         this.velocity.x += -dir * DIVE_ATTACK_REBOUNCE_X;
         this.velocity.y = -DIVE_ATTACK_REBOUNCE_Y;
       }
     } else {
       // Horizontal attack
-      let hit = false;
       const targets = scene.getEntitiesInArea(this.meleeBoxHorizontal);
 
       for (const target of targets) {
         if (target.damage(scene, this.meleeDamage)) {
-          hit = true;
           target.knockback(this.position, this.facing, MELEE_KNOCKBACK);
         }
       }
