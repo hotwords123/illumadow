@@ -4,7 +4,7 @@ import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import { MapEntity } from "../../map/interfaces";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
-import { MobWithFacing } from "../Mob";
+import Mob from "../Mob";
 
 let textureScout: Texture;
 
@@ -14,7 +14,7 @@ textureManager.loadTexture("entity/scout", imgScout).then(texture => {
 
 const WALK_SPEED = 0.75;
 
-export default class EnemyScout extends MobWithFacing {
+export default class EnemyScout extends Mob {
   playerInTouchTicks = 0;
 
   attackCooldown = 0;

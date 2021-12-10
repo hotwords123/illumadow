@@ -5,7 +5,7 @@ import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
 import { MapEntityPlayer } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
-import Mob, { MobWithFacing } from "./Mob";
+import Mob from "./Mob";
 
 let texturePlayer: Texture;
 
@@ -36,7 +36,7 @@ enum State {
   dash = 2,
 }
 
-export default class Player extends MobWithFacing {
+export default class Player extends Mob {
   /** player state */
   state = State.walk;
 
@@ -60,6 +60,8 @@ export default class Player extends MobWithFacing {
   constructor({ health, maxHealth, ...data }: MapEntityPlayer) {
     super(data, { health, maxHealth });
   }
+
+  isPlayer() { return true; }
 
   get collisionBoxR() {
     return new AABB(-4, -10, 1, 0);
@@ -173,7 +175,7 @@ export default class Player extends MobWithFacing {
         [this.diveBoxLeft, this.diveBoxCenter, this.diveBoxRight][dir + 1]);
 
       for (const target of targets) {
-        if (target instanceof Mob) {
+        if (target.isMob()) {
           if (target.damage(scene, this.meleeDamage)) {
             hit = true;
             target.velocity.y += DIVE_ATTACK_PUSH_Y;
@@ -201,7 +203,7 @@ export default class Player extends MobWithFacing {
       }
 
       for (const target of targets) {
-        if (target instanceof Mob) {
+        if (target.isMob()) {
           if (target.damage(scene, this.meleeDamage)) {
             target.knockback(this.position, this.facing, MELEE_KNOCKBACK);
           }

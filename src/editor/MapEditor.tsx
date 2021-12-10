@@ -385,7 +385,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         const tags = value === '' ? [] : value.split(',');
         if (tags.some(x => !x.length))
           throw new EditError("tag name should not be empty");
-        if (tags.length != new Set(tags).size)
+        if (tags.length !== new Set(tags).size)
           throw new EditError("duplicate tag");
         parsed = tags;
         break;

@@ -9,6 +9,8 @@ import Entity from "./Entity";
 import LevelScene from "../scene/LevelScene";
 import Player from "./Player";
 import { RendererContext } from "../render/Renderer";
+import Mob from "./Mob";
+import Projectile from "./projectile";
 
 let textureBrick: Texture;
 let textureSpikes: Texture;
@@ -26,7 +28,7 @@ textureManager.loadTextures([
 });
 
 export abstract class Terrain extends Sprite {
-  constructor(position: Coord, public texture: TextureLike) {
+  constructor(position: Coord, public type: MapTerrainType, public texture: TextureLike) {
     if (!texture)
       throw new Error("texture should not be null");
     super(position);
@@ -154,7 +156,7 @@ export class TerrainBrick extends Terrain {
   };
 
   constructor(position: Coord, public variant: string) {
-    super(position, textureManager.get(TerrainBrick.TEXTURE_MAP[variant])!);
+    super(position, MapTerrainType.brick, textureManager.get(TerrainBrick.TEXTURE_MAP[variant])!);
   }
 
   get collisionBox() {
@@ -176,21 +178,25 @@ abstract class HarmingTerrain extends Terrain {
   /**
    * Returns the amount of damage entity will take if it touches `hurtBox`.
    */
-  abstract hurtEntityAmount(entity: Entity): number;
+  abstract hurtMobAmount(mob: Mob): number;
 
   /**
    * Will hurt the entity if it touches `hurtBox`.
    */
   interactEntity(scene: LevelScene, entity: Entity) {
-    const amount = this.hurtEntityAmount(entity);
-    if (amount > 0 && this.hurtBox?.intersects(entity.hurtBox))
+    if (entity.isMob()) {
+      const amount = this.hurtMobAmount(entity);
+      if (amount > 0 && this.hurtBox?.intersects(entity.hurtBox))
       entity.damage(scene, amount);
+    } else if (entity.isProjectile()) {
+      entity.destroy(scene);
+    }
   }
 }
 
 export class TerrainSpikes extends HarmingTerrain {
   constructor(position: Coord, public side: Side) {
-    super(position, textureSpikes.getClip(Side[side])!)
+    super(position, MapTerrainType.spikes, textureSpikes.getClip(Side[side])!)
   }
 
   get hurtBox() {
@@ -206,8 +212,8 @@ export class TerrainSpikes extends HarmingTerrain {
     }
   }
 
-  hurtEntityAmount(entity: Entity) {
-    if (entity instanceof Player)
+  hurtMobAmount(mob: Mob) {
+    if (mob.isPlayer())
       return 1;
     else
       return Infinity;
@@ -227,15 +233,15 @@ export class TerrainSpikes extends HarmingTerrain {
 
 export class TerrainWater extends HarmingTerrain {
   constructor(position: Coord, public surface: boolean) {
-    super(position, textureWater.getClip(surface ? "surface" : "under")!);
+    super(position, MapTerrainType.water, textureWater.getClip(surface ? "surface" : "under")!);
   }
 
   get hurtBox() {
     return this.center.expand(4, this.surface ? 2 : 4, 4, 4);
   }
 
-  hurtEntityAmount(entity: Entity) {
-    if (entity instanceof Player)
+  hurtMobAmount(mob: Mob) {
+    if (mob.isPlayer())
       return 1;
     else
       return Infinity;
@@ -248,13 +254,13 @@ abstract class FragileTerrain extends Terrain {
   /** ticks having been collapsing */
   collapsingTicks = -1;
 
-  constructor(position: Coord, texture: TextureLike, collapseTicks: number) {
-    super(position, texture);
+  constructor(position: Coord, type: MapTerrainType, texture: TextureLike, collapseTicks: number) {
+    super(position, type, texture);
     this.collapseTicks = collapseTicks;
   }
 
   onCollideEntity(scene: LevelScene, entity: Entity, side: Side) {
-    if (side === Side.top && entity instanceof Player) {
+    if (side === Side.top && entity.isPlayer()) {
       this.collapse();
     }
   }
@@ -282,7 +288,7 @@ export class TerrainFragile extends FragileTerrain {
   };
 
   constructor(position: Coord, public variant: string) {
-    super(position, textureManager.get(TerrainFragile.TEXTURE_MAP[variant])!, 60);
+    super(position, MapTerrainType.fragile, textureManager.get(TerrainFragile.TEXTURE_MAP[variant])!, 60);
   }
 
   get collisionBox() {

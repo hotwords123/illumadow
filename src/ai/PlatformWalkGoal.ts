@@ -1,18 +1,18 @@
 import { Coord, Facing } from "../base/math";
-import { TERRAIN_SIZE } from "../map/interfaces";
+import { MapEntityType, MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
 import Entity from "../model/Entity";
-import { MobWithFacing } from "../model/Mob";
+import Mob from "../model/Mob";
 import { Terrain, TerrainBrick } from "../model/Terrain";
 import LevelScene from "../scene/LevelScene";
 
 export default class PlatformWalkGoal {
-  constructor(private self: Entity) {}
+  constructor(private self: Mob) {}
   
   canPassThrough(terrain: Terrain | null) {
     return terrain === null;
   }
   canStandOn(terrain: Terrain | null) {
-    return terrain instanceof TerrainBrick;
+    return terrain && [MapTerrainType.brick, MapTerrainType.fragile].includes(terrain.type);
   }
 
   findFoothold(scene: LevelScene, entity: Entity): Coord | null {
@@ -45,8 +45,7 @@ export default class PlatformWalkGoal {
     let deltaX = target.x - self.x;
 
     // Update facing
-    if (self instanceof MobWithFacing)
-      self.facing = deltaX > 0 ? Facing.right : Facing.left;
+    self.facing = deltaX > 0 ? Facing.right : Facing.left;
 
     // Check foothold
     const foothold = this.findFoothold(scene, self);

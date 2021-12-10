@@ -4,7 +4,7 @@ import imgArcher from "../../assets/entity/archer.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
-import { MobWithFacing } from "../Mob";
+import Mob from "../Mob";
 
 let textureArcher: Texture;
 
@@ -12,7 +12,7 @@ textureManager.loadTexture("entity/archer", imgArcher).then(texture => {
   textureArcher = texture;
 });
 
-export default class EnemyArcher extends MobWithFacing {
+export default class EnemyArcher extends Mob {
   attackCooldown = 0;
   attackSpeed = 120;
 

@@ -89,7 +89,7 @@ export default class LevelScene extends Scene {
     this.entities = [];
     for (const data of map.entities) {
       const entity = this.createEntity(data);
-      if (entity instanceof Player) {
+      if (entity?.isPlayer()) {
         this.player = entity;
       } else if (entity) {
         this.entities.push(entity);

@@ -1,6 +1,5 @@
 import { AABB, Coord, Facing, Side, Vector } from "../base/math";
 import { MapEntity } from "../map/interfaces";
-import { TextureLike } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
 import Entity, { EscapeBehaviour } from "./Entity";
 
@@ -12,7 +11,7 @@ export interface MobInit {
 
 /**
  * Mob
- * - is an entity
+ * - is an Entity
  * - has health
  * - can be hurt
  */
@@ -21,21 +20,31 @@ export default abstract class Mob extends Entity {
   health: number;
   invincible: boolean;
 
-  /** hurt immune ticks */
+  /** ticks left while entity is immune to damage */
   immuneTicks = 0;
 
   constructor(data: MapEntity, init: MobInit) {
     super(data);
-    
+
     this.maxHealth = init.maxHealth;
     this.health = init.health ?? this.maxHealth;
     this.invincible = init.invincible ?? false;
   }
 
-  /* ======== Health ======== */
+  isMob() { return true };
+
+  get hurtBox() {
+    return this.boxByFacing(this.hurtBoxR);
+  }
+  get hurtBoxR(): AABB {
+    return this.collisionBoxR;
+  }
 
   get dead() { return this.health <= 0; }
 
+  /**
+   * Returns ticks entity will be immune to damage after being hurt.
+  */
   get hurtImmuneTicks() { return 0; }
 
   damage(scene: LevelScene, amount: number, evenIfInvincible: boolean = false): boolean {
@@ -59,8 +68,6 @@ export default abstract class Mob extends Entity {
     scene.deleteEntity(this);
   }
 
-  get hurtBox() { return this.collisionBox; }
-
   tick(scene: LevelScene) {
     if (this.dead) return;
 
@@ -81,77 +88,4 @@ export default abstract class Mob extends Entity {
         return EscapeBehaviour.none;
     }
   }
-}
-
-/**
- * Mob with facing (left or right).
- * 
- * This class functions as a middleware to deal with logic related to facing.
- * 
- * Note that all methods with names ended with 'R' should:
- * - Assume that the entity is facing right, and
- * - Return coordinates relative to `this.position`.
- */
-export abstract class MobWithFacing extends Mob {
-  /** The facing of the entity. */
-  facing = Facing.right;
-
-  /**
-   * Flip coordinates if facing left.
-   * 
-   * Note that `vector` should be relative to `this.position`,
-   * and the coordinates returned will be absolute.
-   */
-  coordByFacing(vector: Vector) {
-    return this.position.plus2(this.facing === Facing.right ? vector.x : -vector.x, vector.y);
-  }
-  coordByFacing2(x: number, y: number) {
-    return this.position.plus2(this.facing === Facing.right ? x : -x, y);
-  }
-
-  /**
-   * Flip box if facing left.
-   * 
-   * Note that `box` should be relative to `this.position`,
-   * and the box returned will contain absolute coordinates.
-   */
-  boxByFacing(box: AABB) {
-    return (this.facing === Facing.right ? box : box.flipX(0)).offset(this.position);
-  }
-
-  get collisionBox() {
-    return this.boxByFacing(this.collisionBoxR);
-  }
-  /**
-   * Returns collision box of entity, assuming it is facing right.
-   */
-  abstract get collisionBoxR(): AABB;
-
-  get hurtBox() {
-    return this.boxByFacing(this.hurtBoxR);
-  }
-  get hurtBoxR(): AABB {
-    return this.collisionBoxR;
-  }
-
-  getRenderInfo() {
-    const info = this.getRenderInfoR();
-    if (!info) return null;
-    const flipped = this.facing === Facing.left;
-    return {
-      box: (flipped ? info.box.flipX(0) : info.box).offset(this.position.round()),
-      flipped,
-      texture: info.texture
-    };
-  }
-  /**
-   * Returns information used for rendering, assuming entity is facing right.
-   * Note that `box` should be **relative to** `this.position`.
-   */
-  abstract getRenderInfoR(): RenderInfoR | null;
-}
-
-export interface RenderInfoR {
-  box: AABB;
-  texture: TextureLike;
 }
