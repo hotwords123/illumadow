@@ -1,5 +1,5 @@
 import React from 'react';
-import { AABB, Coord } from '../base';
+import { AABB, Coord } from '../base/math';
 import { MapData, MapDecoration, MapEntity, MapEntityType, MapSprite, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
 import ItemEditor, { EditError, ItemEditorData, ItemEditorDataEntry } from './ItemEditor';
 import './MapEditor.css';

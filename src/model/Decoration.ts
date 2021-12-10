@@ -1,4 +1,4 @@
-import { AABB, Coord } from "../base";
+import { AABB, Coord } from "../base/math";
 import { MapDecoration, TERRAIN_SIZE } from "../map/interfaces";
 import Model from "./Model";
 import imgTree from "../assets/decoration/tree.png";

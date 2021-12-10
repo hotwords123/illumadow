@@ -1,11 +1,10 @@
-import { AABB, Coord, Facing } from "../../base";
-import Entity, { EntityWithFacing } from "../Entity";
+import { AABB, Coord, Facing } from "../../base/math";
 import imgScout from "../../assets/entity/scout.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import { MapEntity } from "../../map/interfaces";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
-import { RendererContext } from "../../render/Renderer";
+import { MobWithFacing } from "../Mob";
 
 let textureScout: Texture;
 
@@ -15,7 +14,7 @@ textureManager.loadTexture("entity/scout", imgScout).then(texture => {
 
 const WALK_SPEED = 0.75;
 
-export default class EnemyScout extends EntityWithFacing {
+export default class EnemyScout extends MobWithFacing {
   playerInTouchTicks = 0;
 
   attackCooldown = 0;
@@ -48,7 +47,7 @@ export default class EnemyScout extends EntityWithFacing {
 
     this.applyFriction(this.onGround ? 0.75 : 0.25);
 
-    this.platformWalkGoal.walkTowards(scene, player, this.onGround ? 1 : 0.25, WALK_SPEED, 10);
+    this.platformWalkGoal.keepDistance(scene, player, this.onGround ? 1 : 0.25, WALK_SPEED, 8, 10);
 
     const playerInTouch = this.attackBox.intersects(scene.player.hurtBox);
     if (playerInTouch)

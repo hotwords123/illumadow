@@ -1,4 +1,4 @@
-import { Coord } from "../base";
+import { Coord } from "../base/math";
 import { MapSprite } from "../map/interfaces";
 import Sprite from "./Sprite";
 

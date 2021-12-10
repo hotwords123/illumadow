@@ -1,4 +1,4 @@
-import { Side } from "../base";
+import { Side } from "../base/math";
 
 /* ======== Map ======== */
 

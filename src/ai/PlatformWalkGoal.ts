@@ -1,6 +1,7 @@
-import { Coord, Facing } from "../base";
+import { Coord, Facing } from "../base/math";
 import { TERRAIN_SIZE } from "../map/interfaces";
-import Entity, { EntityWithFacing } from "../model/Entity";
+import Entity from "../model/Entity";
+import { MobWithFacing } from "../model/Mob";
 import { Terrain, TerrainBrick } from "../model/Terrain";
 import LevelScene from "../scene/LevelScene";
 
@@ -39,32 +40,42 @@ export default class PlatformWalkGoal {
     return this.canStandOn(scene.terrains[y][x]) && this.checkEmptyArea(scene, x, y);
   }
 
-  walkTowards(scene: LevelScene, target: Entity, accel: number, maxSpeed: number, minDistance: number) {
+  keepDistance(scene: LevelScene, target: Entity, accel: number, maxSpeed: number, minDistance: number, maxDistance: number) {
     const { self } = this;
-    
     let deltaX = target.x - self.x;
 
-    // Too close horizontally
-    if (Math.abs(deltaX) < maxSpeed) return;
-
     // Update facing
-    if (self instanceof EntityWithFacing)
+    if (self instanceof MobWithFacing)
       self.facing = deltaX > 0 ? Facing.right : Facing.left;
-
-    // Already reached target
-    if (target.position.diff(self.position).length <= minDistance)
-      return;
 
     // Check foothold
     const foothold = this.findFoothold(scene, self);
     if (!foothold) return;
+    const footholdTarget = this.findFoothold(scene, target);
+    if (!footholdTarget) return;
+
+    // Check if on the same altitude
+    if (foothold.y !== footholdTarget.y) return;
 
     const box = self.collisionBox;
-    const blockX = deltaX > 0 ? Math.ceil(box.right / TERRAIN_SIZE) - 1 : Math.floor(box.left / TERRAIN_SIZE);
+    let distance = Math.abs(deltaX);
+
+    // Decide heading
+    let heading: Facing;
+    if (distance > maxDistance)
+      heading = deltaX > 0 ? Facing.right : Facing.left;
+    else if (distance < minDistance)
+      heading = deltaX > 0 ? Facing.left : Facing.right;
+    else
+      return;
+
+    const blockX = heading === Facing.right ?
+      Math.ceil(box.right / TERRAIN_SIZE) - 1 :
+      Math.floor(box.left / TERRAIN_SIZE);
 
     // Avoid getting out of the platform
     if (blockX >= 0 && blockX < scene.mapWidth && this.checkFoothold(scene, blockX, foothold.y)) {
-      self.accelerate(deltaX > 0 ? Facing.right : Facing.left, accel, maxSpeed);
+      self.accelerate(heading, accel, maxSpeed);
     }
   }
 }

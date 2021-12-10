@@ -1,4 +1,4 @@
-import { AABB, Coord } from "../base";
+import { AABB, Coord } from "../base/math";
 import { Drawable, RendererContext } from "../render/Renderer";
 import { TextureLike } from "../render/TextureManager";
 

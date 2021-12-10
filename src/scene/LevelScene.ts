@@ -1,4 +1,4 @@
-import { AABB, Coord, Vector } from "../base";
+import { AABB, Coord, Vector } from "../base/math";
 import Scene, { SCENE_HEIGHT, SCENE_WIDTH } from "./Scene";
 import Entity from "../model/Entity";
 import Player from "../model/Player";
@@ -12,6 +12,18 @@ import EnemyGuard from "../model/enemy/Guard";
 import SelectMenu from "./SelectMenu";
 import Decoration from "../model/Decoration";
 import Subtitle from "./Subtitle";
+import EnemyArcher from "../model/enemy/Archer";
+import imgHealth from "../assets/hud/health.png";
+import { Texture, textureManager } from "../render/TextureManager";
+
+let textureHealth: Texture;
+
+textureManager.loadTextures([
+  ["hud/health", imgHealth]
+]).then(textures => {
+  [textureHealth] = textures;
+  textureHealth.defineClips([['5', '4', '3', '2', '1', '0']], 32, 32);
+});
 
 interface MenuItem {
   action: string;
@@ -106,6 +118,9 @@ export default class LevelScene extends Scene {
       case MapEntityType.guard:
         return new EnemyGuard(data as MapEntity);
 
+      case MapEntityType.archer:
+        return new EnemyArcher(data as MapEntity);
+
       default:
         console.warn(`unknown entity type: ${data.type}`);
         return null;
@@ -138,17 +153,17 @@ export default class LevelScene extends Scene {
       this.pauseMenu = new SelectMenu<MenuItem>(this, [
         {
           action: "resume",
-          text: "Back to Game",
+          text: "继续游戏",
           disabled: false
         },
         {
           action: "retry",
-          text: "Retry",
+          text: "重试",
           disabled: this.player.respawning
         },
         {
           action: "title",
-          text: "Return to Title",
+          text: "返回标题界面",
           disabled: false
         }
       ], ({ action }: MenuItem) => {
@@ -218,6 +233,7 @@ export default class LevelScene extends Scene {
         this.player.render(rctx);
       });
       this.subtitle.render(rctx);
+      this.renderHud(rctx);
       this.renderPauseMenu(rctx);
     });
   }
@@ -242,6 +258,18 @@ export default class LevelScene extends Scene {
     }
   }
 
+  renderHud(rctx: RendererContext) {
+    rctx.run(({ ctx }) => {
+      // Health
+      let heartCount = Math.ceil(this.player.maxHealth / 5);
+      for (let i = 0; i < heartCount; i++) {
+        let value = Math.max(0, Math.min(5, this.player.health - 5 * i));
+        const clip = textureHealth.getClip('' + value)!;
+        clip.drawTo(rctx, 6 + 40 * i, 6);
+      }
+    });
+  }
+
   renderPauseMenu(rctx: RendererContext) {
     rctx.run(({ ctx }) => {
       if (!this.pauseMenu) return;
@@ -252,20 +280,20 @@ export default class LevelScene extends Scene {
       let x = SCENE_WIDTH / 2, y = 30;
       const { selectedItem } = this.pauseMenu;
 
-      ctx.font = "12px sans-serif";
+      ctx.font = "12.5px 'Noto Sans SC'";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       ctx.shadowColor = "#000";
-      ctx.shadowBlur = 1;
+      ctx.shadowBlur = 2;
       ctx.fillStyle = "#999";
-      ctx.fillText("Paused", x, y);
+      ctx.fillText("暂停", x, y);
       y += 20;
 
-      ctx.font = "5px sans-serif";
+      ctx.font = "5.25px 'Noto Sans SC'";
       for (const item of this.pauseMenu.getItems()) {
         ctx.fillStyle = item === selectedItem ?
           (this.totalTicks % 12 < 6 ? '#90d060' : '#f0e080') :
-          (item.disabled ? '#999' : '#fff');
+          (item.disabled ? '#999' : '#eee');
         ctx.fillText(item.text, x, y);
         y += 10;
       }

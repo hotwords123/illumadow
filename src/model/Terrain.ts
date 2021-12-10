@@ -1,4 +1,4 @@
-import { AABB, Axis, Coord, Side, DIRECTION_VECTORS, Vector, Direction } from "../base";
+import { AABB, Axis, Coord, Side, DIRECTION_VECTORS, Vector, Direction } from "../base/math";
 import Sprite from "./Sprite";
 import imgBrick from "../assets/terrain/brick.png";
 import imgSpikes from "../assets/terrain/spikes.png";

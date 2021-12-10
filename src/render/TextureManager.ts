@@ -1,4 +1,4 @@
-import { AABB } from "../base";
+import { AABB } from "../base/math";
 import { RendererContext } from "./Renderer";
 
 export type TextureLike = Texture | TextureClip;
