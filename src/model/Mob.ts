@@ -1,5 +1,5 @@
 import { AABB, Coord, Facing, Side, Vector } from "../base/math";
-import { MapEntity } from "../map/interfaces";
+import { MapEntity, MapEntityType } from "../map/interfaces";
 import LevelScene from "../scene/LevelScene";
 import Entity, { EscapeBehaviour } from "./Entity";
 
@@ -32,6 +32,9 @@ export default abstract class Mob extends Entity {
   }
 
   isMob() { return true };
+  isEnemy() {
+    return ![MapEntityType.player].includes(this.type);
+  }
 
   get hurtBox() {
     return this.boxByFacing(this.hurtBoxR);

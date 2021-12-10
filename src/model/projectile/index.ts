@@ -1,5 +1,6 @@
 import { Coord, Side } from "../../base/math";
 import { MapEntityType } from "../../map/interfaces";
+import { RendererContext } from "../../render/Renderer";
 import LevelScene from "../../scene/LevelScene";
 import Entity, { EscapeBehaviour } from "../Entity";
 import Mob from "../Mob";
@@ -46,5 +47,19 @@ export default abstract class Projectile extends Entity {
       default:
         return EscapeBehaviour.delete;
     }
+  }
+
+  render(rctx: RendererContext) {
+    super.render(rctx);
+    rctx.run(({ ctx, pixelSize, debug }) => {
+      if (debug) {
+        const hbox = this.collisionBox;
+        if (hbox) {
+          ctx.lineWidth = 2 / pixelSize;
+          ctx.strokeStyle = '#f00';
+          ctx.strokeRect(hbox.left, hbox.top, hbox.width, hbox.height);
+        }
+      }
+    });
   }
 }

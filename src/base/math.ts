@@ -87,6 +87,10 @@ export class Segment {
   intersects(other: Segment) {
     return this.l < other.r && other.l < this.r;
   }
+
+  contains(value: number) {
+    return value >= this.l && value <= this.r;
+  }
 }
 
 export class Vector {

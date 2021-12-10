@@ -175,7 +175,7 @@ export default class Player extends Mob {
         [this.diveBoxLeft, this.diveBoxCenter, this.diveBoxRight][dir + 1]);
 
       for (const target of targets) {
-        if (target.isMob()) {
+        if (target.isMob() && target.isEnemy()) {
           if (target.damage(scene, this.meleeDamage)) {
             hit = true;
             target.velocity.y += DIVE_ATTACK_PUSH_Y;
@@ -203,7 +203,7 @@ export default class Player extends Mob {
       }
 
       for (const target of targets) {
-        if (target.isMob()) {
+        if (target.isMob() && target.isEnemy()) {
           if (target.damage(scene, this.meleeDamage)) {
             target.knockback(this.position, this.facing, MELEE_KNOCKBACK);
           }

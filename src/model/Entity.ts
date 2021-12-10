@@ -58,10 +58,6 @@ export default abstract class Entity extends Model {
   isPlayer(): this is Player { return false; }
   isProjectile(): this is Projectile { return false; }
 
-  isEnemy() {
-    return this.isMob() && ![MapEntityType.player].includes(this.type);
-  }
-
   /**
    * Flip coordinates if facing left.
    *
@@ -161,7 +157,8 @@ export default abstract class Entity extends Model {
       this.airTicks = 0;
     } else {
       this.airTicks++;
-      this.velocity.y += GRAVITY;
+      if (this.underGravity)
+        this.velocity.y += GRAVITY;
     }
   }
 

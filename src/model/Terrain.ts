@@ -192,6 +192,20 @@ abstract class HarmingTerrain extends Terrain {
       entity.destroy(scene);
     }
   }
+
+  render(rctx: RendererContext) {
+    super.render(rctx);
+    rctx.run(({ ctx, pixelSize, debug }) => {
+      if (debug) {
+        const hbox = this.hurtBox;
+        if (hbox) {
+          ctx.lineWidth = 2 / pixelSize;
+          ctx.strokeStyle = '#f00';
+          ctx.strokeRect(hbox.left, hbox.top, hbox.width, hbox.height);
+        }
+      }
+    });
+  }
 }
 
 export class TerrainSpikes extends HarmingTerrain {
@@ -217,17 +231,6 @@ export class TerrainSpikes extends HarmingTerrain {
       return 1;
     else
       return Infinity;
-  }
-
-  render(rctx: RendererContext) {
-    super.render(rctx);
-    if (rctx.debug) {
-      const { ctx, pixelSize } = rctx;
-      const { hurtBox: hbox } = this;
-      ctx.lineWidth = 2 / pixelSize;
-      ctx.strokeStyle = '#f00';
-      ctx.strokeRect(hbox.left, hbox.top, hbox.width, hbox.height);
-    }
   }
 }
 
