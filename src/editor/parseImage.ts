@@ -50,7 +50,7 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: {
       type: MapTerrainType.brick,
-      texture: "brick"
+      variant: "brick"
     },
     pixels: [
       'brick', 'brick',
@@ -60,7 +60,7 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: {
       type: MapTerrainType.brick,
-      texture: "dirt"
+      variant: "dirt"
     },
     pixels: [
       'dirt', 'dirt',
@@ -70,7 +70,7 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: {
       type: MapTerrainType.brick,
-      texture: "grass"
+      variant: "grass"
     },
     pixels: [
       'grass', 'grass',
@@ -190,6 +190,28 @@ const PATTERNS_RAW: RawMatchPattern[] = [
     ]
   },
 
+  // Tree platform
+  {
+    terrain: {
+      type: MapTerrainType.brick,
+      variant: "tree"
+    },
+    pixels: [
+      'trunk', 'trunk',
+      'branch', 'branch'
+    ]
+  },
+  {
+    terrain: {
+      type: MapTerrainType.fragile,
+      variant: "tree"
+    },
+    pixels: [
+      'trunk', 'trunk',
+      'none', 'none'
+    ]
+  },
+
   // Water
   {
     terrain: {
@@ -211,7 +233,7 @@ const PATTERNS_RAW: RawMatchPattern[] = [
       'water', 'water'
     ]
   },
-];
+] as RawMatchPattern[];
 
 const PATTERNS: MatchPattern[] = PATTERNS_RAW.map(({ pixels, ...more }) => ({
   ...more,

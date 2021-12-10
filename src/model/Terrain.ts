@@ -17,7 +17,7 @@ let textureWater: Texture;
 textureManager.loadTextures([
   ["terrain/brick", imgBrick],
   ["terrain/spikes", imgSpikes],
-  ["terrain/water", imgWater]
+  ["terrain/water", imgWater],
 ]).then(textures => {
   [textureBrick, textureSpikes, textureWater] = textures;
   textureBrick.defineClips([['brick', 'dirt', 'grass']], TERRAIN_SIZE, TERRAIN_SIZE);
@@ -27,6 +27,8 @@ textureManager.loadTextures([
 
 export abstract class Terrain extends Sprite {
   constructor(position: Coord, public texture: TextureLike) {
+    if (!texture)
+      throw new Error("texture should not be null");
     super(position);
   }
 
@@ -36,7 +38,7 @@ export abstract class Terrain extends Sprite {
     switch (cell.type) {
       case MapTerrainType.brick: {
         const c = cell as MapTerrainBrick;
-        return new TerrainBrick(coord, c.texture);
+        return new TerrainBrick(coord, c.variant);
       }
 
       case MapTerrainType.spikes: {
@@ -46,7 +48,7 @@ export abstract class Terrain extends Sprite {
 
       case MapTerrainType.fragile: {
         const c = cell as MapTerrainFragile;
-        return new TerrainFragile(coord, c.texture);
+        return new TerrainFragile(coord, c.variant);
       }
 
       case MapTerrainType.water: {
@@ -137,16 +139,31 @@ export abstract class Terrain extends Sprite {
     }
   }
 
+  /**
+   * Triggered when colliding with entities.
+   */
   onCollideEntity(scene: LevelScene, entity: Entity, side: Side) {}
 }
 
 export class TerrainBrick extends Terrain {
-  constructor(position: Coord, texture: string) {
-    super(position, textureBrick.getClip(texture)!);
+  static TEXTURE_MAP: Record<string, string> = {
+    brick: "terrain/brick:brick",
+    dirt: "terrain/brick:dirt",
+    grass: "terrain/brick:grass",
+    tree: "decoration/tree:platform"
+  };
+
+  constructor(position: Coord, public variant: string) {
+    super(position, textureManager.get(TerrainBrick.TEXTURE_MAP[variant])!);
   }
 
   get collisionBox() {
-    return this.boundingBox;
+    switch (this.variant) {
+      case "tree":
+        return this.center.expand(4, 4, 4, 2);
+      default:
+        return this.boundingBox;
+    }
   }
 }
 
@@ -225,16 +242,15 @@ export class TerrainWater extends HarmingTerrain {
   }
 }
 
-export class TerrainFragile extends Terrain {
-  collapseTicks = -1;
+abstract class FragileTerrain extends Terrain {
+  /** ticks complete destruction take */
+  collapseTicks: number;
+  /** ticks having been collapsing */
+  collapsingTicks = -1;
 
-  constructor(position: Coord, texture: string) {
-    // TODO: add texture
-    super(position, textureBrick.getClip(texture)!);
-  }
-
-  get collisionBox() {
-    return this.boundingBox;
+  constructor(position: Coord, texture: TextureLike, collapseTicks: number) {
+    super(position, texture);
+    this.collapseTicks = collapseTicks;
   }
 
   onCollideEntity(scene: LevelScene, entity: Entity, side: Side) {
@@ -243,16 +259,38 @@ export class TerrainFragile extends Terrain {
     }
   }
 
+  /**
+   * Make the block start to collapse.
+   */
   collapse() {
-    if (this.collapseTicks < 0)
-      this.collapseTicks = 0;
+    if (this.collapsingTicks < 0)
+      this.collapsingTicks = 0;
   }
 
   tick(scene: LevelScene) {
-    if (this.collapseTicks >= 0) {
-      this.collapseTicks++;
-      if (this.collapseTicks === 60)
+    if (this.collapsingTicks >= 0) {
+      this.collapsingTicks++;
+      if (this.collapsingTicks === this.collapseTicks)
         scene.deleteTerrain(this.position);
+    }
+  }
+}
+
+export class TerrainFragile extends FragileTerrain {
+  static TEXTURE_MAP: Record<string, string> = {
+    tree: "decoration/tree:platform-fragile"
+  };
+
+  constructor(position: Coord, public variant: string) {
+    super(position, textureManager.get(TerrainFragile.TEXTURE_MAP[variant])!, 60);
+  }
+
+  get collisionBox() {
+    switch (this.variant) {
+      case "tree":
+        return this.center.expand(4, 4, 4, 2);
+      default:
+        return this.boundingBox;
     }
   }
 }

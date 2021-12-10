@@ -71,15 +71,15 @@ export default class Player extends EntityWithFacing {
   }
 
   get diveBoxCenter() {
-    return this.position.expand(8, 0, 8, 10);
+    return this.position.expand(8, 0, 8, 12);
   }
 
   get diveBoxLeft() {
-    return this.position.expand(14, 0, 2, 9);
+    return this.position.expand(14, 0, 2, 10);
   }
 
   get diveBoxRight() {
-    return this.position.expand(2, 0, 14, 9);
+    return this.position.expand(2, 0, 14, 10);
   }
 
   getRenderInfoR() {

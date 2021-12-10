@@ -44,13 +44,12 @@ export enum MapTerrainType {
 
 export interface MapTerrain {
   type: MapTerrainType;
-  [key: string]: any;
 }
 
 /** 实心方块 */
 export interface MapTerrainBrick extends MapTerrain {
-  /** 砖块的材质名 */
-  texture: string;
+  /** 砖块的种类 */
+  variant: string;
 }
 
 /** 尖刺 */
@@ -61,7 +60,7 @@ export interface MapTerrainSpikes extends MapTerrain {
 
 /** 通行后坍塌的方块 */
 export interface MapTerrainFragile extends MapTerrain {
-  texture: string;
+  variant: string;
 }
 
 /** 水体 */

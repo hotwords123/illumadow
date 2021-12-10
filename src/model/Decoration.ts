@@ -5,14 +5,14 @@ import imgTree from "../assets/decoration/tree.png";
 import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import { RenderInfo } from "./Sprite";
 
-let textureTree: Texture;
+export let textureTree: Texture;
 
 textureManager.loadTextures([
   ["decoration/tree", imgTree]
 ]).then(textures => {
   [textureTree] = textures;
   textureTree.defineClips([
-    ["branch-end-l", "branch", "trunk-branch-l", "trunk", "trunk-branch-r", "branch-end-r"]
+    ["branch-end-l", "branch", "trunk-branch-l", "trunk", "trunk-branch-r", "branch-end-r", "platform", "platform-fragile"]
   ], TERRAIN_SIZE, TERRAIN_SIZE);
 });
 
