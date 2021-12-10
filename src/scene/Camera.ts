@@ -37,6 +37,10 @@ export default class Camera {
     return ORIGIN_BOX.offset2(this.offset.x, this.offset.y);
   }
 
+  rumble() {
+    // TODO
+  }
+
   /**
    * Update the camera.
    * @param init Whether to ignore previous position and facing.
@@ -133,8 +137,8 @@ export default class Camera {
 
   render(rctx: RendererContext, callback: () => void) {
     rctx.run(({ ctx }) => {
-      const { x, y } = this.offset;
-      ctx.translate(-Math.round(x), -Math.round(y));
+      let { x, y } = this.offset.round();
+      ctx.translate(-x, -y);
       callback();
     });
 

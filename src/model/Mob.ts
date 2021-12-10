@@ -55,10 +55,13 @@ export default abstract class Mob extends Entity {
     if (this.dead) return false;
     if (!evenIfInvincible && (this.invincible || this.immuneTicks > 0)) return false;
     this.health -= amount;
+    this.onDamage(scene, amount);
     if (this.dead) this.die(scene);
     this.immuneTicks = this.hurtImmuneTicks;
     return true;
   }
+
+  onDamage(scene: LevelScene, amount: number): void {}
 
   cure(scene: LevelScene, amount: number) {
     if (this.dead) return;

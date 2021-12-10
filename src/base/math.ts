@@ -130,6 +130,10 @@ export class Vector {
     this.x *= k;
     this.y *= k;
   }
+
+  round() {
+    return new Vector(Math.round(this.x), Math.round(this.y));
+  }
 }
 
 export const DIRECTION_VECTORS = [

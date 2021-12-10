@@ -188,6 +188,10 @@ export default class LevelScene extends Scene {
     this.subtitle.show({ text }, Math.round(ms / TICK_ELAPSE));
   }
 
+  rumble() {
+    this.camera.rumble();
+  }
+
   retry() {
     // TODO: animation
     this.init();
