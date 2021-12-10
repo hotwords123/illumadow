@@ -175,8 +175,7 @@ export default class Player extends EntityWithFacing {
         if (target.damage(scene, this.meleeDamage)) {
           hit = true;
           target.velocity.y += DIVE_ATTACK_PUSH_Y;
-          if (dir)
-            target.setImpulse(dir * DIVE_ATTACK_PUSH_X, null, 4);
+          target.setImpulse((dir - 0.25 + Math.random() * 0.5) * DIVE_ATTACK_PUSH_X, null, 4);
         }
       }
 
@@ -187,7 +186,16 @@ export default class Player extends EntityWithFacing {
       }
     } else {
       // Horizontal attack
-      const targets = scene.getEntitiesInArea(this.meleeBoxHorizontal);
+      let targets = scene.getEntitiesInArea(this.meleeBoxHorizontal);
+
+      // Check if there are enemies in the opposite direction
+      if (!targets.length) {
+        let was = this.facing;
+        this.facing = was === Facing.right ? Facing.left : Facing.right;
+        targets = scene.getEntitiesInArea(this.meleeBoxHorizontal);
+        if (!targets.length)
+          this.facing = was;
+      }
 
       for (const target of targets) {
         if (target.damage(scene, this.meleeDamage)) {
