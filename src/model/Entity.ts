@@ -7,6 +7,7 @@ import Mob from "./Mob";
 import Model from "./Model";
 import Player from "./Player";
 import Projectile from "./projectile";
+import { Terrain } from "./Terrain";
 
 export const GRAVITY = 0.2;
 
@@ -250,6 +251,8 @@ export default abstract class Entity extends Model {
       }
     }
   }
+
+  onCollideTerrain(scene: LevelScene, terrain: Terrain, side: Side) {}
 
   render(rctx: RendererContext) {
     super.render(rctx);

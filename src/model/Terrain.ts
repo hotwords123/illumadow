@@ -118,10 +118,12 @@ export abstract class Terrain extends Sprite {
           vel.x = 0;
           pos.x -= newBox.right - selfBox.left;
           this.onCollideEntity(scene, entity, Side.left);
+          entity.onCollideTerrain(scene, this, Side.right);
         } else if (oldBox.left >= selfBox.right && newBox.left <= selfBox.right) {
           vel.x = 0;
           pos.x -= newBox.left - selfBox.right;
           this.onCollideEntity(scene, entity, Side.right);
+          entity.onCollideTerrain(scene, this, Side.left);
         }
       }
     } else {
@@ -132,10 +134,12 @@ export abstract class Terrain extends Sprite {
           pos.y -= newBox.bottom - selfBox.top;
           entity.onGround = true;
           this.onCollideEntity(scene, entity, Side.top);
+          entity.onCollideTerrain(scene, this, Side.bottom);
         } else if (oldBox.top >= selfBox.bottom && newBox.top <= selfBox.bottom) {
           vel.y = 0;
           pos.y -= newBox.top - selfBox.bottom;
           this.onCollideEntity(scene, entity, Side.bottom);
+          entity.onCollideTerrain(scene, this, Side.top);
         }
       }
     }
