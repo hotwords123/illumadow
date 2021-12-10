@@ -113,7 +113,8 @@ export default class Player extends Mob {
       case "skill.melee":
         if (event === "down") {
           this.meleePressedAt = scene.ticks;
-          scene.shortPause(2);
+          if (this.meleeCooldown === 0)
+            scene.shortPause(2);
         }
         break;
     }
