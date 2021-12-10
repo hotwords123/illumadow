@@ -1,6 +1,6 @@
 import React from 'react';
 import { AABB, Coord } from '../base/math';
-import { MapData, MapDecoration, MapEntity, MapEntityType, MapSprite, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
+import { MapBackground, MapData, MapDecoration, MapEntity, MapEntityType, MapSprite, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
 import ItemEditor, { EditError, ItemEditorData, ItemEditorDataEntry } from './ItemEditor';
 import './MapEditor.css';
 import parseImage from './parseImage';
@@ -52,6 +52,8 @@ interface MapEditorState {
   mapWidth: number;
   mapHeight: number;
   terrains: (MapTerrain | null)[][];
+  backgrounds: MapBackground[];
+  backgroundDrafts: ItemEditorData[];
   scale: number;
   pxAtom: number;
   pxGrid: number;
@@ -83,6 +85,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       mapWidth: 0,
       mapHeight: 0,
       terrains: [],
+      backgrounds: [],
+      backgroundDrafts: [],
       scale: 4,
       pxAtom: 4 / window.devicePixelRatio,
       pxGrid: 4 * TERRAIN_SIZE / window.devicePixelRatio,
@@ -143,7 +147,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         const reader = new FileReader();
         reader.onload = () => {
           try {
-            const data = JSON.parse(reader.result as string);
+            const data = JSON.parse(reader.result as string) as MapData;
+            data.backgrounds = data.backgrounds ?? [];
             this.loadMap(data);
           } catch (err: any) {
             console.error(err);
@@ -171,6 +176,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       mapWidth: map.width,
       mapHeight: map.height,
       terrains: map.terrain,
+      backgrounds: map.backgrounds,
+      backgroundDrafts: map.backgrounds.map(x => this.makeBackgroundDraft(x)),
       items: [
         ...map.entities.map(entity => this.createItem('entity', entity)),
         ...map.decorations.map(decoration => this.createItem('decoration', decoration))
@@ -183,7 +190,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
   exportMap(): MapData {
     const {
       mapId, mapWidth, mapHeight,
-      terrains, items
+      terrains, items, backgrounds
     } = this.state;
     return {
       id: mapId,
@@ -192,7 +199,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       terrain: terrains,
       entities: items.filter(x => x.category === 'entity').map(x => x.item as MapEntity),
       decorations: items.filter(x => x.category === 'decoration').map(x => x.item as MapDecoration),
-      triggers: []
+      triggers: [],
+      backgrounds: backgrounds
     };
   }
 
@@ -407,6 +415,80 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     this.update();
   }
 
+  makeBackgroundDraft(data: MapBackground): ItemEditorData {
+    return Object.keys(data).map(key => [key, JSON.stringify((data as any)[key])] as ItemEditorDataEntry);
+  }
+
+  backgroundsEditHandler(index: number, field: string, value: string) {
+    const item = this.state.backgrounds[index];
+    const draft = this.state.backgroundDrafts[index];
+
+    const entry = draft.find(x => x[0] === field);
+    if (!entry)
+      throw new EditError("field does not exist");
+    entry[1] = value;
+    this.update();
+
+    let parsed: any = JSON.parse(value);
+    switch (field) {
+      case 'picture': {
+        if (typeof parsed !== 'string')
+          throw new EditError("picture name should be string");
+        break;
+      }
+      case 'opacity':
+        if (typeof parsed !== 'number')
+          throw new EditError("opacity should be number");
+        break;
+      case 'horizontal': case 'vertical':
+        if (!parsed || typeof parsed !== 'object')
+          throw new EditError(`${field} should be object`);
+        if (typeof parsed.repeat !== "boolean")
+          throw new EditError(`${field}.repeat should be boolean`);
+        if (parsed.repeat) {
+          if (typeof parsed.factor !== "number")
+            throw new EditError(`${field}.factor should be number`);
+          if (typeof parsed.offset !== "number")
+            throw new EditError(`${field}.offset should be number`);
+        } else {
+          if (typeof parsed.marginL !== "number")
+            throw new EditError(`${field}.marginL should be number`);
+          if (typeof parsed.marginR !== "number")
+            throw new EditError(`${field}.marginR should be number`);
+        }
+        break;
+    }
+
+    Object.assign(item, { [field]: parsed });
+    this.update();
+  }
+
+  backgroundAddHandler() {
+    const data: MapBackground = {
+      picture: "bg/",
+      opacity: 1,
+      horizontal: {
+        repeat: true,
+        factor: 0.5,
+        offset: 0
+      },
+      vertical: {
+        repeat: false,
+        marginL: 0,
+        marginR: 0
+      }
+    };
+    this.state.backgrounds.push(data);
+    this.state.backgroundDrafts.push(this.makeBackgroundDraft(data));
+    this.update();
+  }
+
+  backgroundRemoveHandler(index: number) {
+    this.state.backgrounds.splice(index, 1);
+    this.state.backgroundDrafts.splice(index, 1);
+    this.update();
+  }
+
   toggleDebugRender() {
     this.setState(({ mapCounter, debugRender }) => ({
       mapCounter: mapCounter + 1,
@@ -490,8 +572,29 @@ function Sidebar({ parent }: EditorChildProps) {
         }
       </div>
       {itemDraft &&
-        <ItemEditor data={itemDraft} onModify={parent.itemModifyHandler} />
+        <div>
+          <strong>Selected Item</strong>
+          <ItemEditor data={itemDraft} onModify={parent.itemModifyHandler} />
+        </div>
       }
+      <div>
+        <div>
+          <strong>Map Backgrounds</strong>&nbsp;
+          <button onClick={() => parent.backgroundAddHandler()}>Add</button>
+        </div>
+        <div>
+          {state.backgroundDrafts.map((draft, index) => (
+            <div key={index}>
+              <div>
+                <span>Background #{index + 1}</span>&nbsp;
+                <button onClick={() => parent.backgroundRemoveHandler(index)}>Remove</button>
+              </div>
+              <ItemEditor data={draft}
+                onModify={(field, value) => parent.backgroundsEditHandler(index, field, value)} />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

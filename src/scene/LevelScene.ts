@@ -15,6 +15,7 @@ import Subtitle from "./Subtitle";
 import EnemyArcher from "../model/enemy/Archer";
 import imgHealth from "../assets/hud/health.png";
 import { Texture, textureManager } from "../render/TextureManager";
+import Background from "./Background";
 
 let textureHealth: Texture;
 
@@ -41,6 +42,7 @@ export default class LevelScene extends Scene {
   player!: Player;
   entities!: Entity[];
   decorations!: Decoration[];
+  backgrounds!: Background[];
 
   camera!: Camera;
   subtitle!: Subtitle;
@@ -98,6 +100,7 @@ export default class LevelScene extends Scene {
     if (!this.player)
       throw new Error("player not found in map");
     this.decorations = map.decorations.map(data => new Decoration(data));
+    this.backgrounds = map.backgrounds.map(data => new Background(data));
 
     this.camera = new Camera(this);
     this.subtitle = new Subtitle(this);
@@ -228,7 +231,11 @@ export default class LevelScene extends Scene {
   }
 
   render(rctx: RendererContext) {
-    rctx.run(() => {
+    rctx.run(({ ctx }) => {
+      ctx.fillStyle = '#222';
+      ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
+      for (const background of this.backgrounds)
+        background.render(rctx, this);
       this.camera.render(rctx, () => {
         this.renderTerrain(rctx);
         for (const decoration of this.decorations)

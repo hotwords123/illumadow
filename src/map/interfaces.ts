@@ -28,6 +28,8 @@ export interface MapData {
   decorations: MapDecoration[];
   /** 触发器 */
   triggers: MapTrigger[];
+  /** 背景 */
+  backgrounds: MapBackground[];
 }
 
 /* ======== Terrain ======== */
@@ -104,4 +106,23 @@ export interface MapDecoration extends MapSprite {
 
 export interface MapTrigger {
   id: string;
+}
+
+/* ======== Background ======== */
+
+export interface MapBackground {
+  picture: string;
+  opacity: number;
+  horizontal: MapBackgroundAxis;
+  vertical: MapBackgroundAxis;
+}
+
+export type MapBackgroundAxis = {
+  repeat: true;
+  factor: number;
+  offset: number;
+} | {
+  repeat: false;
+  marginL: number;
+  marginR: number;
 }
