@@ -1,4 +1,4 @@
-import { AABB, Axis, Coord, Facing, Vector } from "../base/math";
+import { AABB, Axis, Coord, Facing, Side, Vector } from "../base/math";
 import { MapEntity, TERRAIN_SIZE } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import { TextureLike } from "../render/TextureManager";
@@ -6,19 +6,11 @@ import LevelScene from "../scene/LevelScene";
 import Model from "./Model";
 import { RenderInfo } from "./Sprite";
 
-export interface MobInit {
-  maxHealth: number;
-  health?: number;
-  invincible?: boolean;
-}
-
 export const GRAVITY = 0.2;
 
 /**
  * Entity:
  * - moveable
- * - has health
- * - can be hurt
  * - interacts with terrain
  */
 export default abstract class Entity extends Model {
@@ -33,59 +25,26 @@ export default abstract class Entity extends Model {
   /** ticks left when the impulse will apply */
   impulseTicks: number = 0;
 
-  maxHealth: number;
-  health: number;
-  invincible: boolean;
-
   /** ticks in air, used for jumping check */
   airTicks = 0;
-  /** hurt immune ticks */
-  immuneTicks = 0;
 
-  constructor(data: MapEntity, init: MobInit) {
+  constructor(data: MapEntity) {
     super(data);
 
     this.velocity = new Vector(0, 0);
     this.onGround = true;
 
     this.oldPosition = this.position;
-
-    this.maxHealth = init.maxHealth;
-    this.health = init.health ?? this.maxHealth;
-    this.invincible = init.invincible ?? false;
-  }
-
-  /* ======== Health ======== */
-
-  get dead() { return this.health <= 0; }
-
-  get hurtImmuneTicks() { return 0; }
-
-  damage(scene: LevelScene, amount: number, evenIfInvincible: boolean = false): boolean {
-    if (amount <= 0) return false;
-    if (this.dead) return false;
-    if (!evenIfInvincible && (this.invincible || this.immuneTicks > 0)) return false;
-    this.health -= amount;
-    if (this.dead) this.die(scene);
-    this.immuneTicks = this.hurtImmuneTicks;
-    return true;
-  }
-
-  cure(scene: LevelScene, amount: number) {
-    if (this.dead) return;
-    this.health += amount;
-    if (this.health > this.maxHealth)
-      this.health = this.maxHealth;
-  }
-
-  die(scene: LevelScene): void {
-    scene.deleteEntity(this);
   }
 
   /* ======== Movement ======== */
 
   abstract get collisionBox(): AABB;
-  get hurtBox() { return this.collisionBox; }
+
+  /**
+   * Whether movement of this entity should be affected by gravity.
+   */
+  get underGravity() { return true; }
 
   accelerate(facing: Facing, accel: number, maxSpeed: number) {
     const v = this.velocity;
@@ -109,11 +68,6 @@ export default abstract class Entity extends Model {
    * Performs movement and terrain interaction logic.
    */
   tick(scene: LevelScene) {
-    if (this.dead) return;
-
-    if (this.immuneTicks > 0)
-      this.immuneTicks--;
-
     this.move(scene);
     this.interactTerrains(scene);
 
@@ -171,10 +125,43 @@ export default abstract class Entity extends Model {
 
     // Map border
     const { collisionBox } = this;
-    this.position.x += Math.max(0, 0 - collisionBox.left);
-    this.position.x -= Math.max(0, collisionBox.right - scene.width);
-    if (this.position.y > scene.height)
-      this.damage(scene, Infinity, true);
+    if (collisionBox.left < 0)
+      this.triggerCrossBorder(scene, Side.left, collisionBox.left, collisionBox.right <= 0);
+    if (collisionBox.right > scene.width)
+      this.triggerCrossBorder(scene, Side.right, collisionBox.right - scene.width, collisionBox.left >= scene.width);
+    if (collisionBox.top < 0)
+      this.triggerCrossBorder(scene, Side.top, collisionBox.top, collisionBox.bottom <= 0);
+    if (collisionBox.bottom > scene.height)
+      this.triggerCrossBorder(scene, Side.bottom, collisionBox.bottom - scene.height, collisionBox.top >= scene.height);
+  }
+
+  private triggerCrossBorder(scene: LevelScene, side: Side, offset: number, fullOut: boolean) {
+    switch (this.onCrossBorder(scene, side, fullOut)) {
+      case EscapeBehaviour.block:
+        if (side === Side.left || side === Side.right)
+          this.position.x -= offset;
+        else
+          this.position.y -= offset;
+        break;
+
+      case EscapeBehaviour.delete:
+        if (fullOut)
+          scene.deleteEntity(this);
+        break;
+    }
+  }
+
+  /**
+   * Called when the entity crosses the border of the world.
+   * @param fullOut Whether the entity has completely moved out of the world
+   */
+  onCrossBorder(scene: LevelScene, side: Side, fullOut: boolean): EscapeBehaviour {
+    switch (side) {
+      case Side.top:
+        return EscapeBehaviour.none;
+      default:
+        return EscapeBehaviour.delete;
+    }
   }
 
   collideTerrains(scene: LevelScene, axis: Axis) {
@@ -216,74 +203,10 @@ export default abstract class Entity extends Model {
 }
 
 /**
- * Entity with facing (left or right).
- * 
- * This class functions as a middleware to deal with logic related to facing.
- * 
- * Note that all methods with names ended with 'R' should:
- * - Assume that the entity is facing right, and
- * - Return coordinates relative to `this.position`.
+ * The behaviour entity will follow when escaping the world border.
  */
-export abstract class EntityWithFacing extends Entity {
-  /** The facing of the entity. */
-  facing = Facing.right;
-
-  /**
-   * Flip coordinates if facing left.
-   * 
-   * Note that `vector` should be relative to `this.position`,
-   * and the coordinates returned will be absolute.
-   */
-  coordByFacing(vector: Vector) {
-    return this.position.plus2(this.facing === Facing.right ? vector.x : -vector.x, vector.y);
-  }
-  coordByFacing2(x: number, y: number) {
-    return this.position.plus2(this.facing === Facing.right ? x : -x, y);
-  }
-
-  /**
-   * Flip box if facing left.
-   * 
-   * Note that `box` should be relative to `this.position`,
-   * and the box returned will contain absolute coordinates.
-   */
-  boxByFacing(box: AABB) {
-    return (this.facing === Facing.right ? box : box.flipX(0)).offset(this.position);
-  }
-
-  get collisionBox() {
-    return this.boxByFacing(this.collisionBoxR);
-  }
-  /**
-   * Returns collision box of entity, assuming it is facing right.
-   */
-  abstract get collisionBoxR(): AABB;
-
-  get hurtBox() {
-    return this.boxByFacing(this.hurtBoxR);
-  }
-  get hurtBoxR(): AABB {
-    return this.collisionBoxR;
-  }
-
-  getRenderInfo() {
-    const info = this.getRenderInfoR();
-    if (!info) return null;
-    const flipped = this.facing === Facing.left;
-    return {
-      box: (flipped ? info.box.flipX(0) : info.box).offset(this.position.round()),
-      flipped,
-      texture: info.texture
-    };
-  }
-  /**
-   * Returns information used for rendering, assuming entity is facing right.
-   * Note that `box` should be **relative to** `this.position`.
-   */
-  abstract getRenderInfoR(): RenderInfoR | null;
-}
-
-export interface RenderInfoR {
-  box: AABB;
-  texture: TextureLike;
+export enum EscapeBehaviour {
+  /** do nothing */ none,
+  /** blocked by the border */ block,
+  /** deleted if completely out of scene */ delete
 }

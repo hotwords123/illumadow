@@ -1,10 +1,10 @@
 import { AABB } from "../../base/math";
 import { MapEntity } from "../../map/interfaces";
-import { EntityWithFacing } from "../Entity";
 import imgArcher from "../../assets/entity/archer.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
+import { MobWithFacing } from "../Mob";
 
 let textureArcher: Texture;
 
@@ -12,7 +12,7 @@ textureManager.loadTexture("entity/archer", imgArcher).then(texture => {
   textureArcher = texture;
 });
 
-export default class EnemyArcher extends EntityWithFacing {
+export default class EnemyArcher extends MobWithFacing {
   attackCooldown = 0;
   attackSpeed = 120;
 

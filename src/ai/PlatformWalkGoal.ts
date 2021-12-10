@@ -1,6 +1,7 @@
 import { Coord, Facing } from "../base/math";
 import { TERRAIN_SIZE } from "../map/interfaces";
-import Entity, { EntityWithFacing } from "../model/Entity";
+import Entity from "../model/Entity";
+import { MobWithFacing } from "../model/Mob";
 import { Terrain, TerrainBrick } from "../model/Terrain";
 import LevelScene from "../scene/LevelScene";
 
@@ -44,7 +45,7 @@ export default class PlatformWalkGoal {
     let deltaX = target.x - self.x;
 
     // Update facing
-    if (self instanceof EntityWithFacing)
+    if (self instanceof MobWithFacing)
       self.facing = deltaX > 0 ? Facing.right : Facing.left;
 
     // Check foothold

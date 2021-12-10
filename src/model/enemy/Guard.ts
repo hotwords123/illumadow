@@ -1,9 +1,9 @@
-import { AABB, Coord } from "../../base/math";
-import Entity from "../Entity";
 import imgGuard from "../../assets/entity/guard.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import { MapEntity } from "../../map/interfaces";
+import { MobWithFacing } from "../Mob";
+import { AABB } from "../../base/math";
 
 let textureGuard: Texture;
 
@@ -13,18 +13,18 @@ textureManager.loadTexture("entity/guard", imgGuard).then(texture => {
 
 const WALK_SPEED = 0.375;
 
-export default class EnemyGuard extends Entity {
+export default class EnemyGuard extends MobWithFacing {
   constructor(data: MapEntity) {
     super(data, { maxHealth: 20 });
   }
 
-  get collisionBox() {
-    return this.position.expand(3, 14, 3, 0);
+  get collisionBoxR() {
+    return new AABB(-3, -14, 3, 0);
   }
 
-  getRenderInfo() {
+  getRenderInfoR() {
     return {
-      box: this.position.round().expand(4, 14, 4, 0),
+      box: new AABB(-4, -14, 4, 0),
       texture: textureGuard
     };
   }

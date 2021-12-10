@@ -1,10 +1,11 @@
 import { AABB, Facing, Vector } from "../base/math";
 import { Texture, textureManager } from "../render/TextureManager";
-import Entity, { EntityWithFacing, GRAVITY } from "./Entity";
+import { GRAVITY } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
 import { MapEntityPlayer } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
+import Mob, { MobWithFacing } from "./Mob";
 
 let texturePlayer: Texture;
 
@@ -35,7 +36,7 @@ enum State {
   dash = 2,
 }
 
-export default class Player extends EntityWithFacing {
+export default class Player extends MobWithFacing {
   /** player state */
   state = State.walk;
 
@@ -172,10 +173,12 @@ export default class Player extends EntityWithFacing {
         [this.diveBoxLeft, this.diveBoxCenter, this.diveBoxRight][dir + 1]);
 
       for (const target of targets) {
-        if (target.damage(scene, this.meleeDamage)) {
-          hit = true;
-          target.velocity.y += DIVE_ATTACK_PUSH_Y;
-          target.setImpulse((dir - 0.25 + Math.random() * 0.5) * DIVE_ATTACK_PUSH_X, null, 4);
+        if (target instanceof Mob) {
+          if (target.damage(scene, this.meleeDamage)) {
+            hit = true;
+            target.velocity.y += DIVE_ATTACK_PUSH_Y;
+            target.setImpulse((dir - 0.25 + Math.random() * 0.5) * DIVE_ATTACK_PUSH_X, null, 4);
+          }
         }
       }
 
@@ -198,8 +201,10 @@ export default class Player extends EntityWithFacing {
       }
 
       for (const target of targets) {
-        if (target.damage(scene, this.meleeDamage)) {
-          target.knockback(this.position, this.facing, MELEE_KNOCKBACK);
+        if (target instanceof Mob) {
+          if (target.damage(scene, this.meleeDamage)) {
+            target.knockback(this.position, this.facing, MELEE_KNOCKBACK);
+          }
         }
       }
 
