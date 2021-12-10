@@ -89,10 +89,10 @@ export default class LevelScene extends Scene {
     this.entities = [];
     for (const data of map.entities) {
       const entity = this.createEntity(data);
-      if (entity instanceof Player) {
-        this.player = entity;
-      } else if (entity) {
+      if (entity) {
         this.entities.push(entity);
+        if (entity.isPlayer())
+          this.player = entity;
       }
     }
     if (!this.player)
@@ -129,6 +129,10 @@ export default class LevelScene extends Scene {
 
   getEntitiesInArea(box: AABB): Entity[] {
     return this.entities.filter(entity => box.intersects(entity.collisionBox));
+  }
+
+  addEntity(entity: Entity) {
+    this.entities.push(entity);
   }
 
   deleteEntity(entity: Entity) {
@@ -201,9 +205,6 @@ export default class LevelScene extends Scene {
           for (const cell of row)
             cell?.tick(this);
 
-        // Player
-        this.player.tick(this);
-
         // Entities
         for (const entity of this.entities)
           entity.tick(this);
@@ -230,10 +231,9 @@ export default class LevelScene extends Scene {
           decoration.render(rctx);
         for (const entity of this.entities)
           entity.render(rctx);
-        this.player.render(rctx);
       });
-      this.subtitle.render(rctx);
       this.renderHud(rctx);
+      this.subtitle.render(rctx);
       this.renderPauseMenu(rctx);
     });
   }
@@ -306,7 +306,8 @@ export default class LevelScene extends Scene {
       `${this.width}*${this.height} | ${this.map.width}*${this.map.height} ${this.map.id}`,
       `X: ${this.player.x.toFixed(1)} Y: ${this.player.y.toFixed(1)}`,
       `Camera: (${this.camera.offset.x.toFixed(0)}, ${this.camera.offset.y.toFixed(0)})`,
-      `Health: ${this.player.health}/${this.player.maxHealth} Immune: ${this.player.immuneTicks}`
+      `Health: ${this.player.health}/${this.player.maxHealth} Immune: ${this.player.immuneTicks}`,
+      `Entities: ${this.entities.length}`
     ];
   }
 }

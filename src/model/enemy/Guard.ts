@@ -2,8 +2,8 @@ import imgGuard from "../../assets/entity/guard.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import { MapEntity } from "../../map/interfaces";
-import { MobWithFacing } from "../Mob";
 import { AABB } from "../../base/math";
+import Mob from "../Mob";
 
 let textureGuard: Texture;
 
@@ -13,7 +13,7 @@ textureManager.loadTexture("entity/guard", imgGuard).then(texture => {
 
 const WALK_SPEED = 0.375;
 
-export default class EnemyGuard extends MobWithFacing {
+export default class EnemyGuard extends Mob {
   constructor(data: MapEntity) {
     super(data, { maxHealth: 20 });
   }

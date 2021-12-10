@@ -1,10 +1,12 @@
 import { AABB, Axis, Coord, Facing, Side, Vector } from "../base/math";
-import { MapEntity, TERRAIN_SIZE } from "../map/interfaces";
+import { MapEntity, MapEntityType, TERRAIN_SIZE } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import { TextureLike } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
+import Mob from "./Mob";
 import Model from "./Model";
-import { RenderInfo } from "./Sprite";
+import Player from "./Player";
+import Projectile from "./projectile";
 
 export const GRAVITY = 0.2;
 
@@ -12,12 +14,26 @@ export const GRAVITY = 0.2;
  * Entity:
  * - moveable
  * - interacts with terrain
+ * - has facing (left or right).
+ *
+ * Note that all methods with names ended with 'R' should:
+ * - Assume that the entity is facing right, and
+ * - Return coordinates relative to `this.position`.
  */
 export default abstract class Entity extends Model {
+  type: MapEntityType;
+
   velocity: Vector;
   oldPosition: Coord;
   oldCollisionBox!: AABB;
+
+  /** The facing of the entity. */
+  facing = Facing.right;
+
+  /** whether the entity is standing on solid ground */
   onGround: boolean;
+  /** ticks in air, used for jumping check */
+  airTicks = 0;
 
   /** impulse applied to the entity, will override velocity in a few ticks */
   impulseX: number | null = null;
@@ -25,11 +41,10 @@ export default abstract class Entity extends Model {
   /** ticks left when the impulse will apply */
   impulseTicks: number = 0;
 
-  /** ticks in air, used for jumping check */
-  airTicks = 0;
-
   constructor(data: MapEntity) {
     super(data);
+
+    this.type = data.type;
 
     this.velocity = new Vector(0, 0);
     this.onGround = true;
@@ -37,9 +52,60 @@ export default abstract class Entity extends Model {
     this.oldPosition = this.position;
   }
 
-  /* ======== Movement ======== */
+  /* ======== Basic ======== */
 
-  abstract get collisionBox(): AABB;
+  isMob(): this is Mob { return false; }
+  isPlayer(): this is Player { return false; }
+  isProjectile(): this is Projectile { return false; }
+
+  /**
+   * Flip coordinates if facing left.
+   *
+   * Note that `vector` should be relative to `this.position`,
+   * and the coordinates returned will be absolute.
+   */
+  coordByFacing(vector: Vector) {
+    return this.position.plus2(this.facing === Facing.right ? vector.x : -vector.x, vector.y);
+  }
+  coordByFacing2(x: number, y: number) {
+    return this.position.plus2(this.facing === Facing.right ? x : -x, y);
+  }
+
+  /**
+   * Flip box if facing left.
+   *
+   * Note that `box` should be relative to `this.position`,
+   * and the box returned will contain absolute coordinates.
+   */
+  boxByFacing(box: AABB) {
+    return (this.facing === Facing.right ? box : box.flipX(0)).offset(this.position);
+  }
+
+  get collisionBox() {
+    return this.boxByFacing(this.collisionBoxR);
+  }
+  /**
+   * Returns collision box of entity, assuming it is facing right.
+   */
+  abstract get collisionBoxR(): AABB;
+
+  getRenderInfo() {
+    const info = this.getRenderInfoR();
+    if (!info) return null;
+    const flipped = this.facing === Facing.left;
+    return {
+      box: (flipped ? info.box.flipX(0) : info.box).offset(this.position.round()),
+      flipped,
+      texture: info.texture
+    };
+  }
+  /**
+   * Returns information used for rendering, assuming entity is facing right.
+   * Note that `box` should be **relative to** `this.position`.
+   */
+  abstract getRenderInfoR(): RenderInfoR | null;
+
+  /* ======== Movement ======== */
 
   /**
    * Whether movement of this entity should be affected by gravity.
@@ -48,9 +114,9 @@ export default abstract class Entity extends Model {
 
   accelerate(facing: Facing, accel: number, maxSpeed: number) {
     const v = this.velocity;
-    if (facing === Facing.right && v.x < maxSpeed) 
+    if (facing === Facing.right && v.x < maxSpeed)
       v.x = Math.min(maxSpeed, v.x + accel);
-    if (facing === Facing.left && v.x > -maxSpeed) 
+    if (facing === Facing.left && v.x > -maxSpeed)
       v.x = Math.max(-maxSpeed, v.x - accel);
   }
 
@@ -60,6 +126,22 @@ export default abstract class Entity extends Model {
       v.x = Math.max(0, v.x - friction);
     if (v.x < 0)
       v.x = Math.min(0, v.x + friction);
+  }
+
+  setImpulse(impulseX: number | null, impulseY: number | null, ticks: number) {
+    this.impulseX = impulseX;
+    this.impulseY = impulseY;
+    this.impulseTicks = ticks;
+  }
+
+  knockback(source: Coord, facing: Facing, speed: number, ticks: number = 4) {
+    let deltaY = this.collisionBox.bottom - source.y;
+    let impulseY = deltaY <= 1 ? -0.5 : deltaY >= 3 ? 0.5 : 0;
+    impulseY += Math.random() * 0.2 - 0.1;
+    let impulseX = (facing === Facing.right ? 1 : -1) * Math.sqrt(1 - impulseY ** 2);
+
+    speed = speed * (0.8 + Math.random() * 0.4);
+    this.setImpulse(speed * impulseX, speed * impulseY, ticks);
   }
 
   /* ======== Logic ======== */
@@ -75,24 +157,9 @@ export default abstract class Entity extends Model {
       this.airTicks = 0;
     } else {
       this.airTicks++;
-      this.velocity.y += GRAVITY;
+      if (this.underGravity)
+        this.velocity.y += GRAVITY;
     }
-  }
-
-  knockback(source: Coord, facing: Facing, speed: number, ticks: number = 4) {
-    let deltaY = this.collisionBox.bottom - source.y;
-    let impulseY = deltaY <= 1 ? -0.5 : deltaY >= 3 ? 0.5 : 0;
-    impulseY += Math.random() * 0.2 - 0.1;
-    let impulseX = (facing === Facing.right ? 1 : -1) * Math.sqrt(1 - impulseY ** 2);
-
-    speed = speed * (0.8 + Math.random() * 0.4);
-    this.setImpulse(speed * impulseX, speed * impulseY, ticks);
-  }
-
-  setImpulse(impulseX: number | null, impulseY: number | null, ticks: number) {
-    this.impulseX = impulseX;
-    this.impulseY = impulseY;
-    this.impulseTicks = ticks;
   }
 
   /**
@@ -156,12 +223,7 @@ export default abstract class Entity extends Model {
    * @param fullOut Whether the entity has completely moved out of the world
    */
   onCrossBorder(scene: LevelScene, side: Side, fullOut: boolean): EscapeBehaviour {
-    switch (side) {
-      case Side.top:
-        return EscapeBehaviour.none;
-      default:
-        return EscapeBehaviour.delete;
-    }
+    return EscapeBehaviour.none;
   }
 
   collideTerrains(scene: LevelScene, axis: Axis) {
@@ -200,6 +262,11 @@ export default abstract class Entity extends Model {
       });
     }
   }
+}
+
+export interface RenderInfoR {
+  box: AABB;
+  texture: TextureLike;
 }
 
 /**

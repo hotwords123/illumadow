@@ -72,12 +72,16 @@ export interface MapTerrainWater extends MapTerrain {
 /* ======== Entity ======== */
 
 export enum MapEntityType {
+  /** Mob */
   player = "player",
   scout = "scout",
   guard = "guard",
   archer = "archer",
   wizard = "wizard",
-  boss = "boss"
+  boss = "boss",
+
+  /** Projectile */
+  arrow = "arrow",
 }
 
 export interface MapEntity extends MapSprite {
