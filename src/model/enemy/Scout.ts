@@ -1,4 +1,4 @@
-import { AABB, Coord, Facing } from "../../base";
+import { AABB, Coord, Facing } from "../../base/math";
 import Entity, { EntityWithFacing } from "../Entity";
 import imgScout from "../../assets/entity/scout.png";
 import { Texture, textureManager } from "../../render/TextureManager";

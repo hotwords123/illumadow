@@ -1,4 +1,4 @@
-import { AABB, Coord, Vector } from "../base";
+import { AABB, Coord, Vector } from "../base/math";
 import Scene, { SCENE_HEIGHT, SCENE_WIDTH } from "./Scene";
 import Entity from "../model/Entity";
 import Player from "../model/Player";

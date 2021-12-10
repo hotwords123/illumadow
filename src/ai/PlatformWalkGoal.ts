@@ -1,4 +1,4 @@
-import { Coord, Facing } from "../base";
+import { Coord, Facing } from "../base/math";
 import { TERRAIN_SIZE } from "../map/interfaces";
 import Entity, { EntityWithFacing } from "../model/Entity";
 import { Terrain, TerrainBrick } from "../model/Terrain";

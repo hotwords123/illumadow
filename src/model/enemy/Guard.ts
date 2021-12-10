@@ -1,4 +1,4 @@
-import { AABB, Coord } from "../../base";
+import { AABB, Coord } from "../../base/math";
 import Entity from "../Entity";
 import imgGuard from "../../assets/entity/guard.png";
 import { Texture, textureManager } from "../../render/TextureManager";

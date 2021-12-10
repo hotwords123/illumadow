@@ -1,5 +1,5 @@
 
-import { AABB, Coord, Vector, Facing } from "../base";
+import { AABB, Coord, Vector, Facing } from "../base/math";
 import { RendererContext } from "../render/Renderer";
 import LevelScene from "./LevelScene";
 import { SCENE_WIDTH, SCENE_HEIGHT } from "./Scene";

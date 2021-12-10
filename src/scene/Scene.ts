@@ -1,4 +1,4 @@
-import { Dimension } from "../base";
+import { Dimension } from "../base/math";
 import GameManager from "../GameManager";
 import { Drawable, RendererContext } from "../render/Renderer";
 

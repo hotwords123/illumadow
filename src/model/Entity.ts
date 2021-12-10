@@ -1,4 +1,4 @@
-import { AABB, Axis, Coord, Facing, Vector } from "../base";
+import { AABB, Axis, Coord, Facing, Vector } from "../base/math";
 import { MapEntity, TERRAIN_SIZE } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import { TextureLike } from "../render/TextureManager";

@@ -1,4 +1,4 @@
-import { AABB, Facing, Vector } from "../base";
+import { AABB, Facing, Vector } from "../base/math";
 import { Texture, textureManager } from "../render/TextureManager";
 import Entity, { EntityWithFacing, GRAVITY } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";

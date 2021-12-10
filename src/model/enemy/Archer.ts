@@ -1,4 +1,4 @@
-import { AABB } from "../../base";
+import { AABB } from "../../base/math";
 import { MapEntity } from "../../map/interfaces";
 import { EntityWithFacing } from "../Entity";
 import imgArcher from "../../assets/entity/archer.png";
