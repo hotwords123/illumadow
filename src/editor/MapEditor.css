@@ -45,6 +45,7 @@
   grid-area: sidebar;
   padding: 5px 10px;
   background-color: #e3f2f7;
+  overflow-y: scroll;
 }
 
 .MapEditor.dock-l .Sidebar {
