@@ -16,12 +16,12 @@ textureManager.loadTextures([
   ], TERRAIN_SIZE, TERRAIN_SIZE);
 });
 
-interface DecorationVariant {
+interface DecorationVariantMeta {
   texture: string;
   box: [number, number, number, number];
 }
 
-const VARIANTS = new Map<string, DecorationVariant>([
+const VARIANTS = new Map<string, DecorationVariantMeta>([
   ["trunk", { texture: "tree:trunk", box: [4, 4, 4, 4] }],
   ["trunk-branch-l", { texture: "tree:trunk-branch-l", box: [4, 4, 4, 4] }],
   ["trunk-branch-r", { texture: "tree:trunk-branch-r", box: [4, 4, 4, 4] }],
@@ -32,7 +32,7 @@ const VARIANTS = new Map<string, DecorationVariant>([
 
 export default class Decoration extends Model {
   variant: string;
-  variantMeta: DecorationVariant | null = null;
+  variantMeta: DecorationVariantMeta | null = null;
   texture: TextureLike | null = null;
 
   constructor({ variant, ...data }: MapDecoration) {
