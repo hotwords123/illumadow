@@ -53,10 +53,16 @@ export default abstract class Mob extends Entity {
   damage(scene: LevelScene, amount: number, evenIfInvincible: boolean = false): boolean {
     if (amount <= 0) return false;
     if (this.dead) return false;
-    if (!evenIfInvincible && (this.invincible || this.immuneTicks > 0)) return false;
+    if (!evenIfInvincible && (this.invincible || this.immuneTicks > 0))
+      return false;
+
     this.health -= amount;
+    if (this.health < 0)
+      this.health = 0;
+
     this.onDamage(scene, amount);
     if (this.dead) this.die(scene);
+
     this.immuneTicks = this.hurtImmuneTicks;
     return true;
   }
@@ -90,7 +96,7 @@ export default abstract class Mob extends Entity {
       case Side.left: case Side.right:
         return EscapeBehaviour.block;
       case Side.bottom:
-        if (fullOut) this.die(scene);
+        if (fullOut) this.damage(scene, Infinity, true);
         return EscapeBehaviour.none;
     }
   }
