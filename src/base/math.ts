@@ -60,6 +60,12 @@ export class Coord {
     this.y += vector.y;
   }
 
+  /** operator -= */
+  setMinus(vector: Vector) {
+    this.x -= vector.x;
+    this.y -= vector.y;
+  }
+
   expand(left: number, top: number, right: number = left, bottom: number = top) {
     return new AABB(
       this.x - left, this.y - top,
@@ -104,6 +110,10 @@ export class Vector {
   set(vector: Vector) {
     this.x = vector.x;
     this.y = vector.y;
+  }
+
+  reset() {
+    this.x = this.y = 0;
   }
 
   clone() { return new Vector(this.x, this.y); }

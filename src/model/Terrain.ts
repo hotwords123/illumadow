@@ -232,9 +232,7 @@ export class TerrainSpikes extends HarmingTerrain {
 
   onHurtEntity(scene: LevelScene, entity: Entity) {
     if (entity.isPlayer()) {
-      if (entity.damage(scene, 1, this)) {
-        entity.respawn(scene);
-      }
+      entity.damage(scene, 1, this);
     } else if (entity.isMob()) {
       entity.damage(scene, Infinity, this);
     } else if (entity.isProjectile()) {
@@ -254,9 +252,7 @@ export class TerrainWater extends HarmingTerrain {
 
   onHurtEntity(scene: LevelScene, entity: Entity) {
     if (entity.isPlayer()) {
-      if (entity.damage(scene, 1, this)) {
-        entity.respawn(scene);
-      }
+      entity.damage(scene, 1, this);
     } else if (entity.isMob()) {
       entity.damage(scene, Infinity, this);
     } else if (entity.isProjectile()) {

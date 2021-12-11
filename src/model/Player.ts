@@ -55,8 +55,7 @@ export default class Player extends Mob {
 
   meleeCooldown = 0;
 
-  /** whether the player is respawning */
-  respawning = false;
+  outOfControlTicks = 0;
 
   constructor({ health, maxHealth, ...data }: MapEntityPlayer) {
     super(data, { health, maxHealth });
@@ -124,43 +123,47 @@ export default class Player extends Mob {
   tick(scene: LevelScene) {
     if (this.dead) return;
 
-    // Move
-    const movement = this.getMovement(scene);
-    if (movement !== 0)
-      this.facing = movement > 0 ? Facing.right : Facing.left;
-
-    const
-      maxSpeed = this.onGround ? MAX_GROUND_SPEED : MAX_AIR_SPEED,
-      acceleration = this.onGround ? GROUND_ACCELERATION : AIR_ACCELERATION;
-
-    const { velocity } = this;
-
     this.applyFriction(this.onGround ? GROUND_FRICTION : AIR_FRICTION);
 
-    if (movement !== 0)
-      this.accelerate(movement > 0 ? Facing.right : Facing.left, acceleration, maxSpeed);
-
-    // Jump
-    if (this.airTicks <= 3 && this.jumpPressedAt === scene.ticks) {
-      velocity.y = movement === 0 ? -JUMP_SPEED_Y_UP : -JUMP_SPEED_Y_SIDE;
-      if (movement > 0)
-        velocity.x = JUMP_SPEED_X;
-      if (movement < 0)
-        velocity.x = -JUMP_SPEED_X;
-      this.jumpedAt = scene.ticks;
-    }
-
-    const ticksAfterJumped = scene.ticks - this.jumpPressedAt;
-    if (ticksAfterJumped >= 6 && ticksAfterJumped <= 12 && this.jumpReleasedAt < this.jumpPressedAt) {
-      this.velocity.y -= GRAVITY;
-    }
-
-    // Melee attack
-    if (scene.ticks === this.meleePressedAt && this.meleeCooldown === 0) {
-      this.meleeAttack(scene);
+    if (this.outOfControlTicks > 0) {
+      this.outOfControlTicks--;
     } else {
-      if (this.meleeCooldown > 0)
-        this.meleeCooldown--;
+      // Move
+      const movement = this.getMovement(scene);
+      if (movement !== 0)
+        this.facing = movement > 0 ? Facing.right : Facing.left;
+  
+      const
+        maxSpeed = this.onGround ? MAX_GROUND_SPEED : MAX_AIR_SPEED,
+        acceleration = this.onGround ? GROUND_ACCELERATION : AIR_ACCELERATION;
+  
+      const { velocity } = this;
+  
+      if (movement !== 0)
+        this.accelerate(movement > 0 ? Facing.right : Facing.left, acceleration, maxSpeed);
+  
+      // Jump
+      if (this.airTicks <= 3 && this.jumpPressedAt === scene.ticks) {
+        velocity.y = movement === 0 ? -JUMP_SPEED_Y_UP : -JUMP_SPEED_Y_SIDE;
+        if (movement > 0)
+          velocity.x = JUMP_SPEED_X;
+        if (movement < 0)
+          velocity.x = -JUMP_SPEED_X;
+        this.jumpedAt = scene.ticks;
+      }
+  
+      const ticksAfterJumped = scene.ticks - this.jumpPressedAt;
+      if (ticksAfterJumped >= 6 && ticksAfterJumped <= 12 && this.jumpReleasedAt < this.jumpPressedAt) {
+        this.velocity.y -= GRAVITY;
+      }
+  
+      // Melee attack
+      if (scene.ticks === this.meleePressedAt && this.meleeCooldown === 0) {
+        this.meleeAttack(scene);
+      } else {
+        if (this.meleeCooldown > 0)
+          this.meleeCooldown--;
+      }
     }
 
     this.velocity.y = Math.min(MAX_FALL_SPEED, this.velocity.y);
@@ -230,14 +233,19 @@ export default class Player extends Mob {
   onDamage(scene: LevelScene, amount: number, source: DamageSource) {
     // Respawn on certain circumstances if not fatal
     if (!this.dead) {
-      if (source instanceof Terrain) {
-        this.respawn(scene);
+      if (!source || source instanceof Terrain) {
+        scene.onPlayerRespawn();
       }
     }
   }
 
   respawn(scene: LevelScene) {
-    //
+    this.position = scene.spawnPoint.clone();
+    this.immuneTicks = this.hurtImmuneTicks;
+    this.facing = Facing.right;
+    this.velocity.reset();
+    this.impulseTicks = 0;
+    this.outOfControlTicks = 30;
   }
 
   die(scene: LevelScene) {
