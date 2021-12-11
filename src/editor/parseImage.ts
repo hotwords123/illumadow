@@ -301,7 +301,9 @@ function parseImage(img: HTMLImageElement, name: string): MapData {
     entities: [],
     decorations: mapDecorations,
     triggers: [],
-    backgrounds: []
+    backgrounds: [],
+    killBoxes: [],
+    spawnPoints: []
   };
 
   console.log(map);

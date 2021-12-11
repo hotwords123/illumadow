@@ -218,3 +218,15 @@
   height: 30px;
   background-color: #8a3ec9;
 }
+
+.Container .sprite.killBox:before {
+  background-color: #9c0000;
+}
+
+.Container .sprite.killBox {
+  background-color: #c9473e;
+}
+
+.Container .sprite.spawnPoint:before {
+  background-color: #5e009c;
+}

@@ -30,6 +30,10 @@ export interface MapData {
   triggers: MapTrigger[];
   /** 背景 */
   backgrounds: MapBackground[];
+  /** 禁区 */
+  killBoxes: MapKillBox[];
+  /** 重生点 */
+  spawnPoints: MapSpawnPoint[];
 }
 
 /* ======== Terrain ======== */
@@ -125,4 +129,16 @@ export type MapBackgroundAxis = {
   repeat: false;
   marginL: number;
   marginR: number;
+}
+
+/* ======== Kill Box ======== */
+
+export interface MapKillBox extends MapSprite {
+  width: number;
+  height: number;
+}
+
+/* ======== Spawn Point ======== */
+
+export interface MapSpawnPoint extends MapSprite {
 }

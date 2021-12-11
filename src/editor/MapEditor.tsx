@@ -1,6 +1,6 @@
 import React from 'react';
 import { AABB, Coord } from '../base/math';
-import { MapBackground, MapData, MapDecoration, MapEntity, MapEntityType, MapSprite, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
+import { MapBackground, MapData, MapDecoration, MapEntity, MapEntityType, MapKillBox, MapSpawnPoint, MapSprite, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
 import ItemEditor, { EditError, ItemEditorData, ItemEditorDataEntry } from './ItemEditor';
 import './MapEditor.css';
 import parseImage from './parseImage';
@@ -10,7 +10,7 @@ import TerrainCanvas from './TerrainCanvas';
 
 type MapItem = {
   id: number;
-  category: 'entity' | 'decoration';
+  category: 'entity' | 'decoration' | 'killBox' | 'spawnPoint';
   item: MapSprite;
 }
 
@@ -19,6 +19,10 @@ type MapItemType = {
   type: MapEntityType
 } | {
   category: 'decoration';
+} | {
+  category: 'killBox';
+} | {
+  category: 'spawnPoint';
 };
 
 const ENTITY_TEMPLATES = new Map([
@@ -37,6 +41,8 @@ const ENTITY_TYPES: MapEntityType[] = [...ENTITY_TEMPLATES.keys()];
 
 const TOOLS: MapItemType[] = [
   { category: 'decoration' },
+  { category: 'killBox' },
+  { category: 'spawnPoint' },
   ...ENTITY_TYPES.map(type => ({ category: 'entity', type } as MapItemType))
 ];
 
@@ -149,6 +155,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
           try {
             const data = JSON.parse(reader.result as string) as MapData;
             data.backgrounds = data.backgrounds ?? [];
+            data.killBoxes = data.killBoxes ?? [];
+            data.spawnPoints = data.spawnPoints ?? [];
             this.loadMap(data);
           } catch (err: any) {
             console.error(err);
@@ -200,7 +208,9 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       entities: items.filter(x => x.category === 'entity').map(x => x.item as MapEntity),
       decorations: items.filter(x => x.category === 'decoration').map(x => x.item as MapDecoration),
       triggers: [],
-      backgrounds: backgrounds
+      backgrounds: backgrounds,
+      killBoxes: items.filter(x => x.category === 'killBox').map(x => x.item as MapKillBox),
+      spawnPoints: items.filter(x => x.category === 'spawnPoint').map(x => x.item as MapSpawnPoint)
     };
   }
 
@@ -266,7 +276,18 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
 
   getItemsInRect(rect: AABB) {
     const { items, pxAtom } = this.state;
-    return items.filter(({ item }) => new Coord(item.x * pxAtom, item.y * pxAtom).inside(rect));
+    return items.filter(({ category, item }) => {
+      switch (category) {
+        case 'killBox': {
+          const killBox = item as MapKillBox;
+          return AABB.offset(killBox.x, killBox.y, killBox.width, killBox.height).inside(rect);
+        }
+        default: {
+          const sprite = item as MapSprite;
+          return new Coord(sprite.x * pxAtom, sprite.y * pxAtom).inside(rect);
+        }
+      }
+    });
   }
 
   keyHandler(evt: KeyboardEvent) {
@@ -292,7 +313,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         break;
       }
       case '1': case '2': case '3': case '4': case '5':
-      case '6': case '7': {
+      case '6': case '7': case '8': case '9': {
         this.switchTool(TOOLS[parseInt(evt.key) - 1]);
         break;
       }
@@ -326,6 +347,15 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         return this.createItem('decoration', {
           tags: [], x, y,
           variant: ''
+        });
+      case 'killBox':
+        return this.createItem('killBox', {
+          tags: [], x, y,
+          width: 8, height: 8
+        });
+      case 'spawnPoint':
+        return this.createItem('spawnPoint', {
+          tags: [], x, y
         });
       default:
         return null;
@@ -531,6 +561,14 @@ function Toolbar({ parent }: EditorChildProps) {
         className={tool.category === "decoration" ? "tool selected" : "tool"}
         onClick={() => parent.switchTool({ category: 'decoration' })}
       >decoration</button>
+      <button
+        className={tool.category === "killBox" ? "tool selected" : "tool"}
+        onClick={() => parent.switchTool({ category: 'killBox' })}
+      >killBox</button>
+      <button
+        className={tool.category === "spawnPoint" ? "tool selected" : "tool"}
+        onClick={() => parent.switchTool({ category: 'spawnPoint' })}
+      >spawnPoint</button>
       {ENTITY_TYPES.map(type => {
         const classList = ["tool"];
         if (tool.category === "entity" && tool.type === type)
@@ -567,6 +605,8 @@ function Sidebar({ parent }: EditorChildProps) {
         <div>Scene: {state.width} x {state.height}</div>
         <div>Entities: {state.items.filter(x => x.category === 'entity').length}</div>
         <div>Decorations: {state.items.filter(x => x.category === 'decoration').length}</div>
+        <div>Kill Boxes: {state.items.filter(x => x.category === 'killBox').length}</div>
+        <div>Spawn Points: {state.items.filter(x => x.category === 'spawnPoint').length}</div>
         {selectedItems.length > 0 &&
           <div>Selected: {`${selectedItems.length} ${selectedItems.length > 1 ? 'items' : 'item'}`}</div>
         }
@@ -636,12 +676,12 @@ function Container({ parent, refMain }: ContainerProps) {
             style: {
               left: PX(item.x),
               top: PX(item.y),
-              '--label': ''
+              '--label': '""'
             },
             onMouseDown: handler,
             onMouseUp: handler,
             onMouseMove: handler
-          };
+          } as any;
           const classList = ['sprite'];
           if (selectedItems.includes(mapItem))
             classList.push('selected');
@@ -652,11 +692,28 @@ function Container({ parent, refMain }: ContainerProps) {
               props.style['--label'] = `"${type}"`;
               break;
             }
-            case 'decoration':
+
+            case 'decoration': {
               const { variant } = item as MapDecoration;
               classList.push('decoration', variant);
               props.style['--label'] = `"${variant}"`;
               break;
+            }
+
+            case 'killBox': {
+              const { width, height } = item as MapKillBox;
+              classList.push('killBox');
+              props.style['--label'] = '"kill box"';
+              props.style.width = PX(width);
+              props.style.height = PX(height);
+              break;
+            }
+
+            case 'spawnPoint': {
+              classList.push('spawnPoint');
+              props.style['--label'] = '"spawn point"';
+              break;
+            }
           }
           console.info(props);
           return (
