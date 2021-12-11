@@ -5,7 +5,8 @@ import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
 import { MapEntityPlayer, MapEntityType } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
-import Mob from "./Mob";
+import Mob, { DamageSource } from "./Mob";
+import { Terrain } from "./Terrain";
 
 let texturePlayer: Texture;
 
@@ -186,7 +187,7 @@ export default class Player extends Mob {
 
       for (const target of targets) {
         if (target.isMob() && target.isEnemy()) {
-          if (target.damage(scene, this.meleeDamage)) {
+          if (target.damage(scene, this.meleeDamage, this)) {
             hit = true;
             target.velocity.y += DIVE_ATTACK_PUSH_Y;
             target.setImpulse((dir - 0.25 + Math.random() * 0.5) * DIVE_ATTACK_PUSH_X, null, 4);
@@ -214,7 +215,7 @@ export default class Player extends Mob {
 
       for (const target of targets) {
         if (target.isMob()) {
-          if (target.damage(scene, this.meleeDamage)) {
+          if (target.damage(scene, this.meleeDamage, this)) {
             target.knockback(this.position, this.facing, MELEE_KNOCKBACK);
           }
         } else if (target.isProjectile()) {
@@ -224,6 +225,19 @@ export default class Player extends Mob {
 
       this.meleeCooldown = this.meleeSpeed;
     }
+  }
+
+  onDamage(scene: LevelScene, amount: number, source: DamageSource) {
+    // Respawn on certain circumstances if not fatal
+    if (!this.dead) {
+      if (source instanceof Terrain) {
+        this.respawn(scene);
+      }
+    }
+  }
+
+  respawn(scene: LevelScene) {
+    //
   }
 
   die(scene: LevelScene) {

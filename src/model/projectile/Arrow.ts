@@ -52,7 +52,7 @@ export default class Arrow extends Projectile {
   onHitMob(scene: LevelScene, mob: Mob) {
     if (this.stoppedTicks >= 0)
       return false;
-    if (mob.isPlayer() && mob.damage(scene, this.power)) {
+    if (mob.isPlayer() && mob.damage(scene, this.power, this)) {
       mob.knockback(this.position.plus2(0, 8), this.facing, 3, 3);
       return true;
     }

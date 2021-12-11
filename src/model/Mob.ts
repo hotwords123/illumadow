@@ -2,6 +2,7 @@ import { AABB, Coord, Facing, Side, Vector } from "../base/math";
 import { MapEntity, MapEntityType } from "../map/interfaces";
 import LevelScene from "../scene/LevelScene";
 import Entity, { EscapeBehaviour } from "./Entity";
+import { Terrain } from "./Terrain";
 
 export interface MobInit {
   maxHealth: number;
@@ -50,7 +51,7 @@ export default abstract class Mob extends Entity {
   */
   get hurtImmuneTicks() { return 0; }
 
-  damage(scene: LevelScene, amount: number, evenIfInvincible: boolean = false): boolean {
+  damage(scene: LevelScene, amount: number, source: DamageSource, evenIfInvincible: boolean = false): boolean {
     if (amount <= 0) return false;
     if (this.dead) return false;
     if (!evenIfInvincible && (this.invincible || this.immuneTicks > 0))
@@ -60,14 +61,14 @@ export default abstract class Mob extends Entity {
     if (this.health < 0)
       this.health = 0;
 
-    this.onDamage(scene, amount);
-    if (this.dead) this.die(scene);
+    this.onDamage(scene, amount, source);
+    if (this.dead) this.die(scene, source);
 
     this.immuneTicks = this.hurtImmuneTicks;
     return true;
   }
 
-  onDamage(scene: LevelScene, amount: number): void {}
+  onDamage(scene: LevelScene, amount: number, source: DamageSource): void {}
 
   cure(scene: LevelScene, amount: number) {
     if (this.dead) return;
@@ -76,7 +77,7 @@ export default abstract class Mob extends Entity {
       this.health = this.maxHealth;
   }
 
-  die(scene: LevelScene): void {
+  die(scene: LevelScene, source: DamageSource): void {
     scene.deleteEntity(this);
   }
 
@@ -96,8 +97,10 @@ export default abstract class Mob extends Entity {
       case Side.left: case Side.right:
         return EscapeBehaviour.block;
       case Side.bottom:
-        if (fullOut) this.damage(scene, Infinity, true);
+        if (fullOut) this.damage(scene, Infinity, null, true);
         return EscapeBehaviour.none;
     }
   }
 }
+
+export type DamageSource = Terrain | Entity | null;

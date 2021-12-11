@@ -180,20 +180,20 @@ abstract class HarmingTerrain extends Terrain {
   abstract get hurtBox(): AABB | null;
 
   /**
-   * Returns the amount of damage entity will take if it touches `hurtBox`.
+   * Called when the `collisionBox` of an Entity touches `hurtBox`.
    */
-  abstract hurtMobAmount(mob: Mob): number;
+  abstract onHurtEntity(scene: LevelScene, entity: Entity): void;
 
   /**
    * Will hurt the entity if it touches `hurtBox`.
    */
   interactEntity(scene: LevelScene, entity: Entity) {
     if (entity.isMob()) {
-      const amount = this.hurtMobAmount(entity);
-      if (amount > 0 && this.hurtBox?.intersects(entity.hurtBox))
-      entity.damage(scene, amount);
+      if (this.hurtBox?.intersects(entity.hurtBox))
+        this.onHurtEntity(scene, entity);
     } else if (entity.isProjectile()) {
-      entity.destroy(scene);
+      if (this.hurtBox?.intersects(entity.collisionBox))
+        this.onHurtEntity(scene, entity);
     }
   }
 
@@ -230,11 +230,16 @@ export class TerrainSpikes extends HarmingTerrain {
     }
   }
 
-  hurtMobAmount(mob: Mob) {
-    if (mob.isPlayer())
-      return 1;
-    else
-      return Infinity;
+  onHurtEntity(scene: LevelScene, entity: Entity) {
+    if (entity.isPlayer()) {
+      if (entity.damage(scene, 1, this)) {
+        entity.respawn(scene);
+      }
+    } else if (entity.isMob()) {
+      entity.damage(scene, Infinity, this);
+    } else if (entity.isProjectile()) {
+      entity.destroy(scene);
+    }
   }
 }
 
@@ -247,11 +252,16 @@ export class TerrainWater extends HarmingTerrain {
     return this.center.expand(4, this.surface ? 2 : 4, 4, 4);
   }
 
-  hurtMobAmount(mob: Mob) {
-    if (mob.isPlayer())
-      return 1;
-    else
-      return Infinity;
+  onHurtEntity(scene: LevelScene, entity: Entity) {
+    if (entity.isPlayer()) {
+      if (entity.damage(scene, 1, this)) {
+        entity.respawn(scene);
+      }
+    } else if (entity.isMob()) {
+      entity.damage(scene, Infinity, this);
+    } else if (entity.isProjectile()) {
+      entity.destroy(scene);
+    }
   }
 }
 
