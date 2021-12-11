@@ -14,7 +14,7 @@ class TextureManager {
       const img = new Image();
       img.src = path;
       img.onload = () => {
-        const texture = new Texture(img);
+        const texture = new Texture(img, name);
         this.textures.set(name, texture);
         resolve(texture);
       };
@@ -32,10 +32,11 @@ class TextureManager {
     return Promise.all(this.tasks).then(() => {});
   }
 
-  get(name: string): TextureLike | null {
+  get(name: string): TextureLike {
     const [textureName, clipName] = name.split(':');
     const texture = this.textures.get(textureName);
-    if (!texture) return null;
+    if (!texture)
+      throw new Error(`texture not found: "${name}"`);
     return clipName ? texture.getClip(clipName) : texture;
   }
 }
@@ -45,7 +46,7 @@ export const textureManager = new TextureManager();
 export class Texture {
   clips = new Map<string, TextureClip>();
 
-  constructor(public img: HTMLImageElement) {}
+  constructor(public img: HTMLImageElement, public name: string) {}
 
   get width() { return this.img.naturalWidth; }
   get height() { return this.img.naturalHeight; }
@@ -67,8 +68,11 @@ export class Texture {
     }));
   }
 
-  getClip(name: string) {
-    return this.clips.get(name) ?? null;
+  getClip(name: string): TextureClip {
+    const clip = this.clips.get(name);
+    if (!clip)
+      throw new Error(`texture clip not found: "${name}:${clip}"`);
+    return clip;
   }
 
   drawTo(rctx: RendererContext, x: number, y: number, flipped = false) {

@@ -37,7 +37,7 @@ export default class Background {
   vertical: MapBackgroundAxis;
 
   constructor(data: MapBackground) {
-    this.texture = textureManager.get(data.picture)!;
+    this.texture = textureManager.get(data.picture);
     this.opacity = data.opacity;
     this.horizontal = data.horizontal;
     this.vertical = data.vertical;

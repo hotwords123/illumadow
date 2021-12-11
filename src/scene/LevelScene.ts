@@ -275,7 +275,7 @@ export default class LevelScene extends Scene {
       let heartCount = Math.ceil(this.player.maxHealth / 5);
       for (let i = 0; i < heartCount; i++) {
         let value = Math.max(0, Math.min(5, this.player.health - 5 * i));
-        const clip = textureHealth.getClip('' + value)!;
+        const clip = textureHealth.getClip('' + value);
         clip.drawTo(rctx, 6 + 40 * i, 6);
       }
     });
