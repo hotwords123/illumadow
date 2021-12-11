@@ -43,7 +43,7 @@ export default class Player extends Mob {
   /** damage of single melee attack */
   meleeDamage = 1;
   /** cooldown ticks after each melee attack */
-  meleeSpeed = 20;
+  meleeSpeed = 30;
 
   /** tick index when the corresponding key was pressed / released */
   jumpPressedAt = -1;
@@ -64,7 +64,7 @@ export default class Player extends Mob {
   isPlayer() { return true; }
 
   get collisionBoxR() {
-    return new AABB(-4, -10, 1, 0);
+    return new AABB(-4, -10, 3, 0);
   }
 
   get hurtImmuneTicks() { return 60; }
