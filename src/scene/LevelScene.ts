@@ -296,26 +296,28 @@ export default class LevelScene extends Scene {
     rctx.run(({ ctx }) => {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
-      if (this.focusCircle) {
-        const { center, radius } = this.focusCircle.current();
-        ctx.beginPath();
-        center.setMinus(this.camera.offset);
-        ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
-        ctx.clip();
-      }
-      for (const background of this.backgrounds)
-        background.render(rctx, this);
-      this.camera.render(rctx, () => {
-        this.renderTerrain(rctx);
-        for (const decoration of this.decorations)
-          decoration.render(rctx);
-        for (const spawnPoint of this.spawnPoints)
-          spawnPoint.render(rctx);
-        for (const entity of this.entities)
-          entity.render(rctx);
+      rctx.run(() => {
+        if (this.focusCircle) {
+          const { center, radius } = this.focusCircle.current();
+          ctx.beginPath();
+          center.setMinus(this.camera.offset);
+          ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
+          ctx.clip();
+        }
+        for (const background of this.backgrounds)
+          background.render(rctx, this);
+        this.camera.render(rctx, () => {
+          this.renderTerrain(rctx);
+          for (const decoration of this.decorations)
+            decoration.render(rctx);
+          for (const spawnPoint of this.spawnPoints)
+            spawnPoint.render(rctx);
+          for (const entity of this.entities)
+            entity.render(rctx);
+        });
+        this.renderHud(rctx);
+        this.subtitle.render(rctx);
       });
-      this.renderHud(rctx);
-      this.subtitle.render(rctx);
       this.renderPauseMenu(rctx);
     });
   }
