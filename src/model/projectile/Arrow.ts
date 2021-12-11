@@ -28,7 +28,7 @@ export default class Arrow extends Projectile {
   }
 
   get collisionBoxR() {
-    return new AABB(-1, -1, 4, 2);
+    return new AABB(-1, 0, 4, 1);
   }
 
   getRenderInfoR() {
