@@ -5,6 +5,14 @@ import Projectile from ".";
 import Player from "../Player";
 import LevelScene from "../../scene/LevelScene";
 import { Terrain } from "../Terrain";
+import imgArrow from "../../assets/entity/arrow.png";
+import { Texture, textureManager } from "../../render/TextureManager";
+
+let textureArrow: Texture;
+
+textureManager.loadTexture("entity/arrow", imgArrow).then(texture => {
+  textureArrow = texture;
+});
 
 export default class Arrow extends Projectile {
   stoppedTicks = -1;
@@ -20,11 +28,14 @@ export default class Arrow extends Projectile {
   }
 
   get collisionBoxR() {
-    return new AABB(-3, -1, 3, 1);
+    return new AABB(-1, -1, 4, 2);
   }
 
   getRenderInfoR() {
-    return null;
+    return {
+      box: new AABB(-4, -1, 4, 2),
+      texture: textureArrow
+    };
   }
 
   tick(scene: LevelScene) {
@@ -50,7 +61,7 @@ export default class Arrow extends Projectile {
 
   onCollideTerrain(scene: LevelScene, terrain: Terrain, side: Side) {
     const facingSide = this.facing === Facing.right ? Side.right : Side.left;
-    if (facingSide === side) {
+    if (facingSide === side && this.stoppedTicks < 0) {
       this.stoppedTicks = 0;
     }
   }
