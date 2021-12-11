@@ -141,7 +141,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         img.onload = () => {
           try {
             const map = parseImage(img, file.name.slice(0, file.name.indexOf('.')));
-            this.loadMap(map);
+            this.loadMap(map, true);
           } catch (err: any) {
             console.error(err);
             alert(err.message);
@@ -174,7 +174,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     return { id: this.currentItemId++, category, item };
   }
 
-  loadMap(map: MapData) {
+  loadMap(map: MapData, keepItems = false) {
     this.setState(state => ({
       loaded: true,
       mapCounter: state.mapCounter + 1,
@@ -188,7 +188,10 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       backgroundDrafts: map.backgrounds.map(x => this.makeBackgroundDraft(x)),
       items: [
         ...map.entities.map(entity => this.createItem('entity', entity)),
-        ...map.decorations.map(decoration => this.createItem('decoration', decoration))
+        ...map.decorations.map(decoration => this.createItem('decoration', decoration)),
+        ...map.killBoxes.map(killBox => this.createItem('killBox', killBox)),
+        ...map.spawnPoints.map(spawnPoint => this.createItem('spawnPoint', spawnPoint)),
+        ...(keepItems ? [...state.items.filter(x => x.category !== 'decoration')] : [])
       ],
       selectedItems: [],
       itemDraft: null
