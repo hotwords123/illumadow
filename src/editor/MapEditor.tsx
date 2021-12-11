@@ -184,8 +184,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       mapWidth: map.width,
       mapHeight: map.height,
       terrains: map.terrain,
-      backgrounds: map.backgrounds,
-      backgroundDrafts: map.backgrounds.map(x => this.makeBackgroundDraft(x)),
+      backgrounds: keepItems ? state.backgrounds : map.backgrounds,
+      backgroundDrafts: keepItems ? state.backgroundDrafts : map.backgrounds.map(x => this.makeBackgroundDraft(x)),
       items: [
         ...map.entities.map(entity => this.createItem('entity', entity)),
         ...map.decorations.map(decoration => this.createItem('decoration', decoration)),
