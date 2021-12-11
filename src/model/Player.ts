@@ -1,9 +1,9 @@
 import { AABB, Facing, Vector } from "../base/math";
 import { Texture, textureManager } from "../render/TextureManager";
-import { GRAVITY } from "./Entity";
+import Entity, { GRAVITY } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
-import { MapEntityPlayer } from "../map/interfaces";
+import { MapEntityPlayer, MapEntityType } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import Mob from "./Mob";
 
@@ -167,6 +167,15 @@ export default class Player extends Mob {
     super.tick(scene);
   }
 
+  canAttack(target: Entity) {
+    if (target.isMob())
+      return target.isEnemy();
+    else if (target.isProjectile())
+      return [MapEntityType.arrow].includes(target.type);
+    else
+      return false;
+  }
+
   meleeAttack(scene: LevelScene) {
     if (scene.isKeyPressed("move.down")) {
       // Dive attack
@@ -192,22 +201,24 @@ export default class Player extends Mob {
       }
     } else {
       // Horizontal attack
-      let targets = scene.getEntitiesInArea(this.meleeBoxHorizontal);
+      let targets = scene.getEntitiesInArea(this.meleeBoxHorizontal).filter(x => this.canAttack(x));
 
       // Check if there are enemies in the opposite direction
       if (!targets.length) {
         let was = this.facing;
         this.facing = was === Facing.right ? Facing.left : Facing.right;
-        targets = scene.getEntitiesInArea(this.meleeBoxHorizontal);
+        targets = scene.getEntitiesInArea(this.meleeBoxHorizontal).filter(x => this.canAttack(x));
         if (!targets.length)
           this.facing = was;
       }
 
       for (const target of targets) {
-        if (target.isMob() && target.isEnemy()) {
+        if (target.isMob()) {
           if (target.damage(scene, this.meleeDamage)) {
             target.knockback(this.position, this.facing, MELEE_KNOCKBACK);
           }
+        } else if (target.isProjectile()) {
+          target.destroy(scene);
         }
       }
 
