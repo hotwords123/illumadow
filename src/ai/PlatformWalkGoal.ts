@@ -40,6 +40,26 @@ export default class PlatformWalkGoal {
     return this.canStandOn(scene.terrains[y][x]) && this.checkEmptyArea(scene, x, y);
   }
 
+  isConnected(scene: LevelScene, coord1: Coord, coord2: Coord) {
+    // Check if they are at the same altitude
+    let y = coord1.y;
+    if (coord2.y !== y) return false;
+
+    // Check if the platforms are connected
+    let x1 = coord1.x, x2 = coord2.x;
+    if (x1 > x2) [x1, x2] = [x2, x1];
+
+    const ground = scene.terrains[y];
+    const aboveGround = y < 1 ? null : scene.terrains[y - 1];
+
+    for (let x = x1; x <= x2; x++) {
+      let flag = this.canStandOn(ground[x]) &&
+        (!aboveGround || this.canPassThrough(aboveGround[x]));
+      if (!flag) return false;
+    }
+    return true;
+  }
+
   keepDistance(scene: LevelScene, target: Entity, accel: number, maxSpeed: number, minDistance: number, maxDistance: number) {
     const { self } = this;
     let deltaX = target.x - self.x;
@@ -53,8 +73,9 @@ export default class PlatformWalkGoal {
     const footholdTarget = this.findFoothold(scene, target);
     if (!footholdTarget) return;
 
-    // Check if on the same altitude
-    if (foothold.y !== footholdTarget.y) return;
+    // Check if on the same platform
+    if (!this.isConnected(scene, foothold, footholdTarget))
+      return;
 
     const box = self.collisionBox;
     let distance = Math.abs(deltaX);
