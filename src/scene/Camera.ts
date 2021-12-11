@@ -12,7 +12,9 @@ const
   FOCUS_ANCHOR_R = 240,
   WINDOW_ANCHOR_L = 120,
   WINDOW_ANCHOR_R = 180,
-  WINDOW_ANCHOR_Y = 120,
+  BASE_ANCHOR_Y = 120,
+  WINDOW_ANCHOR_U = 25,
+  WINDOW_ANCHOR_D = 155,
   MAX_ACCEL = 3,
   MIN_SPEED = 0.3,
   MAX_SPEED = 4,
@@ -111,10 +113,10 @@ export default class Camera {
       this.offset.y = -(SCENE_HEIGHT - sceneHeight) / 2;
       this.stateY = CameraState.still;
     } else {
-      if (player.onGround)
+      if (player.onGround || playerOffset.y < WINDOW_ANCHOR_U || playerOffset.y > WINDOW_ANCHOR_D)
         this.snappedY = playerPos.y;
 
-      const target = Math.max(0, Math.min(sceneHeight - SCENE_HEIGHT, this.snappedY - WINDOW_ANCHOR_Y));
+      const target = Math.max(0, Math.min(sceneHeight - SCENE_HEIGHT, this.snappedY - BASE_ANCHOR_Y));
 
       if (init) {
         this.offset.y = target;
@@ -171,8 +173,16 @@ export default class Camera {
 
         ctx.lineWidth = 3 / pixelSize;
         ctx.beginPath();
-        ctx.moveTo(SCENE_WIDTH * 0.3, WINDOW_ANCHOR_Y);
-        ctx.lineTo(SCENE_WIDTH * 0.64, WINDOW_ANCHOR_Y);
+        ctx.moveTo(SCENE_WIDTH * 0.3, BASE_ANCHOR_Y);
+        ctx.lineTo(SCENE_WIDTH * 0.64, BASE_ANCHOR_Y);
+        ctx.stroke();
+
+        ctx.lineWidth = 1.5 / pixelSize;
+        ctx.beginPath();
+        ctx.moveTo(SCENE_WIDTH * 0.34, WINDOW_ANCHOR_U);
+        ctx.lineTo(SCENE_WIDTH * 0.6, WINDOW_ANCHOR_U);
+        ctx.moveTo(SCENE_WIDTH * 0.34, WINDOW_ANCHOR_D);
+        ctx.lineTo(SCENE_WIDTH * 0.6, WINDOW_ANCHOR_D);
         ctx.stroke();
       });
     }
