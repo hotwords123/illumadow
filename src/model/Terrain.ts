@@ -22,7 +22,7 @@ textureManager.loadTextures([
   ["terrain/water", imgWater],
 ]).then(textures => {
   [textureBrick, textureSpikes, textureWater] = textures;
-  textureBrick.defineClips([['dirt', 'grass', 'brick']], TERRAIN_SIZE, TERRAIN_SIZE);
+  textureBrick.defineClips([['dirt', 'grass', 'wood','brick','brick-wall','brick-wall-light']], TERRAIN_SIZE, TERRAIN_SIZE);
   textureSpikes.defineClips([['bottom', 'left', 'top', 'right']], TERRAIN_SIZE, TERRAIN_SIZE);
   textureWater.defineClips([['surface', 'under']], TERRAIN_SIZE, TERRAIN_SIZE);
 });
@@ -154,9 +154,10 @@ export abstract class Terrain extends Sprite {
 export class TerrainBrick extends Terrain {
   static TEXTURE_MAP: Record<string, string> = {
     brick: "terrain/brick:brick",
+    wood: "terrain/brick:wood",
     dirt: "terrain/brick:dirt",
     grass: "terrain/brick:grass",
-    tree: "decoration/tree:platform"
+    tree: "decoration/tree:platform",
   };
 
   constructor(position: Coord, public variant: string) {

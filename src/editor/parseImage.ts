@@ -2,13 +2,15 @@ import { MapData, MapDecoration, MapTerrain, MapTerrainType, TERRAIN_SIZE } from
 
 const COLORS = {
   'none': '#ffffff',
-  'brick': '#880015',
+  'wood': '#880015',
   'dirt': '#b97a57',
   'grass': '#22b14c',
   'spikes': '#ed1c24',
   'trunk': '#382b18',
   'branch': '#987849',
   'water': '#99d9ea',
+  'brick': '#aaaaaa',
+  'wall': '#444444',
 };
 
 function parseHexColor(hex: string) {
@@ -50,11 +52,11 @@ const PATTERNS_RAW: RawMatchPattern[] = [
   {
     terrain: {
       type: MapTerrainType.brick,
-      variant: "brick"
+      variant: "wood"
     },
     pixels: [
-      'brick', 'brick',
-      'brick', 'brick'
+      'wood', 'wood',
+      'wood', 'wood'
     ]
   },
   {
@@ -75,6 +77,16 @@ const PATTERNS_RAW: RawMatchPattern[] = [
     pixels: [
       'grass', 'grass',
       'grass', 'grass'
+    ]
+  },
+  {
+    terrain: {
+      type: MapTerrainType.brick,
+      variant: "brick"
+    },
+    pixels: [
+      'brick', 'brick',
+      'brick', 'brick'
     ]
   },
 
@@ -152,6 +164,30 @@ const PATTERNS_RAW: RawMatchPattern[] = [
     pixels: [
       'trunk', 'trunk',
       'none', 'trunk'
+    ]
+  },
+
+  // Brick Wall
+  {
+    terrain: null,
+    decoration: {
+      x: 4, y: 4,
+      variant: "brick-wall"
+    },
+    pixels: [
+      'wall', 'wall',
+      'wall', 'wall'
+    ]
+  },
+  {
+    terrain: null,
+    decoration: {
+      x: 4, y: 4,
+      variant: "brick-wall-light"
+    },
+    pixels: [
+      'wall', 'none',
+      'none', 'wall'
     ]
   },
 
