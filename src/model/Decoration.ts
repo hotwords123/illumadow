@@ -2,13 +2,17 @@ import { AABB, Coord } from "../base/math";
 import { MapDecoration, TERRAIN_SIZE } from "../map/interfaces";
 import Model from "./Model";
 import imgTree from "../assets/decoration/tree.png";
+import imgBrickWall from "../assets/decoration/brick-wall.png";
+import imgBrickWallLight from "../assets/decoration/brick-wall-light.png";
 import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import { RenderInfo } from "./Sprite";
 
 export let textureTree: Texture;
 
 textureManager.loadTextures([
-  ["decoration/tree", imgTree]
+  ["decoration/tree", imgTree],
+  ["decoration/brick-wall", imgBrickWall],
+  ["decoration/brick-wall-light", imgBrickWallLight],
 ]).then(textures => {
   [textureTree] = textures;
   textureTree.defineClips([
@@ -28,8 +32,8 @@ const VARIANTS = new Map<string, DecorationVariantMeta>([
   ["branch", { texture: "decoration/tree:branch", box: [4, 4, 4, 4] }],
   ["branch-end-l", { texture: "decoration/tree:branch-end-l", box: [4, 4, 4, 4] }],
   ["branch-end-r", { texture: "decoration/tree:branch-end-r", box: [4, 4, 4, 4] }],
-  ["brick-wall", { texture: "terrain/brick:brick-wall", box: [4, 4, 4, 4] }],
-  ["brick-wall-light", { texture: "terrain/brick:brick-wall-light", box: [4, 4, 4, 4] }],
+  ["brick-wall", { texture: "decoration/brick-wall", box: [4, 4, 4, 4] }],
+  ["brick-wall-light", { texture: "decoration/brick-wall-light", box: [4, 4, 4, 4] }],
 ]);
 
 export default class Decoration extends Model {

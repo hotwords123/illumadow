@@ -395,6 +395,8 @@ export default class LevelScene extends Scene {
   }
 
   render(rctx: RendererContext) {
+    const { viewBox } = this.camera;
+
     rctx.run(({ ctx }) => {
       rctx.run(() => {
         if (this.focusCircle) {
@@ -413,7 +415,8 @@ export default class LevelScene extends Scene {
         this.camera.render(rctx, () => {
           this.renderTerrain(rctx);
           for (const decoration of this.decorations)
-            decoration.render(rctx);
+            if (decoration.getRenderInfo()?.box.intersects(viewBox))
+              decoration.render(rctx);
           for (const spawnPoint of this.spawnPoints)
             spawnPoint.render(rctx);
           for (const entity of this.entities)

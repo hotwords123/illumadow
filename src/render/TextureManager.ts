@@ -79,7 +79,7 @@ export class Texture {
     rctx.run(({ ctx }) => {
       ctx.translate(x, y);
       if (flipped) ctx.scale(-1, 1);
-      ctx.drawImage(this.img, 0, 0, this.width, this.height);
+      ctx.drawImage(this.img, 0, 0);
     });
   }
 }

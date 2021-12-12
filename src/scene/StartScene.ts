@@ -74,7 +74,7 @@ export default class StartScene extends Scene {
 
   renderMenu(rctx: RendererContext) {
     rctx.run(({ ctx }) => {
-      let x = SCENE_WIDTH / 2, y = 90;
+      let x = 215, y = 105;
       const { selectedItem } = this.menu;
 
       ctx.textAlign = "center";
