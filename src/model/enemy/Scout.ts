@@ -24,7 +24,7 @@ export default class EnemyScout extends Mob {
   platformWalkGoal = new PlatformWalkGoal(this);
 
   constructor(data: MapEntity) {
-    super(data, { maxHealth: 5 });
+    super(data, { maxHealth: 3 });
   }
 
   get collisionBoxR() {

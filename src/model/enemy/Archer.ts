@@ -23,7 +23,7 @@ export default class EnemyArcher extends Mob {
   platformWalkGoal = new PlatformWalkGoal(this);
 
   constructor(data: MapEntity) {
-    super(data, { maxHealth: 5 });
+    super(data, { maxHealth: 2 });
   }
 
   get collisionBoxR() {
