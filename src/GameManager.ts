@@ -98,8 +98,24 @@ export default class GameManager {
     this.switchScene(() => new LevelScene(this, level));
   }
 
+  onLevelComplete(name: string) {
+    switch (name) {
+      case "level1":
+        this.startLevel("level2");
+        break;
+      case "level2":
+        this.startLevel("level3");
+        break;
+      case "level3":
+        this.backToTitle();
+        break;
+      default:
+        throw new Error(`unknown level: ${name}`);
+    }
+  }
+
   startGame() {
-    this.startLevel('level1');
+    this.startLevel("level1");
   }
 
   backToTitle() {

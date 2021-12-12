@@ -111,6 +111,10 @@ export interface MapEntityItem extends MapEntity {
   item: MapItemType;
 }
 
+export interface MapEntityItemFlower extends MapEntityItem {
+  double: boolean;
+}
+
 /* ======== Decoration ======== */
 
 export interface MapDecoration extends MapSprite {

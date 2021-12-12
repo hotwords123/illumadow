@@ -259,14 +259,6 @@ export default class LevelScene extends Scene {
     this.camera.rumble();
   }
 
-  retry() {
-    this.player.damage(this, 1, null, true);
-  }
-
-  restart() {
-    this.init();
-  }
-
   tick() {
     const startTime = performance.now();
     this.totalTicks++;
@@ -325,6 +317,26 @@ export default class LevelScene extends Scene {
     this.focusCircle = new RespawningFocusCirle(this.player.collisionBox.center);
     do yield; while (!this.focusCircle.next());
     this.focusCircle = null;
+  }
+
+  retry() {
+    this.player.damage(this, 1, null, true);
+  }
+
+  restart() {
+    this.init();
+  }
+
+  levelComplete() {
+    this.animation = new GeneratorAnimation(this.animateLevelComplete());
+  }
+
+  *animateLevelComplete() {
+    this.despawning = true;
+    this.focusCircle = new DespawningFocusCircle(this.player.collisionBox.center);
+    do yield; while (!this.focusCircle.next());
+    for (let i = 0; i < 30; i++) yield;
+    this.gameManager.onLevelComplete(this.map.id);
   }
 
   gameOver() {

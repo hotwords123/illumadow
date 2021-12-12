@@ -58,6 +58,9 @@ export default abstract class Trigger {
       case "level1:7":
         scene.boundary.right = scene.width;
         break;
+      case "level1:8":
+        scene.levelComplete();
+        break;
 
       default:
         console.warn(`unknown trigger id: ${this.id}`);
