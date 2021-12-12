@@ -33,7 +33,7 @@ export default class Renderer {
 
   private timer: number | null = null;
 
-  private debugMode: boolean = true;
+  private debugMode: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;

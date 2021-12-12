@@ -216,7 +216,12 @@ export default class LevelScene extends Scene {
         {
           action: "retry",
           text: "重试",
-          disabled: this.despawning
+          disabled: this.despawning || this.player.health <= 1
+        },
+        {
+          action: "restart",
+          text: "重新开始",
+          disabled: false
         },
         {
           action: "title",
@@ -227,6 +232,9 @@ export default class LevelScene extends Scene {
         switch (action) {
           case "retry":
             this.retry();
+            break;
+          case "restart":
+            this.restart();
             break;
           case "title":
             this.gameManager.backToTitle();
@@ -252,7 +260,10 @@ export default class LevelScene extends Scene {
   }
 
   retry() {
-    // TODO: animation
+    this.player.damage(this, 1, null, true);
+  }
+
+  restart() {
     this.init();
   }
 

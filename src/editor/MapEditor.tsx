@@ -339,6 +339,12 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         this.switchTool(TOOLS[parseInt(evt.key) - 1]);
         break;
       }
+      case 'a': {
+        if (evt.ctrlKey) {
+          this.selectItems(this.state.items.slice(0));
+        }
+        break;
+      }
       case 'Delete': {
         const { selectedItems } = this.state;
         this.selectItems([]);

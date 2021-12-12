@@ -31,6 +31,8 @@ export default abstract class EntityItem extends Entity {
     }
   }
 
+  get underGravity() { return false; }
+
   tick(scene: LevelScene) {
     if (scene.player.collisionBox.intersects(this.collisionBox)) {
       this.onPickup(scene);

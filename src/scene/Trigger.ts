@@ -50,6 +50,12 @@ export default abstract class Trigger {
         scene.boundary.right = scene.getLandmark("L6").box.right;
         break;
       case "level1:5":
+        scene.boundary.right = scene.getLandmark("L9").box.right;
+        break;
+      case "level1:6":
+        scene.boundary.left = scene.getLandmark("L7").box.left;
+        break;
+      case "level1:7":
         scene.boundary.right = scene.width;
         break;
 
