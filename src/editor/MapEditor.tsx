@@ -36,7 +36,8 @@ const ENTITY_TEMPLATES = new Map([
   [MapEntityType.wizard, {}],
   [MapEntityType.boss, {}],
   [MapEntityType.item, {
-    item: MapItemType.flower
+    item: MapItemType.flower,
+    double: false
   }],
 ]);
 
