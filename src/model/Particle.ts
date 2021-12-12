@@ -4,16 +4,22 @@ import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
 import Sprite, { RenderInfo } from "./Sprite";
 import imgMeleeWave from "../assets/entity/melee-wave.png";
+import imgDeathBurst from "../assets/entity/death-burst.png";
 
 let textureMeleeWave: Texture;
+let textureDeathBurst: Texture;
 
 textureManager.loadTextures([
-  ["entity/melee-wave", imgMeleeWave]
+  ["entity/melee-wave", imgMeleeWave],
+  ["entity/death-burst", imgDeathBurst],
 ]).then(textures => {
-  [textureMeleeWave] = textures;
+  [textureMeleeWave, textureDeathBurst] = textures;
   textureMeleeWave.defineClips([
     ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
   ], 24, 12);
+  textureDeathBurst.defineClips([
+    ["0", "1", "2", "3", "4", "5", "6", "7"]
+  ], 16, 12);
 });
 
 export default abstract class Particle extends Sprite {
@@ -60,5 +66,18 @@ export class MeleeWave extends Particle {
 
   get renderBoxR() {
     return new AABB(0, -12, 24, 0);
+  }
+}
+
+export class DeathBurst extends Particle {
+  constructor(position: Coord) {
+    super(position);
+
+    this.animation = FrameSequence.fromClips("entity/death-burst",
+      ["0", "1", "2", "3", "4", "5", "6", "7"]);
+  }
+
+  get renderBoxR() {
+    return new AABB(-8, -6, 8, 6);
   }
 }

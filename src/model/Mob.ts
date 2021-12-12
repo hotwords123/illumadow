@@ -2,6 +2,7 @@ import { AABB, Coord, Facing, Side, Vector } from "../base/math";
 import { MapEntity, MapEntityType } from "../map/interfaces";
 import LevelScene from "../scene/LevelScene";
 import Entity, { EscapeBehaviour } from "./Entity";
+import { DeathBurst } from "./Particle";
 import { Terrain } from "./Terrain";
 
 export interface MobInit {
@@ -80,7 +81,9 @@ export default abstract class Mob extends Entity {
   }
 
   die(scene: LevelScene, source: DamageSource): void {
-    scene.deleteEntity(this);
+    scene.addParticle(new DeathBurst(this.collisionBox.center));
+    if (!this.isPlayer())
+      scene.deleteEntity(this);
   }
 
   tick(scene: LevelScene) {

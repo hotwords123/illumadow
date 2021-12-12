@@ -293,10 +293,9 @@ export default class Player extends Mob {
     this.outOfControlTicks = 30;
   }
 
-  die(scene: LevelScene) {
+  die(scene: LevelScene, source: DamageSource) {
+    super.die(scene, source);
     scene.gameOver();
-
-    // don't call super.die(scene) here as it would try to remove player from the scene
   }
 
   render(rctx: RendererContext) {
