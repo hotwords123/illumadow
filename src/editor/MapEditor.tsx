@@ -1,6 +1,6 @@
 import React from 'react';
 import { AABB, Coord } from '../base/math';
-import { MapBackground, MapData, MapDecoration, MapEntity, MapEntityType, MapKillBox, MapSpawnPoint, MapSprite, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
+import { MapBackground, MapData, MapDecoration, MapEntity, MapEntityType, MapKillBox, MapSpawnPoint, MapSprite, MapTerrain, MapTrigger, MapTriggerType, TERRAIN_SIZE } from '../map/interfaces';
 import ItemEditor, { EditError, ItemEditorData, ItemEditorDataEntry } from './ItemEditor';
 import './MapEditor.css';
 import parseImage from './parseImage';
@@ -60,6 +60,8 @@ interface MapEditorState {
   terrains: (MapTerrain | null)[][];
   backgrounds: MapBackground[];
   backgroundDrafts: ItemEditorData[];
+  triggers: MapTrigger[];
+  triggerDrafts: ItemEditorData[];
   scale: number;
   pxAtom: number;
   pxGrid: number;
@@ -70,6 +72,7 @@ interface MapEditorState {
   sidebarDock: 'l' | 'r';
   dragCorner: Coord | null;
   dragCorner2: Coord | null;
+  mousePosition: Coord | null;
   debugRender: boolean;
 }
 
@@ -93,6 +96,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       terrains: [],
       backgrounds: [],
       backgroundDrafts: [],
+      triggers: [],
+      triggerDrafts: [],
       scale: 4,
       pxAtom: 4 / window.devicePixelRatio,
       pxGrid: 4 * TERRAIN_SIZE / window.devicePixelRatio,
@@ -106,6 +111,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       sidebarDock: 'r',
       dragCorner: null,
       dragCorner2: null,
+      mousePosition: null,
       debugRender: true
     };
 
@@ -186,6 +192,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       terrains: map.terrain,
       backgrounds: keepItems ? state.backgrounds : map.backgrounds,
       backgroundDrafts: keepItems ? state.backgroundDrafts : map.backgrounds.map(x => this.makeBackgroundDraft(x)),
+      triggers: keepItems ? state.triggers : map.triggers,
+      triggerDrafts: keepItems ? state.triggerDrafts : map.triggers.map(x => this.makeTriggerDraft(x)),
       items: [
         ...map.entities.map(entity => this.createItem('entity', entity)),
         ...map.decorations.map(decoration => this.createItem('decoration', decoration)),
@@ -241,6 +249,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     const box = this.refContainer.current!.getBoundingClientRect();
     const offsetX = evt.clientX - box.left;
     const offsetY = evt.clientY - box.top;
+    const sceneX = Math.round(offsetX / this.state.pxAtom);
+    const sceneY = Math.round(offsetY / this.state.pxAtom);
 
     if (evt.type === 'mousedown') {
       if (evt.button === 0) {
@@ -249,8 +259,6 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
           dragCorner: new Coord(offsetX, offsetY)
         });
       } else if (evt.button === 2) {
-        const sceneX = Math.round(offsetX / this.state.pxAtom);
-        const sceneY = Math.round(offsetY / this.state.pxAtom);
         this.placeItem(sceneX, sceneY);
       }
     } else if (evt.type === 'mousemove') {
@@ -259,6 +267,9 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
           dragCorner2: new Coord(offsetX, offsetY)
         });
       }
+      this.setState({
+        mousePosition: new Coord(sceneX, sceneY)
+      });
     } else if (evt.type === 'mouseup') {
       if (evt.button === 0) {
         const { dragCorner: corner, dragCorner2: corner2 } = this.state;
@@ -448,6 +459,8 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     this.update();
   }
 
+  /* ======== Background ======== */
+
   makeBackgroundDraft(data: MapBackground): ItemEditorData {
     return Object.keys(data).map(key => [key, JSON.stringify((data as any)[key])] as ItemEditorDataEntry);
   }
@@ -522,6 +535,47 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     this.update();
   }
 
+  /* ======== Trigger ======== */
+
+  makeTriggerDraft(data: MapTrigger): ItemEditorData {
+    return Object.keys(data).map(key => [key, JSON.stringify((data as any)[key])] as ItemEditorDataEntry);
+  }
+
+  triggersEditHandler(index: number, field: string, value: string) {
+    const item = this.state.triggers[index];
+    const draft = this.state.triggerDrafts[index];
+
+    const entry = draft.find(x => x[0] === field);
+    if (!entry)
+      throw new EditError("field does not exist");
+    entry[1] = value;
+    this.update();
+
+    let parsed: any = JSON.parse(value);
+
+    Object.assign(item, { [field]: parsed });
+    this.update();
+  }
+
+  triggerAddHandler() {
+    const data: MapTrigger = {
+      id: `${this.state.mapId}.`,
+      condition: {
+        type: MapTriggerType.entityKilled,
+        entityTag: ''
+      }
+    };
+    this.state.triggers.push(data);
+    this.state.triggerDrafts.push(this.makeTriggerDraft(data));
+    this.update();
+  }
+
+  triggerRemoveHandler(index: number) {
+    this.state.triggers.splice(index, 1);
+    this.state.triggerDrafts.splice(index, 1);
+    this.update();
+  }
+
   toggleDebugRender() {
     this.setState(({ mapCounter, debugRender }) => ({
       mapCounter: mapCounter + 1,
@@ -593,7 +647,7 @@ function Toolbar({ parent }: EditorChildProps) {
 
 function Sidebar({ parent }: EditorChildProps) {
   const { state } = parent;
-  const { itemDraft, sidebarDock, selectedItems } = state;
+  const { itemDraft, sidebarDock, selectedItems, mousePosition } = state;
   const toggledSide = { l: 'right', r: 'left' }[sidebarDock];
 
   return (
@@ -610,6 +664,9 @@ function Sidebar({ parent }: EditorChildProps) {
         <div>Decorations: {state.items.filter(x => x.category === 'decoration').length}</div>
         <div>Kill Boxes: {state.items.filter(x => x.category === 'killBox').length}</div>
         <div>Spawn Points: {state.items.filter(x => x.category === 'spawnPoint').length}</div>
+        {mousePosition &&
+          <div>Cursor: ({mousePosition.x}, {mousePosition.y}) ({Math.floor(mousePosition.x / TERRAIN_SIZE)}, {Math.floor(mousePosition.y / TERRAIN_SIZE)})</div>
+        }
         {selectedItems.length > 0 &&
           <div>Selected: {`${selectedItems.length} ${selectedItems.length > 1 ? 'items' : 'item'}`}</div>
         }
@@ -620,24 +677,46 @@ function Sidebar({ parent }: EditorChildProps) {
           <ItemEditor data={itemDraft} onModify={parent.itemModifyHandler} />
         </div>
       }
-      <div>
+      {!itemDraft &&
         <div>
-          <strong>Map Backgrounds</strong>&nbsp;
-          <button onClick={() => parent.backgroundAddHandler()}>Add</button>
-        </div>
-        <div>
-          {state.backgroundDrafts.map((draft, index) => (
-            <div key={index}>
-              <div>
-                <span>Background #{index + 1}</span>&nbsp;
-                <button onClick={() => parent.backgroundRemoveHandler(index)}>Remove</button>
+          <div>
+            <strong>Map Triggers</strong>&nbsp;
+            <button onClick={() => parent.triggerAddHandler()}>Add</button>
+          </div>
+          <div>
+            {state.triggerDrafts.map((draft, index) => (
+              <div key={index}>
+                <div>
+                  <span>Trigger #{index + 1}</span>&nbsp;
+                  <button onClick={() => parent.triggerRemoveHandler(index)}>Remove</button>
+                </div>
+                <ItemEditor data={draft}
+                  onModify={(field, value) => parent.triggersEditHandler(index, field, value)} />
               </div>
-              <ItemEditor data={draft}
-                onModify={(field, value) => parent.backgroundsEditHandler(index, field, value)} />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      }
+      {!itemDraft &&
+        <div>
+          <div>
+            <strong>Map Backgrounds</strong>&nbsp;
+            <button onClick={() => parent.backgroundAddHandler()}>Add</button>
+          </div>
+          <div>
+            {state.backgroundDrafts.map((draft, index) => (
+              <div key={index}>
+                <div>
+                  <span>Layer #{index + 1}</span>&nbsp;
+                  <button onClick={() => parent.backgroundRemoveHandler(index)}>Remove</button>
+                </div>
+                <ItemEditor data={draft}
+                  onModify={(field, value) => parent.backgroundsEditHandler(index, field, value)} />
+              </div>
+            ))}
+          </div>
+        </div>
+      }
     </div>
   );
 }

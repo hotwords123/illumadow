@@ -110,7 +110,21 @@ export interface MapDecoration extends MapSprite {
 
 export interface MapTrigger {
   id: string;
+  condition: MapTriggerCondition;
 }
+
+export enum MapTriggerType {
+  reachPlace = "reachPlace",
+  entityKilled = "entityKilled"
+}
+
+export type MapTriggerCondition = {
+  type: MapTriggerType.reachPlace,
+  place: [x: number, y: number, width: number, height: number]
+} | {
+  type: MapTriggerType.entityKilled;
+  entityTag: string;
+};
 
 /* ======== Background ======== */
 

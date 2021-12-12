@@ -20,6 +20,7 @@ import KillBox from "./KillBox";
 import SpawnPoint from "./SpawnPoint";
 import FocusCircle, { DespawningFocusCircle, OpeningFocusCircle, RespawningFocusCirle } from "./FocusCircle";
 import { ForwardAnimation, GeneratorAnimation } from "../render/Animation";
+import Trigger from "./Trigger";
 
 let textureHealth: Texture;
 
@@ -50,6 +51,7 @@ export default class LevelScene extends Scene {
   killBoxes!: KillBox[];
   spawnPoints!: SpawnPoint[];
   spawnPoint!: Coord;
+  triggers!: Trigger[];
 
   /** used for block player's move before tasks finished */
   boundary!: AABB;
@@ -122,6 +124,7 @@ export default class LevelScene extends Scene {
     this.killBoxes = map.killBoxes.map(data => new KillBox(data));
     this.spawnPoints = map.spawnPoints.map(data => new SpawnPoint(data));
     this.spawnPoint = this.player.position.clone();
+    this.triggers = map.triggers.map(data => Trigger.create(data));
 
     this.boundary = new AABB(0, 0, this.width, this.height);
 
@@ -153,6 +156,10 @@ export default class LevelScene extends Scene {
         console.warn(`unknown entity type: ${data.type}`);
         return null;
     }
+  }
+
+  getEntitiesWithTag(tag: string): Entity[] {
+    return this.entities.filter(entity => entity.tags.includes(tag));
   }
 
   getEntitiesInArea(box: AABB): Entity[] {

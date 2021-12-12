@@ -10,13 +10,13 @@
 }
 
 .MapEditor.dock-l {
-  grid-template-columns: 320px auto;
+  grid-template-columns: 360px auto;
   grid-template-areas: "toolbar toolbar"
                        "sidebar main";
 }
 
 .MapEditor.dock-r {
-  grid-template-columns: auto 320px;
+  grid-template-columns: auto 360px;
   grid-template-areas: "toolbar toolbar"
                        "main sidebar";
 }
