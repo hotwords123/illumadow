@@ -1,6 +1,6 @@
-import { AABB, Facing, Vector } from "../base/math";
+import { AABB, Facing, Side, Vector } from "../base/math";
 import { Texture, textureManager } from "../render/TextureManager";
-import Entity, { GRAVITY } from "./Entity";
+import Entity, { EscapeBehaviour, GRAVITY } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
 import { MapEntityPlayer, MapEntityType } from "../map/interfaces";
@@ -227,6 +227,15 @@ export default class Player extends Mob {
       }
 
       this.meleeCooldown = this.meleeSpeed;
+    }
+  }
+
+  onCrossBorder(scene: LevelScene, side: Side, fullOut: boolean): EscapeBehaviour {
+    if (side === Side.bottom) {
+      this.damage(scene, 1, null, true);
+      return EscapeBehaviour.none;
+    } else {
+      return super.onCrossBorder(scene, side, fullOut);
     }
   }
 

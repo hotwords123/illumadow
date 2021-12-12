@@ -96,6 +96,7 @@
   position: absolute;
   z-index: 20;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .Container .sprite.selected {
@@ -220,12 +221,13 @@
   background-color: #8a3ec9;
 }
 
-.Container .sprite.killBox:before {
+.Container .sprite.landmark:before {
   background-color: #9c0000;
 }
 
-.Container .sprite.killBox {
-  background-color: #c9473e;
+.Container .sprite.landmark {
+  background-color: rgba(201, 71, 62, 0.4);
+  outline: 3px dashed #9c0000;
 }
 
 .Container .sprite.spawnPoint:before {

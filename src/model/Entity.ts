@@ -197,7 +197,7 @@ export default abstract class Entity extends Model {
 
     if (collisionBox.left < boundary.left)
       this.triggerCrossBorder(scene, Side.left,
-        collisionBox.left, collisionBox.right <= boundary.left);
+        collisionBox.left - boundary.left, collisionBox.right <= boundary.left);
 
     if (collisionBox.right > boundary.right)
       this.triggerCrossBorder(scene, Side.right,
@@ -205,7 +205,7 @@ export default abstract class Entity extends Model {
 
     if (collisionBox.top < boundary.top)
       this.triggerCrossBorder(scene, Side.top,
-        collisionBox.top, collisionBox.bottom <= boundary.top);
+        collisionBox.top - boundary.top, collisionBox.bottom <= boundary.top);
 
     if (collisionBox.bottom > boundary.bottom)
       this.triggerCrossBorder(scene, Side.bottom,

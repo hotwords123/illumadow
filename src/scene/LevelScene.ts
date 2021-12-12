@@ -16,7 +16,7 @@ import EnemyArcher from "../model/enemy/Archer";
 import imgHealth from "../assets/hud/health.png";
 import { Texture, textureManager } from "../render/TextureManager";
 import Background from "./Background";
-import KillBox from "./KillBox";
+import Landmark from "./Landmark";
 import SpawnPoint from "./SpawnPoint";
 import FocusCircle, { DespawningFocusCircle, OpeningFocusCircle, RespawningFocusCirle } from "./FocusCircle";
 import { ForwardAnimation, GeneratorAnimation } from "../render/Animation";
@@ -48,7 +48,7 @@ export default class LevelScene extends Scene {
   entities!: Entity[];
   decorations!: Decoration[];
   backgrounds!: Background[];
-  killBoxes!: KillBox[];
+  landmarks!: Landmark[];
   spawnPoints!: SpawnPoint[];
   spawnPoint!: Coord;
   triggers!: Trigger[];
@@ -121,7 +121,7 @@ export default class LevelScene extends Scene {
 
     this.decorations = map.decorations.map(data => new Decoration(data));
     this.backgrounds = map.backgrounds.map(data => new Background(data));
-    this.killBoxes = map.killBoxes.map(data => new KillBox(data));
+    this.landmarks = map.landmarks.map(data => new Landmark(data));
     this.spawnPoints = map.spawnPoints.map(data => new SpawnPoint(data));
     this.spawnPoint = this.player.position.clone();
     this.triggers = map.triggers.map(data => Trigger.create(data));
@@ -180,6 +180,16 @@ export default class LevelScene extends Scene {
 
   deleteTerrain({ x, y }: Coord) {
     this.terrains[y][x] = null;
+  }
+
+  getLandmark(tag: string) {
+    const landmark = this.landmarks.find(x => x.tags.includes(tag));
+    if (!landmark) throw new Error(`landmark not found: ${tag}`);
+    return landmark;
+  }
+
+  getLandmarksWithTag(tag: string) {
+    return this.landmarks.filter(landmark => landmark.tags.includes(tag));
   }
 
   setBoundary(box: AABB) {
@@ -260,14 +270,8 @@ export default class LevelScene extends Scene {
   
           // Entities
           for (const entity of this.entities)
-            entity.tick(this);
-  
-          // Kill Box
-          for (const killBox of this.killBoxes) {
-            if (killBox.box.intersects(this.player.collisionBox)) {
-              this.player.damage(this, 1, null, true);
-            }
-          }
+            if (entity.collisionBox.intersects(this.boundary))
+              entity.tick(this);
   
           // Spawn Point
           for (const spawnPoint of this.spawnPoints) {

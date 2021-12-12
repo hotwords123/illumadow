@@ -302,7 +302,7 @@ function parseImage(img: HTMLImageElement, name: string): MapData {
     decorations: mapDecorations,
     triggers: [],
     backgrounds: [],
-    killBoxes: [],
+    landmarks: [],
     spawnPoints: []
   };
 

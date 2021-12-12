@@ -113,7 +113,7 @@ export default class Camera {
       this.offset.y = boundary.center.y - SCENE_HEIGHT / 2;
       this.stateY = CameraState.still;
     } else {
-      if (player.onGround || playerOffset.y < WINDOW_ANCHOR_U || playerOffset.y > WINDOW_ANCHOR_D)
+      if (init || player.onGround || playerOffset.y < WINDOW_ANCHOR_U || playerOffset.y > WINDOW_ANCHOR_D)
         this.snappedY = playerPos.y;
 
       const target = Math.max(boundary.top - 0, Math.min(boundary.bottom - SCENE_HEIGHT,

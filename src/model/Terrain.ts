@@ -318,7 +318,7 @@ export class TerrainFragile extends FragileTerrain {
   collapseOffset = new Vector(0, 0);
 
   recoveringTicks = -1;
-  recoverTicks = 240;
+  recoverTicks = 180;
 
   static TEXTURE_MAP: Record<string, string> = {
     tree: "decoration/tree:platform-fragile"

@@ -30,8 +30,8 @@ export interface MapData {
   triggers: MapTrigger[];
   /** 背景 */
   backgrounds: MapBackground[];
-  /** 禁区 */
-  killBoxes: MapKillBox[];
+  /** 地标 */
+  landmarks: MapLandmark[];
   /** 重生点 */
   spawnPoints: MapSpawnPoint[];
 }
@@ -120,7 +120,7 @@ export enum MapTriggerType {
 
 export type MapTriggerCondition = {
   type: MapTriggerType.reachPlace,
-  place: [x: number, y: number, width: number, height: number]
+  landmarkTag: string;
 } | {
   type: MapTriggerType.entityKilled;
   entityTag: string;
@@ -145,9 +145,9 @@ export type MapBackgroundAxis = {
   marginR: number;
 }
 
-/* ======== Kill Box ======== */
+/* ======== Landmark ======== */
 
-export interface MapKillBox extends MapSprite {
+export interface MapLandmark extends MapSprite {
   width: number;
   height: number;
 }

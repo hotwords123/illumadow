@@ -90,14 +90,14 @@ export default abstract class Mob extends Entity {
     super.tick(scene);
   }
 
-  onCrossBorder(scene: LevelScene, side: Side, fullOut: boolean) {
+  onCrossBorder(scene: LevelScene, side: Side, fullOut: boolean): EscapeBehaviour {
     switch (side) {
       case Side.top:
         return EscapeBehaviour.none;
       case Side.left: case Side.right:
         return EscapeBehaviour.block;
       case Side.bottom:
-        if (fullOut) this.damage(scene, Infinity, null, true);
+        this.damage(scene, Infinity, null, true);
         return EscapeBehaviour.none;
     }
   }

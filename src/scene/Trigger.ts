@@ -1,5 +1,6 @@
 import { AABB } from "../base/math";
 import { MapTrigger, MapTriggerType } from "../map/interfaces";
+import Landmark from "./Landmark";
 import LevelScene from "./LevelScene";
 
 export default abstract class Trigger {
@@ -10,7 +11,7 @@ export default abstract class Trigger {
   static create(data: MapTrigger): Trigger {
     switch (data.condition.type) {
       case MapTriggerType.reachPlace:
-        return new TriggerReachPlace(data.id, AABB.offset(...data.condition.place));
+        return new TriggerReachPlace(data.id, data.condition.landmarkTag);
 
       case MapTriggerType.entityKilled:
         return new TriggerEntityKilled(data.id, data.condition.entityTag);
@@ -33,11 +34,17 @@ export default abstract class Trigger {
     console.log(`triggered: ${this.id}`);
     switch (this.id) {
       case "level1:1":
-        scene.boundary.right = 776;
+        scene.boundary.right = scene.getLandmark("L2").box.right;
         break;
       case "level1:2":
         scene.boundary.right = scene.width;
         break;
+      case "level1:3": {
+        const { box } = scene.getLandmark("L3");
+        scene.boundary.left = box.left;
+        scene.boundary.bottom = box.bottom;
+        break;
+      }
 
       default:
         console.warn(`unknown trigger id: ${this.id}`);
@@ -46,12 +53,13 @@ export default abstract class Trigger {
 }
 
 export class TriggerReachPlace extends Trigger {
-  constructor(id: string, public box: AABB) {
+  constructor(id: string, public landmarkTag: string) {
     super(id);
   }
 
   checkCondition(scene: LevelScene) {
-    return scene.player.collisionBox.intersects(this.box);
+    return scene.getLandmarksWithTag(this.landmarkTag)
+      .some(landmark => scene.player.collisionBox.intersects(landmark.box));
   }
 }
 
