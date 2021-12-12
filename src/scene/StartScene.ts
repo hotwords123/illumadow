@@ -1,13 +1,13 @@
 import { RendererContext } from "../render/Renderer";
 import Scene, { SCENE_HEIGHT, SCENE_WIDTH } from "./Scene";
-import bg from "../assets/start-scene/bg.png";
+import bg from "../assets/background/start.png";
 import { Texture, textureManager } from "../render/TextureManager";
 import GameManager from "../GameManager";
 import SelectMenu from "./SelectMenu";
 
 let textureBg: Texture;
 
-textureManager.loadTexture("start-scene/bg", bg)
+textureManager.loadTexture("background/start", bg)
   .then(result => { textureBg = result; });
 
 interface Button {
@@ -18,6 +18,7 @@ interface Button {
 
 export default class StartScene extends Scene {
   menu: SelectMenu<Button>;
+  totalTicks = 0;
 
   constructor(gameManager: GameManager) {
     super(gameManager);
@@ -26,17 +27,17 @@ export default class StartScene extends Scene {
     this.menu = new SelectMenu<Button>(this, [
       {
         action: "start",
-        text: "Start",
+        text: "开始游戏",
         disabled: false
       },
       {
         action: "help",
-        text: "Help",
+        text: "帮助",
         disabled: false
       },
       {
         action: "about",
-        text: "About",
+        text: "关于",
         disabled: false
       }
     ], this.buttonHandler);
@@ -60,13 +61,36 @@ export default class StartScene extends Scene {
     }
   }
 
+  tick() {
+    this.totalTicks++;
+  }
+
   render(rctx: RendererContext) {
     rctx.run(({ ctx }) => {
       textureBg.drawTo(rctx, 0, 0);
-      ctx.font = "8px Consolas";
+      this.renderMenu(rctx);
+    });
+  }
+
+  renderMenu(rctx: RendererContext) {
+    rctx.run(({ ctx }) => {
+      let x = SCENE_WIDTH / 2, y = 90;
+      const { selectedItem } = this.menu;
+
       ctx.textAlign = "center";
-      ctx.fillStyle = "#000";
-      ctx.fillText(this.menu.selectedItem.text, SCENE_WIDTH / 2, SCENE_HEIGHT * 2 / 3);
+      ctx.textBaseline = "top";
+      ctx.shadowColor = "#000";
+      ctx.shadowBlur = 2;
+
+      for (const item of this.menu.getItems()) {
+        let header = item.action === "start";
+        ctx.font = `${header ? 9 : 7}px 'Noto Sans SC'`;
+        ctx.fillStyle = item === selectedItem ?
+          (this.totalTicks % 12 < 6 ? '#90d060' : '#f0e080') :
+          (item.disabled ? '#999' : '#eee');
+        ctx.fillText(item.text, x, y);
+        y += header ? 18 : 12;
+      }
     });
   }
 }

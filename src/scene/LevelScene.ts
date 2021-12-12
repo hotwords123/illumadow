@@ -134,8 +134,6 @@ export default class LevelScene extends Scene {
 
     this.animation = new GeneratorAnimation(this.animateOpening());
 
-    this.showSubtitle("game start", 2000);
-
     this.ticks = 0;
   }
 
@@ -402,7 +400,7 @@ export default class LevelScene extends Scene {
       for (let i = 0; i < heartCount; i++) {
         let value = Math.max(0, Math.min(5, this.player.health - 5 * i));
         const clip = textureHealth.getClip('' + value);
-        clip.drawTo(rctx, 6 + 40 * i, 6);
+        clip.drawTo(rctx, 6 + 34 * i, 6);
       }
     });
   }

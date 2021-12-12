@@ -66,6 +66,7 @@
   grid-template-rows: 1fr auto 1fr;
   grid-template-columns: 1fr auto 1fr;
   grid-template-areas: ". . ." ". box ." ". . .";
+  background: #f7f7f7;
 }
 
 .ContainerBox {
