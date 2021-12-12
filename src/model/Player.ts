@@ -1,5 +1,5 @@
 import { AABB, Facing, Side, Vector } from "../base/math";
-import { Texture, textureManager } from "../render/TextureManager";
+import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import Entity, { EscapeBehaviour, GRAVITY } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
@@ -7,6 +7,7 @@ import { MapEntityPlayer, MapEntityType } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import Mob, { DamageSource } from "./Mob";
 import { Terrain } from "./Terrain";
+import { ForwardAnimation, FrameSequence } from "../render/Animation";
 
 let texturePlayer: Texture;
 
@@ -29,12 +30,16 @@ const
 
 textureManager.loadTexture("entity/player", imgPlayer).then(texture => {
   texturePlayer = texture;
+  texturePlayer.defineClips([
+    ["normal", "attack1", "attack2", "attack3", "attack4", "attack5"]
+  ], 12, 12);
 });
 
 enum State {
-  walk = 0,
-  duck = 1,
-  dash = 2,
+  normal = 0,
+  walk = 1,
+  attack = 2,
+  dash = 3
 }
 
 export default class Player extends Mob {
@@ -56,6 +61,8 @@ export default class Player extends Mob {
   meleeCooldown = 0;
 
   outOfControlTicks = 0;
+
+  animation: FrameSequence = this.createAnimation(State.normal);
 
   constructor({ health, maxHealth, ...data }: MapEntityPlayer) {
     super(data, { health, maxHealth });
@@ -88,7 +95,7 @@ export default class Player extends Mob {
   getRenderInfoR() {
     return {
       box: new AABB(-6, -12, 6, 0),
-      texture: texturePlayer
+      texture: this.animation.current()
     };
   }
 
@@ -120,10 +127,33 @@ export default class Player extends Mob {
     }
   }
 
+  createAnimation(state: State): FrameSequence {
+    switch (state) {
+      case State.normal: default:
+        return FrameSequence.fromClips("entity/player", ["normal"]).setLoop(true);
+
+      case State.attack:
+        return FrameSequence.fromClipRanges("entity/player", [
+          ["attack1", 3],
+          ["attack2", 3],
+          ["attack3", 3],
+          ["attack4", 3],
+          ["attack5", 5],
+          ["attack4", 1],
+          ["attack3", 1],
+          ["attack2", 1],
+          ["attack1", 1]
+        ]);
+    }
+  }
+
   tick(scene: LevelScene) {
     if (this.dead) return;
 
     this.applyFriction(this.onGround ? GROUND_FRICTION : AIR_FRICTION);
+
+    if (this.animation.next())
+      this.animation = this.createAnimation(State.normal);
 
     if (this.outOfControlTicks > 0) {
       this.outOfControlTicks--;
@@ -203,6 +233,8 @@ export default class Player extends Mob {
         this.velocity.x += -dir * DIVE_ATTACK_REBOUNCE_X;
         this.velocity.y = -DIVE_ATTACK_REBOUNCE_Y;
       }
+
+      this.animation = this.createAnimation(State.attack);
     } else {
       // Horizontal attack
       let targets = scene.getEntitiesInArea(this.meleeBoxHorizontal).filter(x => this.canAttack(x));
@@ -227,6 +259,7 @@ export default class Player extends Mob {
       }
 
       this.meleeCooldown = this.meleeSpeed;
+      this.animation = this.createAnimation(State.attack);
     }
   }
 
