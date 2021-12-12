@@ -37,7 +37,7 @@ export default abstract class Trigger {
         scene.boundary.right = scene.getLandmark("L2").box.right;
         break;
       case "level1:2":
-        scene.boundary.right = scene.width;
+        scene.boundary.right = scene.getLandmark("L4").box.right;
         break;
       case "level1:3": {
         const { box } = scene.getLandmark("L3");

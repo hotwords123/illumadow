@@ -63,7 +63,7 @@ export default class EnemyArcher extends Mob {
   ], State.idle);
 
   constructor(data: MapEntity) {
-    super(data, { maxHealth: 2 });
+    super(data, { maxHealth: 3 });
   }
 
   get collisionBoxR() {
