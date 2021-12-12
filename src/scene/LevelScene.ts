@@ -276,6 +276,10 @@ export default class LevelScene extends Scene {
             }
           }
 
+          // Triggers
+          for (const trigger of this.triggers)
+            trigger.tick(this);
+
           // Misc
           this.camera.update();
           this.subtitle.tick();

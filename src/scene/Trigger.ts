@@ -24,12 +24,21 @@ export default abstract class Trigger {
 
   tick(scene: LevelScene) {
     if (!this.triggered && this.checkCondition(scene)) {
+      this.triggered = true;
       this.execute(scene);
     }
   }
 
   execute(scene: LevelScene) {
+    console.log(`triggered: ${this.id}`);
     switch (this.id) {
+      case "level1:1":
+        scene.boundary.right = 776;
+        break;
+      case "level1:2":
+        scene.boundary.right = scene.width;
+        break;
+
       default:
         console.warn(`unknown trigger id: ${this.id}`);
     }

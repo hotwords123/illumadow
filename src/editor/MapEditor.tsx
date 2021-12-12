@@ -72,7 +72,7 @@ interface MapEditorState {
   sidebarDock: 'l' | 'r';
   dragCorner: Coord | null;
   dragCorner2: Coord | null;
-  mousePosition: Coord | null;
+  mouseCoord: Coord | null;
   debugRender: boolean;
 }
 
@@ -111,7 +111,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       sidebarDock: 'r',
       dragCorner: null,
       dragCorner2: null,
-      mousePosition: null,
+      mouseCoord: null,
       debugRender: true
     };
 
@@ -209,7 +209,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
   exportMap(): MapData {
     const {
       mapId, mapWidth, mapHeight,
-      terrains, items, backgrounds
+      terrains, items, backgrounds, triggers
     } = this.state;
     return {
       id: mapId,
@@ -218,7 +218,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       terrain: terrains,
       entities: items.filter(x => x.category === 'entity').map(x => x.item as MapEntity),
       decorations: items.filter(x => x.category === 'decoration').map(x => x.item as MapDecoration),
-      triggers: [],
+      triggers: triggers,
       backgrounds: backgrounds,
       killBoxes: items.filter(x => x.category === 'killBox').map(x => x.item as MapKillBox),
       spawnPoints: items.filter(x => x.category === 'spawnPoint').map(x => x.item as MapSpawnPoint)
@@ -242,6 +242,11 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     this.setState(({ sidebarDock }) => ({
       sidebarDock: sidebarDock === 'l' ? 'r' : 'l'
     }));
+  }
+
+  editMapId() {
+    let str = prompt("Enter map id:", this.state.mapId);
+    if (str) this.setState({ mapId: str });
   }
 
   mouseHandler(evt: React.MouseEvent<HTMLDivElement>) {
@@ -268,7 +273,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         });
       }
       this.setState({
-        mousePosition: new Coord(sceneX, sceneY)
+        mouseCoord: new Coord(sceneX, sceneY)
       });
     } else if (evt.type === 'mouseup') {
       if (evt.button === 0) {
@@ -559,7 +564,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
 
   triggerAddHandler() {
     const data: MapTrigger = {
-      id: `${this.state.mapId}.`,
+      id: `${this.state.mapId}:`,
       condition: {
         type: MapTriggerType.entityKilled,
         entityTag: ''
@@ -647,8 +652,10 @@ function Toolbar({ parent }: EditorChildProps) {
 
 function Sidebar({ parent }: EditorChildProps) {
   const { state } = parent;
-  const { itemDraft, sidebarDock, selectedItems, mousePosition } = state;
+  const { itemDraft, sidebarDock, selectedItems, mouseCoord, dragCorner, pxAtom } = state;
   const toggledSide = { l: 'right', r: 'left' }[sidebarDock];
+
+  const dragCoord = dragCorner && new Coord(dragCorner.x / pxAtom, dragCorner.y / pxAtom).round();
 
   return (
     <div className="Sidebar">
@@ -658,14 +665,18 @@ function Sidebar({ parent }: EditorChildProps) {
       </div>
       <div>
         <div><strong>Map Information</strong></div>
+        <div>ID: {state.mapId}&nbsp;<button onClick={() => parent.editMapId()}>Edit</button></div>
         <div>Map: {state.mapWidth} x {state.mapHeight}</div>
         <div>Scene: {state.width} x {state.height}</div>
         <div>Entities: {state.items.filter(x => x.category === 'entity').length}</div>
         <div>Decorations: {state.items.filter(x => x.category === 'decoration').length}</div>
         <div>Kill Boxes: {state.items.filter(x => x.category === 'killBox').length}</div>
         <div>Spawn Points: {state.items.filter(x => x.category === 'spawnPoint').length}</div>
-        {mousePosition &&
-          <div>Cursor: ({mousePosition.x}, {mousePosition.y}) ({Math.floor(mousePosition.x / TERRAIN_SIZE)}, {Math.floor(mousePosition.y / TERRAIN_SIZE)})</div>
+        {mouseCoord &&
+          <div>Cursor: ({mouseCoord.x}, {mouseCoord.y}) ({Math.floor(mouseCoord.x / TERRAIN_SIZE)}, {Math.floor(mouseCoord.y / TERRAIN_SIZE)})</div>
+        }
+        {dragCoord &&
+          <div>Drag: ({dragCoord.x}, {dragCoord.y}) {Math.abs(mouseCoord!.x - dragCoord.x)}x{Math.abs(mouseCoord!.y - dragCoord.y)}</div>
         }
         {selectedItems.length > 0 &&
           <div>Selected: {`${selectedItems.length} ${selectedItems.length > 1 ? 'items' : 'item'}`}</div>
