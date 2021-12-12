@@ -267,6 +267,8 @@ abstract class FragileTerrain extends Terrain {
   /** ticks having been collapsing */
   collapsingTicks = -1;
 
+  collapsed = false;
+
   constructor(position: Coord, type: MapTerrainType, texture: TextureLike, collapseTicks: number) {
     super(position, type, texture);
     this.collapseTicks = collapseTicks;
@@ -275,6 +277,16 @@ abstract class FragileTerrain extends Terrain {
   onCollideEntity(scene: LevelScene, entity: Entity, side: Side) {
     if (side === Side.top && entity.isPlayer()) {
       this.collapse();
+      for (let x = this.x - 1; x >= 0; x--) {
+        const terrain = scene.terrains[this.y][x];
+        if (!(terrain instanceof FragileTerrain)) break;
+        terrain.collapse();
+      }
+      for (let x = this.x + 1; x < scene.mapWidth; x++) {
+        const terrain = scene.terrains[this.y][x];
+        if (!(terrain instanceof FragileTerrain)) break;
+        terrain.collapse();
+      }
     }
   }
 
@@ -289,13 +301,25 @@ abstract class FragileTerrain extends Terrain {
   tick(scene: LevelScene) {
     if (this.collapsingTicks >= 0) {
       this.collapsingTicks++;
-      if (this.collapsingTicks === this.collapseTicks)
-        scene.deleteTerrain(this.position);
+      if (this.collapsingTicks === this.collapseTicks) {
+        this.collapsingTicks = -1;
+        this.collapsed = true;
+        this.onCollapsed(scene);
+      }
     }
+  }
+
+  onCollapsed(scene: LevelScene) {
+    scene.deleteTerrain(this.position);
   }
 }
 
 export class TerrainFragile extends FragileTerrain {
+  collapseOffset = new Vector(0, 0);
+
+  recoveringTicks = -1;
+  recoverTicks = 240;
+
   static TEXTURE_MAP: Record<string, string> = {
     tree: "decoration/tree:platform-fragile"
   };
@@ -305,11 +329,47 @@ export class TerrainFragile extends FragileTerrain {
   }
 
   get collisionBox() {
+    if (this.collapsed)
+      return null;
     switch (this.variant) {
       case "tree":
         return this.center.expand(4, 4, 4, 2);
       default:
         return this.boundingBox;
     }
+  }
+
+  tick(scene: LevelScene) {
+    if (this.collapsed) {
+      this.recoveringTicks++;
+      if (this.recoveringTicks === this.recoverTicks) {
+        this.recoveringTicks = -1;
+        this.collapsed = false;
+      }
+    } else if (this.collapsingTicks > 0 && this.collapsingTicks % 3 === 0) {
+      this.collapseOffset.x = Math.floor(Math.random() * 3) - 1;
+      this.collapseOffset.y = Math.floor(Math.random() * 3) - 1;
+    }
+    super.tick(scene);
+  }
+
+  onCollapsed(scene: LevelScene) {
+    this.recoveringTicks = 0;
+  }
+
+  getRenderInfo() {
+    let { box, texture } = super.getRenderInfo();
+    if (this.collapsingTicks >= 0) {
+      box = box.offset(this.collapseOffset);
+    }
+    return { box, texture };
+  }
+
+  render(rctx: RendererContext) {
+    rctx.run(({ ctx }) => {
+      if (this.collapsed)
+        ctx.globalAlpha = 0.4;
+      super.render(rctx);
+    });
   }
 }
