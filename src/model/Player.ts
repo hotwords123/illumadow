@@ -8,6 +8,7 @@ import { RendererContext } from "../render/Renderer";
 import Mob, { DamageSource } from "./Mob";
 import { Terrain } from "./Terrain";
 import { ForwardAnimation, FrameSequence } from "../render/Animation";
+import { MeleeWave } from "./Particle";
 
 let texturePlayer: Texture;
 
@@ -260,6 +261,8 @@ export default class Player extends Mob {
 
       this.meleeCooldown = this.meleeSpeed;
       this.animation = this.createAnimation(State.attack);
+
+      scene.addParticle(new MeleeWave(this.coordByFacing2(2, 0), this.facing));
     }
   }
 

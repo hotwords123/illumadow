@@ -22,6 +22,7 @@ import FocusCircle, { DespawningFocusCircle, OpeningFocusCircle, RespawningFocus
 import { ForwardAnimation, GeneratorAnimation } from "../render/Animation";
 import Trigger from "./Trigger";
 import EntityItem from "../model/Item";
+import Particle from "../model/Particle";
 
 let textureHealth: Texture;
 
@@ -53,6 +54,7 @@ export default class LevelScene extends Scene {
   spawnPoints!: SpawnPoint[];
   spawnPoint!: Coord;
   triggers!: Trigger[];
+  particles!: Particle[];
 
   /** used for block player's move before tasks finished */
   boundary!: AABB;
@@ -77,6 +79,7 @@ export default class LevelScene extends Scene {
 
   paused = false;
   pauseMenu: SelectMenu<MenuItem> | null = null;
+  gameOverMenu: SelectMenu<MenuItem> | null = null;
 
   constructor(gameManager: GameManager, private map: MapData) {
     super(gameManager);
@@ -126,12 +129,14 @@ export default class LevelScene extends Scene {
     this.spawnPoints = map.spawnPoints.map(data => new SpawnPoint(data));
     this.spawnPoint = this.player.position.clone();
     this.triggers = map.triggers.map(data => Trigger.create(data));
+    this.particles = [];
 
     this.boundary = new AABB(0, 0, this.width, this.height);
 
     this.camera = new Camera(this);
     this.subtitle = new Subtitle(this);
 
+    this.despawning = false;
     this.animation = new GeneratorAnimation(this.animateOpening());
 
     this.ticks = 0;
@@ -182,6 +187,14 @@ export default class LevelScene extends Scene {
 
   deleteTerrain({ x, y }: Coord) {
     this.terrains[y][x] = null;
+  }
+
+  addParticle(particle: Particle) {
+    this.particles.push(particle);
+  }
+
+  deleteParticle(particle: Particle) {
+    this.particles = this.particles.filter(p => p !== particle);
   }
 
   getLandmark(tag: string) {
@@ -277,6 +290,10 @@ export default class LevelScene extends Scene {
           for (const entity of this.entities)
             if (entity.collisionBox.intersects(this.boundary))
               entity.tick(this);
+
+          // Particle
+          for (const particle of this.particles)
+            particle.tick(this);
   
           // Spawn Point
           for (const spawnPoint of this.spawnPoints) {
@@ -338,7 +355,39 @@ export default class LevelScene extends Scene {
   }
 
   gameOver() {
-    this.showSubtitle("Game Over", 3000);
+    this.animation = new GeneratorAnimation(this.animateGameOver());
+  }
+
+  *animateGameOver() {
+    this.despawning = true;
+    this.focusCircle = new DespawningFocusCircle(this.player.collisionBox.center);
+    do yield; while (!this.focusCircle.next());
+    for (let i = 0; i < 30; i++) yield;
+    this.gameOverMenu = new SelectMenu<MenuItem>(this, [
+      {
+        action: "restart",
+        text: "重玩本关",
+        disabled: false
+      },
+      {
+        action: "title",
+        text: "返回标题界面",
+        disabled: false
+      }
+    ], ({ action }) => {
+      this.gameOverMenu!.cleanup();
+      this.gameOverMenu = null;
+
+      switch (action) {
+        case "restart":
+          this.restart();
+          break;
+
+        case "title":
+          this.gameManager.backToTitle();
+          break;
+      }
+    });
   }
 
   render(rctx: RendererContext) {
@@ -365,11 +414,16 @@ export default class LevelScene extends Scene {
             spawnPoint.render(rctx);
           for (const entity of this.entities)
             entity.render(rctx);
+          for (const particle of this.particles)
+            particle.render(rctx);
         });
         this.renderHud(rctx);
         this.subtitle.render(rctx);
       });
-      this.renderPauseMenu(rctx);
+      if (this.pauseMenu)
+        this.renderMenu(rctx, this.pauseMenu, "暂停");
+      if (this.gameOverMenu)
+        this.renderMenu(rctx, this.gameOverMenu, "挑战失败");
     });
   }
 
@@ -405,15 +459,13 @@ export default class LevelScene extends Scene {
     });
   }
 
-  renderPauseMenu(rctx: RendererContext) {
+  renderMenu(rctx: RendererContext, menu: SelectMenu<MenuItem>, title: string) {
     rctx.run(({ ctx }) => {
-      if (!this.pauseMenu) return;
-
       ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
       ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
 
       let x = SCENE_WIDTH / 2, y = 30;
-      const { selectedItem } = this.pauseMenu;
+      const { selectedItem } = menu;
 
       ctx.font = "12.5px 'Noto Sans SC'";
       ctx.textAlign = "center";
@@ -421,11 +473,11 @@ export default class LevelScene extends Scene {
       ctx.shadowColor = "#000";
       ctx.shadowBlur = 2;
       ctx.fillStyle = "#999";
-      ctx.fillText("暂停", x, y);
+      ctx.fillText(title, x, y);
       y += 20;
 
       ctx.font = "5.25px 'Noto Sans SC'";
-      for (const item of this.pauseMenu.getItems()) {
+      for (const item of menu.getItems()) {
         ctx.fillStyle = item === selectedItem ?
           (this.totalTicks % 12 < 6 ? '#90d060' : '#f0e080') :
           (item.disabled ? '#999' : '#eee');
