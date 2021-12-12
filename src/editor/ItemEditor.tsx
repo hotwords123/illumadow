@@ -40,9 +40,6 @@ export default class ItemEditor extends React.Component<ItemEditorProps, ItemEdi
     const { props: { data: item }, state } = this;
     return (
       <div className="ItemEditor">
-        <div>
-          <strong>Selected Item</strong>
-        </div>
         <div className="fields">
           {item.map(([field, value]) =>
             <div key={field} className="field">

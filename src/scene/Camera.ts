@@ -12,7 +12,9 @@ const
   FOCUS_ANCHOR_R = 240,
   WINDOW_ANCHOR_L = 120,
   WINDOW_ANCHOR_R = 180,
-  WINDOW_ANCHOR_Y = 120,
+  BASE_ANCHOR_Y = 120,
+  WINDOW_ANCHOR_U = 25,
+  WINDOW_ANCHOR_D = 155,
   MAX_ACCEL = 3,
   MIN_SPEED = 0.3,
   MAX_SPEED = 4,
@@ -37,6 +39,10 @@ export default class Camera {
     return ORIGIN_BOX.offset2(this.offset.x, this.offset.y);
   }
 
+  rumble() {
+    // TODO
+  }
+
   /**
    * Update the camera.
    * @param init Whether to ignore previous position and facing.
@@ -49,11 +55,11 @@ export default class Camera {
     /** Player position relative to the camera */
     const playerOffset = playerPos.minus(this.offset);
     const playerOffsetOld = playerPosOld.minus(this.offset);
-    const sceneWidth = this.scene.width, sceneHeight = this.scene.height;
+    const boundary = this.scene.boundary;
 
-    if (sceneWidth <= SCENE_WIDTH) {
+    if (boundary.width <= SCENE_WIDTH) {
       // Scene too small, just put it in the center
-      this.offset.x = -(SCENE_WIDTH - sceneWidth) / 2;
+      this.offset.x = boundary.center.x - SCENE_WIDTH / 2;
       this.stateX = CameraState.still;
     } else {
       // Decide facing
@@ -72,7 +78,7 @@ export default class Camera {
       }
 
       /** Target absolute offset */
-      const target = Math.max(0, Math.min(sceneWidth - SCENE_WIDTH,
+      const target = Math.max(boundary.left - 0, Math.min(boundary.right - SCENE_WIDTH,
         playerPos.x - (this.facing === Facing.right ? WINDOW_ANCHOR_L : WINDOW_ANCHOR_R)));
 
       if (init) {
@@ -103,14 +109,15 @@ export default class Camera {
       }
     }
 
-    if (sceneHeight <= SCENE_HEIGHT) {
-      this.offset.y = -(SCENE_HEIGHT - sceneHeight) / 2;
+    if (boundary.height <= SCENE_HEIGHT) {
+      this.offset.y = boundary.center.y - SCENE_HEIGHT / 2;
       this.stateY = CameraState.still;
     } else {
-      if (player.onGround)
+      if (init || player.onGround || playerOffset.y < WINDOW_ANCHOR_U || playerOffset.y > WINDOW_ANCHOR_D)
         this.snappedY = playerPos.y;
 
-      const target = Math.max(0, Math.min(sceneHeight - SCENE_HEIGHT, this.snappedY - WINDOW_ANCHOR_Y));
+      const target = Math.max(boundary.top - 0, Math.min(boundary.bottom - SCENE_HEIGHT,
+        this.snappedY - BASE_ANCHOR_Y));
 
       if (init) {
         this.offset.y = target;
@@ -133,8 +140,8 @@ export default class Camera {
 
   render(rctx: RendererContext, callback: () => void) {
     rctx.run(({ ctx }) => {
-      const { x, y } = this.offset;
-      ctx.translate(-Math.round(x), -Math.round(y));
+      let { x, y } = this.offset.round();
+      ctx.translate(-x, -y);
       callback();
     });
 
@@ -167,8 +174,16 @@ export default class Camera {
 
         ctx.lineWidth = 3 / pixelSize;
         ctx.beginPath();
-        ctx.moveTo(SCENE_WIDTH * 0.3, WINDOW_ANCHOR_Y);
-        ctx.lineTo(SCENE_WIDTH * 0.64, WINDOW_ANCHOR_Y);
+        ctx.moveTo(SCENE_WIDTH * 0.3, BASE_ANCHOR_Y);
+        ctx.lineTo(SCENE_WIDTH * 0.64, BASE_ANCHOR_Y);
+        ctx.stroke();
+
+        ctx.lineWidth = 1.5 / pixelSize;
+        ctx.beginPath();
+        ctx.moveTo(SCENE_WIDTH * 0.34, WINDOW_ANCHOR_U);
+        ctx.lineTo(SCENE_WIDTH * 0.6, WINDOW_ANCHOR_U);
+        ctx.moveTo(SCENE_WIDTH * 0.34, WINDOW_ANCHOR_D);
+        ctx.lineTo(SCENE_WIDTH * 0.6, WINDOW_ANCHOR_D);
         ctx.stroke();
       });
     }

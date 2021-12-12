@@ -28,6 +28,12 @@ export interface MapData {
   decorations: MapDecoration[];
   /** 触发器 */
   triggers: MapTrigger[];
+  /** 背景 */
+  backgrounds: MapBackground[];
+  /** 地标 */
+  landmarks: MapLandmark[];
+  /** 重生点 */
+  spawnPoints: MapSpawnPoint[];
 }
 
 /* ======== Terrain ======== */
@@ -104,4 +110,49 @@ export interface MapDecoration extends MapSprite {
 
 export interface MapTrigger {
   id: string;
+  condition: MapTriggerCondition;
+}
+
+export enum MapTriggerType {
+  reachPlace = "reachPlace",
+  entityKilled = "entityKilled"
+}
+
+export type MapTriggerCondition = {
+  type: MapTriggerType.reachPlace,
+  landmarkTag: string;
+} | {
+  type: MapTriggerType.entityKilled;
+  entityTag: string;
+};
+
+/* ======== Background ======== */
+
+export interface MapBackground {
+  picture: string;
+  opacity: number;
+  horizontal: MapBackgroundAxis;
+  vertical: MapBackgroundAxis;
+}
+
+export type MapBackgroundAxis = {
+  repeat: true;
+  factor: number;
+  offset: number;
+} | {
+  repeat: false;
+  marginL: number;
+  marginR: number;
+}
+
+/* ======== Landmark ======== */
+
+export interface MapLandmark extends MapSprite {
+  width: number;
+  height: number;
+}
+
+/* ======== Spawn Point ======== */
+
+export interface MapSpawnPoint extends MapSprite {
 }

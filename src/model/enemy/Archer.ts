@@ -50,7 +50,7 @@ export default class EnemyArcher extends Mob {
       const shootPos = this.coordByFacing2(4, -6);
       const playerBox = player.hurtBox;
       let deltaX = player.x - this.x;
-      let playerInReach = Math.abs(deltaX) <= 100;
+      let playerInReach = Math.abs(deltaX) <= 160;
       let canShoot = playerBox.vertical.contains(shootPos.y);
   
       if (playerInReach) {

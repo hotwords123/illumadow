@@ -59,7 +59,7 @@ export default class EnemyScout extends Mob {
       this.attackCooldown--;
     } else {
       if (playerInTouch && this.playerInTouchTicks >= 5) {
-        if (player.damage(scene, this.attackDamage)) {
+        if (player.damage(scene, this.attackDamage, this)) {
           player.knockback(this.position, this.facing, 2.5);
           this.attackCooldown = this.attackSpeed;
         }

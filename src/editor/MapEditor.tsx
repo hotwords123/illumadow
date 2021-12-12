@@ -1,6 +1,6 @@
 import React from 'react';
 import { AABB, Coord } from '../base/math';
-import { MapData, MapDecoration, MapEntity, MapEntityType, MapSprite, MapTerrain, TERRAIN_SIZE } from '../map/interfaces';
+import { MapBackground, MapData, MapDecoration, MapEntity, MapEntityType, MapLandmark, MapSpawnPoint, MapSprite, MapTerrain, MapTrigger, MapTriggerType, TERRAIN_SIZE } from '../map/interfaces';
 import ItemEditor, { EditError, ItemEditorData, ItemEditorDataEntry } from './ItemEditor';
 import './MapEditor.css';
 import parseImage from './parseImage';
@@ -10,7 +10,7 @@ import TerrainCanvas from './TerrainCanvas';
 
 type MapItem = {
   id: number;
-  category: 'entity' | 'decoration';
+  category: 'entity' | 'decoration' | 'landmark' | 'spawnPoint';
   item: MapSprite;
 }
 
@@ -19,6 +19,10 @@ type MapItemType = {
   type: MapEntityType
 } | {
   category: 'decoration';
+} | {
+  category: 'landmark';
+} | {
+  category: 'spawnPoint';
 };
 
 const ENTITY_TEMPLATES = new Map([
@@ -37,6 +41,8 @@ const ENTITY_TYPES: MapEntityType[] = [...ENTITY_TEMPLATES.keys()];
 
 const TOOLS: MapItemType[] = [
   { category: 'decoration' },
+  { category: 'landmark' },
+  { category: 'spawnPoint' },
   ...ENTITY_TYPES.map(type => ({ category: 'entity', type } as MapItemType))
 ];
 
@@ -52,6 +58,10 @@ interface MapEditorState {
   mapWidth: number;
   mapHeight: number;
   terrains: (MapTerrain | null)[][];
+  backgrounds: MapBackground[];
+  backgroundDrafts: ItemEditorData[];
+  triggers: MapTrigger[];
+  triggerDrafts: ItemEditorData[];
   scale: number;
   pxAtom: number;
   pxGrid: number;
@@ -62,6 +72,7 @@ interface MapEditorState {
   sidebarDock: 'l' | 'r';
   dragCorner: Coord | null;
   dragCorner2: Coord | null;
+  mouseCoord: Coord | null;
   debugRender: boolean;
 }
 
@@ -83,6 +94,10 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       mapWidth: 0,
       mapHeight: 0,
       terrains: [],
+      backgrounds: [],
+      backgroundDrafts: [],
+      triggers: [],
+      triggerDrafts: [],
       scale: 4,
       pxAtom: 4 / window.devicePixelRatio,
       pxGrid: 4 * TERRAIN_SIZE / window.devicePixelRatio,
@@ -96,6 +111,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       sidebarDock: 'r',
       dragCorner: null,
       dragCorner2: null,
+      mouseCoord: null,
       debugRender: true
     };
 
@@ -131,7 +147,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         img.onload = () => {
           try {
             const map = parseImage(img, file.name.slice(0, file.name.indexOf('.')));
-            this.loadMap(map);
+            this.loadMap(map, true);
           } catch (err: any) {
             console.error(err);
             alert(err.message);
@@ -143,7 +159,10 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         const reader = new FileReader();
         reader.onload = () => {
           try {
-            const data = JSON.parse(reader.result as string);
+            const data = JSON.parse(reader.result as string) as MapData;
+            data.backgrounds = data.backgrounds ?? [];
+            data.landmarks = data.landmarks ?? [];
+            data.spawnPoints = data.spawnPoints ?? [];
             this.loadMap(data);
           } catch (err: any) {
             console.error(err);
@@ -161,7 +180,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     return { id: this.currentItemId++, category, item };
   }
 
-  loadMap(map: MapData) {
+  loadMap(map: MapData, keepItems = false) {
     this.setState(state => ({
       loaded: true,
       mapCounter: state.mapCounter + 1,
@@ -171,9 +190,16 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       mapWidth: map.width,
       mapHeight: map.height,
       terrains: map.terrain,
+      backgrounds: keepItems ? state.backgrounds : map.backgrounds,
+      backgroundDrafts: keepItems ? state.backgroundDrafts : map.backgrounds.map(x => this.makeBackgroundDraft(x)),
+      triggers: keepItems ? state.triggers : map.triggers,
+      triggerDrafts: keepItems ? state.triggerDrafts : map.triggers.map(x => this.makeTriggerDraft(x)),
       items: [
         ...map.entities.map(entity => this.createItem('entity', entity)),
-        ...map.decorations.map(decoration => this.createItem('decoration', decoration))
+        ...map.decorations.map(decoration => this.createItem('decoration', decoration)),
+        ...map.landmarks.map(landmark => this.createItem('landmark', landmark)),
+        ...map.spawnPoints.map(spawnPoint => this.createItem('spawnPoint', spawnPoint)),
+        ...(keepItems ? [...state.items.filter(x => x.category !== 'decoration')] : [])
       ],
       selectedItems: [],
       itemDraft: null
@@ -183,7 +209,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
   exportMap(): MapData {
     const {
       mapId, mapWidth, mapHeight,
-      terrains, items
+      terrains, items, backgrounds, triggers
     } = this.state;
     return {
       id: mapId,
@@ -192,7 +218,10 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
       terrain: terrains,
       entities: items.filter(x => x.category === 'entity').map(x => x.item as MapEntity),
       decorations: items.filter(x => x.category === 'decoration').map(x => x.item as MapDecoration),
-      triggers: []
+      triggers: triggers,
+      backgrounds: backgrounds,
+      landmarks: items.filter(x => x.category === 'landmark').map(x => x.item as MapLandmark),
+      spawnPoints: items.filter(x => x.category === 'spawnPoint').map(x => x.item as MapSpawnPoint)
     };
   }
 
@@ -215,11 +244,18 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     }));
   }
 
+  editMapId() {
+    let str = prompt("Enter map id:", this.state.mapId);
+    if (str) this.setState({ mapId: str });
+  }
+
   mouseHandler(evt: React.MouseEvent<HTMLDivElement>) {
     evt.preventDefault();
     const box = this.refContainer.current!.getBoundingClientRect();
     const offsetX = evt.clientX - box.left;
     const offsetY = evt.clientY - box.top;
+    const sceneX = Math.round(offsetX / this.state.pxAtom);
+    const sceneY = Math.round(offsetY / this.state.pxAtom);
 
     if (evt.type === 'mousedown') {
       if (evt.button === 0) {
@@ -228,8 +264,6 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
           dragCorner: new Coord(offsetX, offsetY)
         });
       } else if (evt.button === 2) {
-        const sceneX = Math.round(offsetX / this.state.pxAtom);
-        const sceneY = Math.round(offsetY / this.state.pxAtom);
         this.placeItem(sceneX, sceneY);
       }
     } else if (evt.type === 'mousemove') {
@@ -238,6 +272,9 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
           dragCorner2: new Coord(offsetX, offsetY)
         });
       }
+      this.setState({
+        mouseCoord: new Coord(sceneX, sceneY)
+      });
     } else if (evt.type === 'mouseup') {
       if (evt.button === 0) {
         const { dragCorner: corner, dragCorner2: corner2 } = this.state;
@@ -258,7 +295,18 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
 
   getItemsInRect(rect: AABB) {
     const { items, pxAtom } = this.state;
-    return items.filter(({ item }) => new Coord(item.x * pxAtom, item.y * pxAtom).inside(rect));
+    return items.filter(({ category, item }) => {
+      switch (category) {
+        case 'landmark': {
+          const landmark = item as MapLandmark;
+          return AABB.offset(landmark.x, landmark.y, landmark.width, landmark.height).inside(rect);
+        }
+        default: {
+          const sprite = item as MapSprite;
+          return new Coord(sprite.x * pxAtom, sprite.y * pxAtom).inside(rect);
+        }
+      }
+    });
   }
 
   keyHandler(evt: KeyboardEvent) {
@@ -284,7 +332,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         break;
       }
       case '1': case '2': case '3': case '4': case '5':
-      case '6': case '7': {
+      case '6': case '7': case '8': case '9': {
         this.switchTool(TOOLS[parseInt(evt.key) - 1]);
         break;
       }
@@ -318,6 +366,15 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
         return this.createItem('decoration', {
           tags: [], x, y,
           variant: ''
+        });
+      case 'landmark':
+        return this.createItem('landmark', {
+          tags: [], x, y,
+          width: 8, height: 8
+        });
+      case 'spawnPoint':
+        return this.createItem('spawnPoint', {
+          tags: [], x, y
         });
       default:
         return null;
@@ -407,6 +464,123 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     this.update();
   }
 
+  /* ======== Background ======== */
+
+  makeBackgroundDraft(data: MapBackground): ItemEditorData {
+    return Object.keys(data).map(key => [key, JSON.stringify((data as any)[key])] as ItemEditorDataEntry);
+  }
+
+  backgroundsEditHandler(index: number, field: string, value: string) {
+    const item = this.state.backgrounds[index];
+    const draft = this.state.backgroundDrafts[index];
+
+    const entry = draft.find(x => x[0] === field);
+    if (!entry)
+      throw new EditError("field does not exist");
+    entry[1] = value;
+    this.update();
+
+    let parsed: any = JSON.parse(value);
+    switch (field) {
+      case 'picture': {
+        if (typeof parsed !== 'string')
+          throw new EditError("picture name should be string");
+        break;
+      }
+      case 'opacity':
+        if (typeof parsed !== 'number')
+          throw new EditError("opacity should be number");
+        break;
+      case 'horizontal': case 'vertical':
+        if (!parsed || typeof parsed !== 'object')
+          throw new EditError(`${field} should be object`);
+        if (typeof parsed.repeat !== "boolean")
+          throw new EditError(`${field}.repeat should be boolean`);
+        if (parsed.repeat) {
+          if (typeof parsed.factor !== "number")
+            throw new EditError(`${field}.factor should be number`);
+          if (typeof parsed.offset !== "number")
+            throw new EditError(`${field}.offset should be number`);
+        } else {
+          if (typeof parsed.marginL !== "number")
+            throw new EditError(`${field}.marginL should be number`);
+          if (typeof parsed.marginR !== "number")
+            throw new EditError(`${field}.marginR should be number`);
+        }
+        break;
+    }
+
+    Object.assign(item, { [field]: parsed });
+    this.update();
+  }
+
+  backgroundAddHandler() {
+    const data: MapBackground = {
+      picture: "bg/",
+      opacity: 1,
+      horizontal: {
+        repeat: true,
+        factor: 0.5,
+        offset: 0
+      },
+      vertical: {
+        repeat: false,
+        marginL: 0,
+        marginR: 0
+      }
+    };
+    this.state.backgrounds.push(data);
+    this.state.backgroundDrafts.push(this.makeBackgroundDraft(data));
+    this.update();
+  }
+
+  backgroundRemoveHandler(index: number) {
+    this.state.backgrounds.splice(index, 1);
+    this.state.backgroundDrafts.splice(index, 1);
+    this.update();
+  }
+
+  /* ======== Trigger ======== */
+
+  makeTriggerDraft(data: MapTrigger): ItemEditorData {
+    return Object.keys(data).map(key => [key, JSON.stringify((data as any)[key])] as ItemEditorDataEntry);
+  }
+
+  triggersEditHandler(index: number, field: string, value: string) {
+    const item = this.state.triggers[index];
+    const draft = this.state.triggerDrafts[index];
+
+    const entry = draft.find(x => x[0] === field);
+    if (!entry)
+      throw new EditError("field does not exist");
+    entry[1] = value;
+    this.update();
+
+    let parsed: any = JSON.parse(value);
+
+    Object.assign(item, { [field]: parsed });
+    this.update();
+  }
+
+  triggerAddHandler() {
+    const data: MapTrigger = {
+      id: `${this.state.mapId}:`,
+      condition: {
+        type: MapTriggerType.entityKilled,
+        entityTag: ''
+      }
+    };
+    this.state.triggers.push(data);
+    this.state.triggerDrafts.push(this.makeTriggerDraft(data));
+    this.update();
+  }
+
+  triggerRemoveHandler(index: number) {
+    this.state.triggers.splice(index, 1);
+    this.state.triggerDrafts.splice(index, 1);
+    this.update();
+  }
+
   toggleDebugRender() {
     this.setState(({ mapCounter, debugRender }) => ({
       mapCounter: mapCounter + 1,
@@ -449,6 +623,14 @@ function Toolbar({ parent }: EditorChildProps) {
         className={tool.category === "decoration" ? "tool selected" : "tool"}
         onClick={() => parent.switchTool({ category: 'decoration' })}
       >decoration</button>
+      <button
+        className={tool.category === "landmark" ? "tool selected" : "tool"}
+        onClick={() => parent.switchTool({ category: 'landmark' })}
+      >landmark</button>
+      <button
+        className={tool.category === "spawnPoint" ? "tool selected" : "tool"}
+        onClick={() => parent.switchTool({ category: 'spawnPoint' })}
+      >spawnPoint</button>
       {ENTITY_TYPES.map(type => {
         const classList = ["tool"];
         if (tool.category === "entity" && tool.type === type)
@@ -470,8 +652,10 @@ function Toolbar({ parent }: EditorChildProps) {
 
 function Sidebar({ parent }: EditorChildProps) {
   const { state } = parent;
-  const { itemDraft, sidebarDock, selectedItems } = state;
+  const { itemDraft, sidebarDock, selectedItems, mouseCoord, dragCorner, pxAtom } = state;
   const toggledSide = { l: 'right', r: 'left' }[sidebarDock];
+
+  const dragCoord = dragCorner && new Coord(dragCorner.x / pxAtom, dragCorner.y / pxAtom).round();
 
   return (
     <div className="Sidebar">
@@ -481,16 +665,68 @@ function Sidebar({ parent }: EditorChildProps) {
       </div>
       <div>
         <div><strong>Map Information</strong></div>
+        <div>ID: {state.mapId}&nbsp;<button onClick={() => parent.editMapId()}>Edit</button></div>
         <div>Map: {state.mapWidth} x {state.mapHeight}</div>
         <div>Scene: {state.width} x {state.height}</div>
         <div>Entities: {state.items.filter(x => x.category === 'entity').length}</div>
         <div>Decorations: {state.items.filter(x => x.category === 'decoration').length}</div>
+        <div>Landmarks: {state.items.filter(x => x.category === 'landmark').length}</div>
+        <div>Spawn Points: {state.items.filter(x => x.category === 'spawnPoint').length}</div>
+        {mouseCoord &&
+          <div>Cursor: ({mouseCoord.x}, {mouseCoord.y}) ({Math.floor(mouseCoord.x / TERRAIN_SIZE)}, {Math.floor(mouseCoord.y / TERRAIN_SIZE)})</div>
+        }
+        {dragCoord &&
+          <div>Drag: ({dragCoord.x}, {dragCoord.y}) {Math.abs(mouseCoord!.x - dragCoord.x)}x{Math.abs(mouseCoord!.y - dragCoord.y)}</div>
+        }
         {selectedItems.length > 0 &&
           <div>Selected: {`${selectedItems.length} ${selectedItems.length > 1 ? 'items' : 'item'}`}</div>
         }
       </div>
       {itemDraft &&
-        <ItemEditor data={itemDraft} onModify={parent.itemModifyHandler} />
+        <div>
+          <strong>Selected Item</strong>
+          <ItemEditor data={itemDraft} onModify={parent.itemModifyHandler} />
+        </div>
+      }
+      {!itemDraft &&
+        <div>
+          <div>
+            <strong>Map Triggers</strong>&nbsp;
+            <button onClick={() => parent.triggerAddHandler()}>Add</button>
+          </div>
+          <div>
+            {state.triggerDrafts.map((draft, index) => (
+              <div key={index}>
+                <div>
+                  <span>Trigger #{index + 1}</span>&nbsp;
+                  <button onClick={() => parent.triggerRemoveHandler(index)}>Remove</button>
+                </div>
+                <ItemEditor data={draft}
+                  onModify={(field, value) => parent.triggersEditHandler(index, field, value)} />
+              </div>
+            ))}
+          </div>
+        </div>
+      }
+      {!itemDraft &&
+        <div>
+          <div>
+            <strong>Map Backgrounds</strong>&nbsp;
+            <button onClick={() => parent.backgroundAddHandler()}>Add</button>
+          </div>
+          <div>
+            {state.backgroundDrafts.map((draft, index) => (
+              <div key={index}>
+                <div>
+                  <span>Layer #{index + 1}</span>&nbsp;
+                  <button onClick={() => parent.backgroundRemoveHandler(index)}>Remove</button>
+                </div>
+                <ItemEditor data={draft}
+                  onModify={(field, value) => parent.backgroundsEditHandler(index, field, value)} />
+              </div>
+            ))}
+          </div>
+        </div>
       }
     </div>
   );
@@ -533,12 +769,12 @@ function Container({ parent, refMain }: ContainerProps) {
             style: {
               left: PX(item.x),
               top: PX(item.y),
-              '--label': ''
+              '--label': '""'
             },
             onMouseDown: handler,
             onMouseUp: handler,
             onMouseMove: handler
-          };
+          } as any;
           const classList = ['sprite'];
           if (selectedItems.includes(mapItem))
             classList.push('selected');
@@ -549,11 +785,28 @@ function Container({ parent, refMain }: ContainerProps) {
               props.style['--label'] = `"${type}"`;
               break;
             }
-            case 'decoration':
+
+            case 'decoration': {
               const { variant } = item as MapDecoration;
               classList.push('decoration', variant);
               props.style['--label'] = `"${variant}"`;
               break;
+            }
+
+            case 'landmark': {
+              const { width, height } = item as MapLandmark;
+              classList.push('landmark');
+              props.style['--label'] = `"${item.tags.join(',') || 'landmark'}"`;
+              props.style.width = PX(width);
+              props.style.height = PX(height);
+              break;
+            }
+
+            case 'spawnPoint': {
+              classList.push('spawnPoint');
+              props.style['--label'] = '"spawn point"';
+              break;
+            }
           }
           console.info(props);
           return (

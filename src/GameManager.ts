@@ -99,7 +99,7 @@ export default class GameManager {
   }
 
   startGame() {
-    this.startLevel('1-1');
+    this.startLevel('level1');
   }
 
   backToTitle() {

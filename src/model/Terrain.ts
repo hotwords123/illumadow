@@ -118,10 +118,12 @@ export abstract class Terrain extends Sprite {
           vel.x = 0;
           pos.x -= newBox.right - selfBox.left;
           this.onCollideEntity(scene, entity, Side.left);
+          entity.onCollideTerrain(scene, this, Side.right);
         } else if (oldBox.left >= selfBox.right && newBox.left <= selfBox.right) {
           vel.x = 0;
           pos.x -= newBox.left - selfBox.right;
           this.onCollideEntity(scene, entity, Side.right);
+          entity.onCollideTerrain(scene, this, Side.left);
         }
       }
     } else {
@@ -132,10 +134,12 @@ export abstract class Terrain extends Sprite {
           pos.y -= newBox.bottom - selfBox.top;
           entity.onGround = true;
           this.onCollideEntity(scene, entity, Side.top);
+          entity.onCollideTerrain(scene, this, Side.bottom);
         } else if (oldBox.top >= selfBox.bottom && newBox.top <= selfBox.bottom) {
           vel.y = 0;
           pos.y -= newBox.top - selfBox.bottom;
           this.onCollideEntity(scene, entity, Side.bottom);
+          entity.onCollideTerrain(scene, this, Side.top);
         }
       }
     }
@@ -176,20 +180,20 @@ abstract class HarmingTerrain extends Terrain {
   abstract get hurtBox(): AABB | null;
 
   /**
-   * Returns the amount of damage entity will take if it touches `hurtBox`.
+   * Called when the `collisionBox` of an Entity touches `hurtBox`.
    */
-  abstract hurtMobAmount(mob: Mob): number;
+  abstract onHurtEntity(scene: LevelScene, entity: Entity): void;
 
   /**
    * Will hurt the entity if it touches `hurtBox`.
    */
   interactEntity(scene: LevelScene, entity: Entity) {
     if (entity.isMob()) {
-      const amount = this.hurtMobAmount(entity);
-      if (amount > 0 && this.hurtBox?.intersects(entity.hurtBox))
-      entity.damage(scene, amount);
+      if (this.hurtBox?.intersects(entity.hurtBox))
+        this.onHurtEntity(scene, entity);
     } else if (entity.isProjectile()) {
-      entity.destroy(scene);
+      if (this.hurtBox?.intersects(entity.collisionBox))
+        this.onHurtEntity(scene, entity);
     }
   }
 
@@ -226,11 +230,14 @@ export class TerrainSpikes extends HarmingTerrain {
     }
   }
 
-  hurtMobAmount(mob: Mob) {
-    if (mob.isPlayer())
-      return 1;
-    else
-      return Infinity;
+  onHurtEntity(scene: LevelScene, entity: Entity) {
+    if (entity.isPlayer()) {
+      entity.damage(scene, 1, this);
+    } else if (entity.isMob()) {
+      entity.damage(scene, Infinity, this);
+    } else if (entity.isProjectile()) {
+      entity.destroy(scene);
+    }
   }
 }
 
@@ -243,11 +250,14 @@ export class TerrainWater extends HarmingTerrain {
     return this.center.expand(4, this.surface ? 2 : 4, 4, 4);
   }
 
-  hurtMobAmount(mob: Mob) {
-    if (mob.isPlayer())
-      return 1;
-    else
-      return Infinity;
+  onHurtEntity(scene: LevelScene, entity: Entity) {
+    if (entity.isPlayer()) {
+      entity.damage(scene, 1, this);
+    } else if (entity.isMob()) {
+      entity.damage(scene, Infinity, this);
+    } else if (entity.isProjectile()) {
+      entity.destroy(scene);
+    }
   }
 }
 
@@ -257,6 +267,8 @@ abstract class FragileTerrain extends Terrain {
   /** ticks having been collapsing */
   collapsingTicks = -1;
 
+  collapsed = false;
+
   constructor(position: Coord, type: MapTerrainType, texture: TextureLike, collapseTicks: number) {
     super(position, type, texture);
     this.collapseTicks = collapseTicks;
@@ -265,6 +277,16 @@ abstract class FragileTerrain extends Terrain {
   onCollideEntity(scene: LevelScene, entity: Entity, side: Side) {
     if (side === Side.top && entity.isPlayer()) {
       this.collapse();
+      for (let x = this.x - 1; x >= 0; x--) {
+        const terrain = scene.terrains[this.y][x];
+        if (!(terrain instanceof FragileTerrain)) break;
+        terrain.collapse();
+      }
+      for (let x = this.x + 1; x < scene.mapWidth; x++) {
+        const terrain = scene.terrains[this.y][x];
+        if (!(terrain instanceof FragileTerrain)) break;
+        terrain.collapse();
+      }
     }
   }
 
@@ -279,13 +301,25 @@ abstract class FragileTerrain extends Terrain {
   tick(scene: LevelScene) {
     if (this.collapsingTicks >= 0) {
       this.collapsingTicks++;
-      if (this.collapsingTicks === this.collapseTicks)
-        scene.deleteTerrain(this.position);
+      if (this.collapsingTicks === this.collapseTicks) {
+        this.collapsingTicks = -1;
+        this.collapsed = true;
+        this.onCollapsed(scene);
+      }
     }
+  }
+
+  onCollapsed(scene: LevelScene) {
+    scene.deleteTerrain(this.position);
   }
 }
 
 export class TerrainFragile extends FragileTerrain {
+  collapseOffset = new Vector(0, 0);
+
+  recoveringTicks = -1;
+  recoverTicks = 180;
+
   static TEXTURE_MAP: Record<string, string> = {
     tree: "decoration/tree:platform-fragile"
   };
@@ -295,11 +329,47 @@ export class TerrainFragile extends FragileTerrain {
   }
 
   get collisionBox() {
+    if (this.collapsed)
+      return null;
     switch (this.variant) {
       case "tree":
         return this.center.expand(4, 4, 4, 2);
       default:
         return this.boundingBox;
     }
+  }
+
+  tick(scene: LevelScene) {
+    if (this.collapsed) {
+      this.recoveringTicks++;
+      if (this.recoveringTicks === this.recoverTicks) {
+        this.recoveringTicks = -1;
+        this.collapsed = false;
+      }
+    } else if (this.collapsingTicks > 0 && this.collapsingTicks % 3 === 0) {
+      this.collapseOffset.x = Math.floor(Math.random() * 3) - 1;
+      this.collapseOffset.y = Math.floor(Math.random() * 3) - 1;
+    }
+    super.tick(scene);
+  }
+
+  onCollapsed(scene: LevelScene) {
+    this.recoveringTicks = 0;
+  }
+
+  getRenderInfo() {
+    let { box, texture } = super.getRenderInfo();
+    if (this.collapsingTicks >= 0) {
+      box = box.offset(this.collapseOffset);
+    }
+    return { box, texture };
+  }
+
+  render(rctx: RendererContext) {
+    rctx.run(({ ctx }) => {
+      if (this.collapsed)
+        ctx.globalAlpha = 0.4;
+      super.render(rctx);
+    });
   }
 }

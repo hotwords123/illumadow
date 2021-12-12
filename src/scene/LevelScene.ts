@@ -1,4 +1,4 @@
-import { AABB, Coord, Vector } from "../base/math";
+import { AABB, Coord, Facing, Vector } from "../base/math";
 import Scene, { SCENE_HEIGHT, SCENE_WIDTH } from "./Scene";
 import Entity from "../model/Entity";
 import Player from "../model/Player";
@@ -15,6 +15,12 @@ import Subtitle from "./Subtitle";
 import EnemyArcher from "../model/enemy/Archer";
 import imgHealth from "../assets/hud/health.png";
 import { Texture, textureManager } from "../render/TextureManager";
+import Background from "./Background";
+import Landmark from "./Landmark";
+import SpawnPoint from "./SpawnPoint";
+import FocusCircle, { DespawningFocusCircle, OpeningFocusCircle, RespawningFocusCirle } from "./FocusCircle";
+import { ForwardAnimation, GeneratorAnimation } from "../render/Animation";
+import Trigger from "./Trigger";
 
 let textureHealth: Texture;
 
@@ -41,9 +47,23 @@ export default class LevelScene extends Scene {
   player!: Player;
   entities!: Entity[];
   decorations!: Decoration[];
+  backgrounds!: Background[];
+  landmarks!: Landmark[];
+  spawnPoints!: SpawnPoint[];
+  spawnPoint!: Coord;
+  triggers!: Trigger[];
+
+  /** used for block player's move before tasks finished */
+  boundary!: AABB;
 
   camera!: Camera;
   subtitle!: Subtitle;
+
+  focusCircle: FocusCircle | null = null;
+
+  /** whether the player is despawning */
+  despawning = false;
+  animation: ForwardAnimation<void> | null = null;
 
   /** Ticks passed since level started, reset when retry */
   ticks: number = 0;
@@ -97,10 +117,21 @@ export default class LevelScene extends Scene {
     }
     if (!this.player)
       throw new Error("player not found in map");
+    this.player.outOfControlTicks = 30;
+
     this.decorations = map.decorations.map(data => new Decoration(data));
+    this.backgrounds = map.backgrounds.map(data => new Background(data));
+    this.landmarks = map.landmarks.map(data => new Landmark(data));
+    this.spawnPoints = map.spawnPoints.map(data => new SpawnPoint(data));
+    this.spawnPoint = this.player.position.clone();
+    this.triggers = map.triggers.map(data => Trigger.create(data));
+
+    this.boundary = new AABB(0, 0, this.width, this.height);
 
     this.camera = new Camera(this);
     this.subtitle = new Subtitle(this);
+
+    this.animation = new GeneratorAnimation(this.animateOpening());
 
     this.showSubtitle("game start", 2000);
 
@@ -127,6 +158,10 @@ export default class LevelScene extends Scene {
     }
   }
 
+  getEntitiesWithTag(tag: string): Entity[] {
+    return this.entities.filter(entity => entity.tags.includes(tag));
+  }
+
   getEntitiesInArea(box: AABB): Entity[] {
     return this.entities.filter(entity => box.intersects(entity.collisionBox));
   }
@@ -147,6 +182,20 @@ export default class LevelScene extends Scene {
     this.terrains[y][x] = null;
   }
 
+  getLandmark(tag: string) {
+    const landmark = this.landmarks.find(x => x.tags.includes(tag));
+    if (!landmark) throw new Error(`landmark not found: ${tag}`);
+    return landmark;
+  }
+
+  getLandmarksWithTag(tag: string) {
+    return this.landmarks.filter(landmark => landmark.tags.includes(tag));
+  }
+
+  setBoundary(box: AABB) {
+    this.boundary = box;
+  }
+
   togglePause() {
     if (this.paused) {
       this.paused = false;
@@ -163,7 +212,7 @@ export default class LevelScene extends Scene {
         {
           action: "retry",
           text: "重试",
-          disabled: this.player.respawning
+          disabled: this.despawning
         },
         {
           action: "title",
@@ -184,8 +233,18 @@ export default class LevelScene extends Scene {
     }
   }
 
+  *animateOpening() {
+    this.focusCircle = new OpeningFocusCircle(this.player.collisionBox.center);
+    do yield; while (!this.focusCircle.next());
+    this.focusCircle = null;
+  }
+
   showSubtitle(text: string, ms: number) {
     this.subtitle.show({ text }, Math.round(ms / TICK_ELAPSE));
+  }
+
+  rumble() {
+    this.camera.rumble();
   }
 
   retry() {
@@ -200,23 +259,57 @@ export default class LevelScene extends Scene {
       if (this.pauseTicks > 0) {
         this.pauseTicks--;
       } else {
-        // Terrain
-        for (const row of this.terrains)
-          for (const cell of row)
-            cell?.tick(this);
+        if (this.animation?.next())
+          this.animation = null;
 
-        // Entities
-        for (const entity of this.entities)
-          entity.tick(this);
+        if (!this.despawning) {
+          // Terrain
+          for (const row of this.terrains)
+            for (const cell of row)
+              cell?.tick(this);
+  
+          // Entities
+          for (const entity of this.entities)
+            if (entity.collisionBox.intersects(this.boundary))
+              entity.tick(this);
+  
+          // Spawn Point
+          for (const spawnPoint of this.spawnPoints) {
+            if (spawnPoint.effectBox.intersects(this.player.collisionBox)) {
+              this.spawnPoint = spawnPoint.position.clone();
+            }
+          }
 
-        // Misc
-        this.camera.update();
-        this.subtitle.tick();
-        this.ticks++;
+          // Triggers
+          for (const trigger of this.triggers)
+            trigger.tick(this);
+
+          // Misc
+          this.camera.update();
+          this.subtitle.tick();
+          this.ticks++;
+        }
       }
     }
     const endTime = performance.now();
     this.tickTime = endTime - startTime;
+  }
+
+  onPlayerRespawn() {
+    this.animation = new GeneratorAnimation(this.animateRespawn());
+  }
+
+  *animateRespawn() {
+    this.despawning = true;
+    this.focusCircle = new DespawningFocusCircle(this.player.collisionBox.center);
+    do yield; while (!this.focusCircle.next());
+    for (let i = 0; i < 30; i++) yield;
+    this.player.respawn(this);
+    this.camera.update(true);
+    this.despawning = false;
+    this.focusCircle = new RespawningFocusCirle(this.player.collisionBox.center);
+    do yield; while (!this.focusCircle.next());
+    this.focusCircle = null;
   }
 
   gameOver() {
@@ -224,16 +317,31 @@ export default class LevelScene extends Scene {
   }
 
   render(rctx: RendererContext) {
-    rctx.run(() => {
-      this.camera.render(rctx, () => {
-        this.renderTerrain(rctx);
-        for (const decoration of this.decorations)
-          decoration.render(rctx);
-        for (const entity of this.entities)
-          entity.render(rctx);
+    rctx.run(({ ctx }) => {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
+      rctx.run(() => {
+        if (this.focusCircle) {
+          const { center, radius } = this.focusCircle.current();
+          ctx.beginPath();
+          center.setMinus(this.camera.offset);
+          ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
+          ctx.clip();
+        }
+        for (const background of this.backgrounds)
+          background.render(rctx, this);
+        this.camera.render(rctx, () => {
+          this.renderTerrain(rctx);
+          for (const decoration of this.decorations)
+            decoration.render(rctx);
+          for (const spawnPoint of this.spawnPoints)
+            spawnPoint.render(rctx);
+          for (const entity of this.entities)
+            entity.render(rctx);
+        });
+        this.renderHud(rctx);
+        this.subtitle.render(rctx);
       });
-      this.renderHud(rctx);
-      this.subtitle.render(rctx);
       this.renderPauseMenu(rctx);
     });
   }
@@ -264,7 +372,7 @@ export default class LevelScene extends Scene {
       let heartCount = Math.ceil(this.player.maxHealth / 5);
       for (let i = 0; i < heartCount; i++) {
         let value = Math.max(0, Math.min(5, this.player.health - 5 * i));
-        const clip = textureHealth.getClip('' + value)!;
+        const clip = textureHealth.getClip('' + value);
         clip.drawTo(rctx, 6 + 40 * i, 6);
       }
     });

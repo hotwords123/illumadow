@@ -10,13 +10,13 @@
 }
 
 .MapEditor.dock-l {
-  grid-template-columns: 320px auto;
+  grid-template-columns: 360px auto;
   grid-template-areas: "toolbar toolbar"
                        "sidebar main";
 }
 
 .MapEditor.dock-r {
-  grid-template-columns: auto 320px;
+  grid-template-columns: auto 360px;
   grid-template-areas: "toolbar toolbar"
                        "main sidebar";
 }
@@ -45,6 +45,7 @@
   grid-area: sidebar;
   padding: 5px 10px;
   background-color: #e3f2f7;
+  overflow-y: scroll;
 }
 
 .MapEditor.dock-l .Sidebar {
@@ -95,6 +96,7 @@
   position: absolute;
   z-index: 20;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .Container .sprite.selected {
@@ -217,4 +219,17 @@
   width: 20px;
   height: 30px;
   background-color: #8a3ec9;
+}
+
+.Container .sprite.landmark:before {
+  background-color: #9c0000;
+}
+
+.Container .sprite.landmark {
+  background-color: rgba(201, 71, 62, 0.4);
+  outline: 3px dashed #9c0000;
+}
+
+.Container .sprite.spawnPoint:before {
+  background-color: #5e009c;
 }

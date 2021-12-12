@@ -126,12 +126,21 @@ export default class Renderer {
         ...this.scene.debugText
       ];
       this.ctx.save();
+
       this.ctx.font = '18px Consolas';
+
+      if (!(this.scene instanceof LevelScene && this.scene.paused)) {
+        let maxWidth = 0;
+        for (const text of debugText)
+          maxWidth = Math.max(maxWidth, this.ctx.measureText(text).width);
+  
+        this.ctx.fillStyle = 'rgba(32, 32, 32, 0.6)';
+        this.ctx.fillRect(4, 4, maxWidth + 8, 20 * debugText.length + 6);
+      }
+
       this.ctx.textAlign = 'left';
       this.ctx.textBaseline = 'top';
-      this.ctx.fillStyle =
-        this.scene instanceof LevelScene && this.scene.paused ? '#ddd' : '#333';
-
+      this.ctx.fillStyle = '#eee';
       let textY = 8;
       for (const text of debugText) {
         this.ctx.fillText(text, 8, textY);

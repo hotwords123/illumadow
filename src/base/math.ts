@@ -60,6 +60,12 @@ export class Coord {
     this.y += vector.y;
   }
 
+  /** operator -= */
+  setMinus(vector: Vector) {
+    this.x -= vector.x;
+    this.y -= vector.y;
+  }
+
   expand(left: number, top: number, right: number = left, bottom: number = top) {
     return new AABB(
       this.x - left, this.y - top,
@@ -106,6 +112,10 @@ export class Vector {
     this.y = vector.y;
   }
 
+  reset() {
+    this.x = this.y = 0;
+  }
+
   clone() { return new Vector(this.x, this.y); }
 
   get length() { return Math.sqrt(this.x ** 2 + this.y ** 2); }
@@ -129,6 +139,10 @@ export class Vector {
   setScale(k: number) {
     this.x *= k;
     this.y *= k;
+  }
+
+  round() {
+    return new Vector(Math.round(this.x), Math.round(this.y));
   }
 }
 

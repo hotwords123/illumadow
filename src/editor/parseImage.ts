@@ -300,7 +300,10 @@ function parseImage(img: HTMLImageElement, name: string): MapData {
     terrain: mapTerrain,
     entities: [],
     decorations: mapDecorations,
-    triggers: []
+    triggers: [],
+    backgrounds: [],
+    landmarks: [],
+    spawnPoints: []
   };
 
   console.log(map);
