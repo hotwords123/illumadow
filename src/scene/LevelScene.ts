@@ -23,6 +23,7 @@ import { ForwardAnimation, GeneratorAnimation } from "../render/Animation";
 import Trigger from "./Trigger";
 import EntityItem from "../model/Item";
 import Particle from "../model/Particle";
+import EnemyWitch from "../model/enemy/Witch";
 
 let textureHealth: Texture;
 
@@ -155,6 +156,9 @@ export default class LevelScene extends Scene {
 
       case MapEntityType.archer:
         return new EnemyArcher(data as MapEntity);
+
+      case MapEntityType.witch:
+        return new EnemyWitch(data as MapEntity);
 
       case MapEntityType.item:
         return EntityItem.create(data as MapEntityItem);

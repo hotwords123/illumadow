@@ -33,7 +33,7 @@ const ENTITY_TEMPLATES = new Map([
   [MapEntityType.scout, {}],
   [MapEntityType.guard, {}],
   [MapEntityType.archer, {}],
-  [MapEntityType.wizard, {}],
+  [MapEntityType.witch, {}],
   [MapEntityType.boss, {}],
   [MapEntityType.item, {
     item: MapItemType.flower,

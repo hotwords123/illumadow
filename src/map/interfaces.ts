@@ -83,7 +83,7 @@ export enum MapEntityType {
   scout = "scout",
   guard = "guard",
   archer = "archer",
-  wizard = "wizard",
+  witch = "witch",
   boss = "boss",
 
   /** Projectile */
