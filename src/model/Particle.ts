@@ -4,20 +4,20 @@ import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
 import Sprite, { RenderInfo } from "./Sprite";
 import imgMeleeWave from "../assets/entity/melee-wave.png";
-import imgDeathBurst from "../assets/entity/death-burst.png";
+import imgDamageBurst from "../assets/entity/damage-burst.png";
 
 let textureMeleeWave: Texture;
-let textureDeathBurst: Texture;
+let textureDamageBurst: Texture;
 
 textureManager.loadTextures([
   ["entity/melee-wave", imgMeleeWave],
-  ["entity/death-burst", imgDeathBurst],
+  ["entity/damage-burst", imgDamageBurst],
 ]).then(textures => {
-  [textureMeleeWave, textureDeathBurst] = textures;
+  [textureMeleeWave, textureDamageBurst] = textures;
   textureMeleeWave.defineClips([
     ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
   ], 24, 12);
-  textureDeathBurst.defineClips([
+  textureDamageBurst.defineClips([
     ["0", "1", "2", "3", "4", "5", "6", "7"]
   ], 16, 12);
 });
@@ -69,11 +69,11 @@ export class MeleeWave extends Particle {
   }
 }
 
-export class DeathBurst extends Particle {
+export class DamageBurst extends Particle {
   constructor(position: Coord) {
     super(position);
 
-    this.animation = FrameSequence.fromClips("entity/death-burst",
+    this.animation = FrameSequence.fromClips("entity/damage-burst",
       ["0", "1", "2", "3", "4", "5", "6", "7"]);
   }
 
