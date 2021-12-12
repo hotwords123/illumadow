@@ -22,7 +22,7 @@ textureManager.loadTextures([
   ["terrain/water", imgWater],
 ]).then(textures => {
   [textureBrick, textureSpikes, textureWater] = textures;
-  textureBrick.defineClips([['brick', 'dirt', 'grass']], TERRAIN_SIZE, TERRAIN_SIZE);
+  textureBrick.defineClips([['dirt', 'grass', 'brick']], TERRAIN_SIZE, TERRAIN_SIZE);
   textureSpikes.defineClips([['bottom', 'left', 'top', 'right']], TERRAIN_SIZE, TERRAIN_SIZE);
   textureWater.defineClips([['surface', 'under']], TERRAIN_SIZE, TERRAIN_SIZE);
 });
