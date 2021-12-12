@@ -193,14 +193,23 @@ export default abstract class Entity extends Model {
 
     // Map border
     const { collisionBox } = this;
-    if (collisionBox.left < 0)
-      this.triggerCrossBorder(scene, Side.left, collisionBox.left, collisionBox.right <= 0);
-    if (collisionBox.right > scene.width)
-      this.triggerCrossBorder(scene, Side.right, collisionBox.right - scene.width, collisionBox.left >= scene.width);
-    if (collisionBox.top < 0)
-      this.triggerCrossBorder(scene, Side.top, collisionBox.top, collisionBox.bottom <= 0);
-    if (collisionBox.bottom > scene.height)
-      this.triggerCrossBorder(scene, Side.bottom, collisionBox.bottom - scene.height, collisionBox.top >= scene.height);
+    const { boundary } = scene;
+
+    if (collisionBox.left < boundary.left)
+      this.triggerCrossBorder(scene, Side.left,
+        collisionBox.left, collisionBox.right <= boundary.left);
+
+    if (collisionBox.right > boundary.right)
+      this.triggerCrossBorder(scene, Side.right,
+        collisionBox.right - boundary.right, collisionBox.left >= boundary.right);
+
+    if (collisionBox.top < boundary.top)
+      this.triggerCrossBorder(scene, Side.top,
+        collisionBox.top, collisionBox.bottom <= boundary.top);
+
+    if (collisionBox.bottom > boundary.bottom)
+      this.triggerCrossBorder(scene, Side.bottom,
+        collisionBox.bottom - boundary.bottom, collisionBox.top >= boundary.bottom);
   }
 
   private triggerCrossBorder(scene: LevelScene, side: Side, offset: number, fullOut: boolean) {

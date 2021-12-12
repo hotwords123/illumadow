@@ -55,11 +55,11 @@ export default class Camera {
     /** Player position relative to the camera */
     const playerOffset = playerPos.minus(this.offset);
     const playerOffsetOld = playerPosOld.minus(this.offset);
-    const sceneWidth = this.scene.width, sceneHeight = this.scene.height;
+    const boundary = this.scene.boundary;
 
-    if (sceneWidth <= SCENE_WIDTH) {
+    if (boundary.width <= SCENE_WIDTH) {
       // Scene too small, just put it in the center
-      this.offset.x = -(SCENE_WIDTH - sceneWidth) / 2;
+      this.offset.x = boundary.center.x - SCENE_WIDTH / 2;
       this.stateX = CameraState.still;
     } else {
       // Decide facing
@@ -78,7 +78,7 @@ export default class Camera {
       }
 
       /** Target absolute offset */
-      const target = Math.max(0, Math.min(sceneWidth - SCENE_WIDTH,
+      const target = Math.max(boundary.left - 0, Math.min(boundary.right - SCENE_WIDTH,
         playerPos.x - (this.facing === Facing.right ? WINDOW_ANCHOR_L : WINDOW_ANCHOR_R)));
 
       if (init) {
@@ -109,14 +109,15 @@ export default class Camera {
       }
     }
 
-    if (sceneHeight <= SCENE_HEIGHT) {
-      this.offset.y = -(SCENE_HEIGHT - sceneHeight) / 2;
+    if (boundary.height <= SCENE_HEIGHT) {
+      this.offset.y = boundary.center.y - SCENE_HEIGHT / 2;
       this.stateY = CameraState.still;
     } else {
       if (player.onGround || playerOffset.y < WINDOW_ANCHOR_U || playerOffset.y > WINDOW_ANCHOR_D)
         this.snappedY = playerPos.y;
 
-      const target = Math.max(0, Math.min(sceneHeight - SCENE_HEIGHT, this.snappedY - BASE_ANCHOR_Y));
+      const target = Math.max(boundary.top - 0, Math.min(boundary.bottom - SCENE_HEIGHT,
+        this.snappedY - BASE_ANCHOR_Y));
 
       if (init) {
         this.offset.y = target;

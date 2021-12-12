@@ -51,6 +51,9 @@ export default class LevelScene extends Scene {
   spawnPoints!: SpawnPoint[];
   spawnPoint!: Coord;
 
+  /** used for block player's move before tasks finished */
+  boundary!: AABB;
+
   camera!: Camera;
   subtitle!: Subtitle;
 
@@ -120,6 +123,8 @@ export default class LevelScene extends Scene {
     this.spawnPoints = map.spawnPoints.map(data => new SpawnPoint(data));
     this.spawnPoint = this.player.position.clone();
 
+    this.boundary = new AABB(0, 0, this.width, this.height);
+
     this.camera = new Camera(this);
     this.subtitle = new Subtitle(this);
 
@@ -168,6 +173,10 @@ export default class LevelScene extends Scene {
 
   deleteTerrain({ x, y }: Coord) {
     this.terrains[y][x] = null;
+  }
+
+  setBoundary(box: AABB) {
+    this.boundary = box;
   }
 
   togglePause() {
