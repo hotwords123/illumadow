@@ -22,12 +22,14 @@ interface DecorationVariantMeta {
 }
 
 const VARIANTS = new Map<string, DecorationVariantMeta>([
-  ["trunk", { texture: "tree:trunk", box: [4, 4, 4, 4] }],
-  ["trunk-branch-l", { texture: "tree:trunk-branch-l", box: [4, 4, 4, 4] }],
-  ["trunk-branch-r", { texture: "tree:trunk-branch-r", box: [4, 4, 4, 4] }],
-  ["branch", { texture: "tree:branch", box: [4, 4, 4, 4] }],
-  ["branch-end-l", { texture: "tree:branch-end-l", box: [4, 4, 4, 4] }],
-  ["branch-end-r", { texture: "tree:branch-end-r", box: [4, 4, 4, 4] }],
+  ["trunk", { texture: "decoration/tree:trunk", box: [4, 4, 4, 4] }],
+  ["trunk-branch-l", { texture: "decoration/tree:trunk-branch-l", box: [4, 4, 4, 4] }],
+  ["trunk-branch-r", { texture: "decoration/tree:trunk-branch-r", box: [4, 4, 4, 4] }],
+  ["branch", { texture: "decoration/tree:branch", box: [4, 4, 4, 4] }],
+  ["branch-end-l", { texture: "decoration/tree:branch-end-l", box: [4, 4, 4, 4] }],
+  ["branch-end-r", { texture: "decoration/tree:branch-end-r", box: [4, 4, 4, 4] }],
+  ["brick-wall", { texture: "terrain/brick:brick-wall", box: [4, 4, 4, 4] }],
+  ["brick-wall-light", { texture: "terrain/brick:brick-wall-light", box: [4, 4, 4, 4] }],
 ]);
 
 export default class Decoration extends Model {
@@ -41,7 +43,7 @@ export default class Decoration extends Model {
     this.variant = variant;
     this.variantMeta = VARIANTS.get(variant) ?? null;
     if (this.variantMeta) {
-      this.texture = textureManager.get("decoration/" + this.variantMeta.texture);
+      this.texture = textureManager.get(this.variantMeta.texture);
       if (!this.texture)
         console.warn(`texture not found: ${this.variantMeta.texture}`)
     } else {

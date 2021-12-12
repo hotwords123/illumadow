@@ -82,15 +82,15 @@ export default class Player extends Mob {
   }
 
   get diveBoxCenter() {
-    return this.position.expand(8, 0, 8, 12);
+    return this.position.expand(6, 0, 6, 16);
   }
 
   get diveBoxLeft() {
-    return this.position.expand(14, 0, 2, 12);
+    return this.position.expand(10, 0, 2, 16);
   }
 
   get diveBoxRight() {
-    return this.position.expand(2, 0, 14, 12);
+    return this.position.expand(2, 0, 10, 16);
   }
 
   getRenderInfoR() {

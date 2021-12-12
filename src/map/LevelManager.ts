@@ -2,6 +2,8 @@ import { MapData } from "./interfaces";
 import levelTest0 from "../assets/levels/test0.json";
 import levelTest from "../assets/levels/test.json";
 import level1 from "../assets/levels/level1.json";
+import level2 from "../assets/levels/level2.json";
+
 
 class LevelManager {
   levels = new Map<string, MapData>();
@@ -25,7 +27,8 @@ const levelManager = new LevelManager();
 levelManager.addLevels([
   levelTest0,
   levelTest,
-  level1
+  level1,
+  level2,
 ] as any);
 
 export default levelManager;
