@@ -4,19 +4,31 @@ import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
 import Sprite, { RenderInfo } from "./Sprite";
 import imgMeleeWave from "../assets/entity/melee-wave.png";
+import imgDiveAttackWave from "../assets/entity/dive-attack-wave.png";
+import imgDiveSideAttackWave from "../assets/entity/dive-side-attack-wave.png";
 import imgDamageBurst from "../assets/entity/damage-burst.png";
 
 let textureMeleeWave: Texture;
+let textureDiveAttack: Texture;
+let textureDiveSideAttack: Texture;
 let textureDamageBurst: Texture;
 
 textureManager.loadTextures([
   ["entity/melee-wave", imgMeleeWave],
+  ["entity/dive-attack-wave", imgDiveAttackWave],
+  ["entity/dive-side-attack-wave", imgDiveSideAttackWave],
   ["entity/damage-burst", imgDamageBurst],
 ]).then(textures => {
-  [textureMeleeWave, textureDamageBurst] = textures;
+  [textureMeleeWave, textureDiveAttack, textureDiveSideAttack, textureDamageBurst] = textures;
   textureMeleeWave.defineClips([
     ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
   ], 24, 12);
+  textureDiveAttack.defineClips([
+    ["0", "1", "2", "3", "4", "5", "6", "7"]
+  ], 12, 16);
+  textureDiveSideAttack.defineClips([
+    ["0", "1", "2", "3", "4", "5", "6", "7"]
+  ], 12, 16);
   textureDamageBurst.defineClips([
     ["0", "1", "2", "3", "4", "5", "6", "7"]
   ], 16, 12);
@@ -65,7 +77,34 @@ export class MeleeWave extends Particle {
   }
 
   get renderBoxR() {
-    return new AABB(0, -12, 24, 0);
+    return new AABB(2, -12, 26, 0);
+  }
+}
+
+export class DiveAttackWave extends Particle {
+  constructor(position: Coord) {
+    super(position);
+
+    this.animation = FrameSequence.fromClips("entity/dive-attack-wave",
+      ["0", "1", "2", "3", "4", "5", "6", "7"]);
+  }
+
+  get renderBoxR() {
+    return new AABB(-6, 2, 6, 18);
+  }
+}
+
+export class DiveSideAttackWave extends Particle {
+  constructor(position: Coord, facing: Facing) {
+    super(position);
+
+    this.facing = facing;
+    this.animation = FrameSequence.fromClips("entity/dive-side-attack-wave",
+      ["0", "1", "2", "3", "4", "5", "6", "7"]);
+  }
+
+  get renderBoxR() {
+    return new AABB(0, 2, 12, 18);
   }
 }
 

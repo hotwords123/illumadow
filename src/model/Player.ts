@@ -8,7 +8,7 @@ import { RendererContext } from "../render/Renderer";
 import Mob, { DamageSource } from "./Mob";
 import { Terrain } from "./Terrain";
 import { ForwardAnimation, FrameSequence } from "../render/Animation";
-import { MeleeWave } from "./Particle";
+import { DiveAttackWave, DiveSideAttackWave, MeleeWave } from "./Particle";
 
 let texturePlayer: Texture;
 
@@ -236,6 +236,10 @@ export default class Player extends Mob {
       }
 
       this.animation = this.createAnimation(State.attack);
+      if (dir === 0)
+        scene.addParticle(new DiveAttackWave(this.position.clone()));
+      else
+        scene.addParticle(new DiveSideAttackWave(this.position.clone(), dir > 0 ? Facing.right : Facing.left));
     } else {
       // Horizontal attack
       let targets = scene.getEntitiesInArea(this.meleeBoxHorizontal).filter(x => this.canAttack(x));
@@ -262,7 +266,7 @@ export default class Player extends Mob {
       this.meleeCooldown = this.meleeSpeed;
       this.animation = this.createAnimation(State.attack);
 
-      scene.addParticle(new MeleeWave(this.coordByFacing2(2, 0), this.facing));
+      scene.addParticle(new MeleeWave(this.position.clone(), this.facing));
     }
   }
 
