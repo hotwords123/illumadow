@@ -42,7 +42,8 @@ const
   SUMMON_PREPARE_TICKS = 160,
   CURSE_COOLDOWN_TICKS = 180,
   SUMMON_COOLDOWN_TICKS = 240,
-  TELEPORT_COOLDOWN_TICKS = 300;
+  TELEPORT_COOLDOWN_TICKS = 300,
+  INITIAL_COOLDOWN_TICKS = 120;
 
 enum State {
   idle = 0,
@@ -89,7 +90,7 @@ export default class EnemyWitch extends Mob {
 
   curseTicks = 0;
   summonTicks = 0;
-  cooldownTicks = 0;
+  cooldownTicks = INITIAL_COOLDOWN_TICKS;
 
   curseTarget: Coord | null = null;
 
@@ -182,9 +183,11 @@ export default class EnemyWitch extends Mob {
   }
 
   teleport(scene: LevelScene) {
-    return;
-
     const choices = scene.getLandmarksWithTag("tp");
+    if (!choices.length) {
+      console.warn("failed to teleport");
+      return;
+    }
     const { box } = choices[Math.floor(Math.random() * choices.length)];
 
     this.position.x = box.left + Math.random() * (box.right - box.left);
@@ -205,7 +208,7 @@ export default class EnemyWitch extends Mob {
 
     for (let y = box.top; y < box.bottom; y++) {
       for (let x = box.left; x < box.right; x++) {
-        if (scene.terrains[y][x]?.collisionBox?.intersects(box))
+        if (scene.terrains[y][x]?.collisionBox?.intersects(collisionBox))
           return false;
       }
     }
