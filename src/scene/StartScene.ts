@@ -80,7 +80,7 @@ export default class StartScene extends Scene {
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       ctx.shadowColor = "#000";
-      ctx.shadowBlur = 2;
+      ctx.shadowBlur = 3;
 
       for (const item of this.menu.getItems()) {
         let header = item.action === "start";
