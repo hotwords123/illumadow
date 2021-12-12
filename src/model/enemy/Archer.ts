@@ -114,7 +114,7 @@ export default class EnemyArcher extends Mob {
       if (shot) {
         this.state.set(State.shot);
       } else if (this.chargeTicks > 0) {
-        this.state.set(State.drawing, this.chargeTicks);
+        this.state.set(State.drawing, this.chargeTicks - 1);
       } else {
         this.state.set(State.idle);
       }

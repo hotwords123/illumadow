@@ -77,7 +77,7 @@ export default class Player extends Mob {
   get hurtImmuneTicks() { return 60; }
 
   get meleeBoxHorizontal() {
-    return this.boxByFacing(new AABB(0, -12, 18, 0));
+    return this.boxByFacing(new AABB(0, -12, 20, 0));
   }
 
   get diveBoxCenter() {
@@ -85,11 +85,11 @@ export default class Player extends Mob {
   }
 
   get diveBoxLeft() {
-    return this.position.expand(14, 0, 2, 10);
+    return this.position.expand(14, 0, 2, 12);
   }
 
   get diveBoxRight() {
-    return this.position.expand(2, 0, 14, 10);
+    return this.position.expand(2, 0, 14, 12);
   }
 
   getRenderInfoR() {
@@ -134,15 +134,15 @@ export default class Player extends Mob {
 
       case State.attack:
         return FrameSequence.fromClipRanges("entity/player", [
-          ["attack1", 3],
-          ["attack2", 3],
-          ["attack3", 3],
-          ["attack4", 3],
-          ["attack5", 5],
-          ["attack4", 1],
-          ["attack3", 1],
+          ["attack1", 1],
           ["attack2", 1],
-          ["attack1", 1]
+          ["attack3", 1],
+          ["attack4", 1],
+          ["attack5", 5],
+          ["attack4", 3],
+          ["attack3", 3],
+          ["attack2", 3],
+          ["attack1", 3]
         ]);
     }
   }

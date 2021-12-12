@@ -5,23 +5,63 @@ import LevelScene from "../../scene/LevelScene";
 import { MapEntity } from "../../map/interfaces";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
 import Mob from "../Mob";
+import StateMachine from "../StateMachine";
+import { FrameSequence } from "../../render/Animation";
 
 let textureScout: Texture;
 
 textureManager.loadTexture("entity/scout", imgScout).then(texture => {
   textureScout = texture;
+  textureScout.defineClips([
+    ["0", "1", "2", "3"]
+  ], 8, 10);
 });
 
 const WALK_SPEED = 0.75;
 
+enum State {
+  idle = 0,
+  stabbing = 1,
+  stabbed = 2
+}
+
 export default class EnemyScout extends Mob {
-  playerInTouchTicks = 0;
+  stabbingTicks = 0;
 
   attackCooldown = 0;
-  attackSpeed = 45;
+  attackSpeed = 40;
   attackDamage = 1;
 
   platformWalkGoal = new PlatformWalkGoal(this);
+
+  state = new StateMachine<State>([
+    [State.idle,
+      {
+        next: State.idle,
+        animation: FrameSequence.fromClipRanges("entity/scout", [
+          ["0", 1]
+        ])
+      }
+    ],
+    [State.stabbing,
+      {
+        next: State.stabbed,
+        animation: FrameSequence.fromClipRanges("entity/scout", [
+          ["0", 1],
+          ["1", 4],
+        ])
+      }
+    ],
+    [State.stabbed,
+      {
+        next: State.idle,
+        animation: FrameSequence.fromClipRanges("entity/scout", [
+          ["2", 5],
+          ["3", 5],
+        ])
+      }
+    ],
+  ], State.idle);
 
   constructor(data: MapEntity) {
     super(data, { maxHealth: 3 });
@@ -38,7 +78,7 @@ export default class EnemyScout extends Mob {
   getRenderInfoR() {
     return {
       box: new AABB(-4, -10, 4, 0),
-      texture: textureScout
+      texture: this.state.animation.current()
     };
   }
 
@@ -49,22 +89,38 @@ export default class EnemyScout extends Mob {
 
     this.platformWalkGoal.keepDistance(scene, player, this.onGround ? 1 : 0.25, WALK_SPEED, 8, 10);
 
-    const playerInTouch = this.attackBox.intersects(scene.player.hurtBox);
-    if (playerInTouch)
-      this.playerInTouchTicks++;
-    else
-      this.playerInTouchTicks = Math.max(0, this.playerInTouchTicks - 2);
-
     if (this.attackCooldown > 0) {
       this.attackCooldown--;
     } else {
-      if (playerInTouch && this.playerInTouchTicks >= 5) {
+      const playerInTouch = this.attackBox.intersects(scene.player.hurtBox);
+
+      if (playerInTouch) {
+        this.stabbingTicks++;
+        if (this.stabbingTicks > 5)
+          this.stabbingTicks = 5;
+        if (this.state.current === State.idle)
+          this.state.set(State.stabbing);
+      } else if (this.state.current === State.stabbing) {
+        this.stabbingTicks = Math.max(0, this.stabbingTicks - 2);
+        if (this.stabbingTicks > 0)
+          this.state.set(State.stabbing, this.stabbingTicks - 1);
+        else
+          this.state.set(State.idle);
+      }
+
+      if (playerInTouch && this.stabbingTicks >= 5) {
         if (player.damage(scene, this.attackDamage, this)) {
           player.knockback(this.position, this.facing, 2.5);
           this.attackCooldown = this.attackSpeed;
+          this.stabbingTicks = 0;
+          this.state.set(State.stabbed);
+        } else {
+          this.state.set(State.stabbing, 9);
         }
       }
     }
+
+    this.state.next();
 
     super.tick(scene);
   }
