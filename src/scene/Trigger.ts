@@ -43,8 +43,15 @@ export default abstract class Trigger {
         const { box } = scene.getLandmark("L3");
         scene.boundary.left = box.left;
         scene.boundary.bottom = box.bottom;
+        scene.boundary.right = scene.getLandmark("L5").box.right;
         break;
       }
+      case "level1:4":
+        scene.boundary.right = scene.getLandmark("L6").box.right;
+        break;
+      case "level1:5":
+        scene.boundary.right = scene.width;
+        break;
 
       default:
         console.warn(`unknown trigger id: ${this.id}`);

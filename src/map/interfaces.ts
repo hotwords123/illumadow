@@ -88,6 +88,9 @@ export enum MapEntityType {
 
   /** Projectile */
   arrow = "arrow",
+
+  /** Item */
+  item = "item"
 }
 
 export interface MapEntity extends MapSprite {
@@ -98,6 +101,14 @@ export interface MapEntity extends MapSprite {
 export interface MapEntityPlayer extends MapEntity {
   health: number;
   maxHealth: number;
+}
+
+export enum MapItemType {
+  flower = "flower"
+}
+
+export interface MapEntityItem extends MapEntity {
+  item: MapItemType;
 }
 
 /* ======== Decoration ======== */

@@ -3,6 +3,7 @@ import { MapEntity, MapEntityType, TERRAIN_SIZE } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import { TextureLike } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
+import EntityItem from "./Item";
 import Mob from "./Mob";
 import Model from "./Model";
 import Player from "./Player";
@@ -58,6 +59,7 @@ export default abstract class Entity extends Model {
   isMob(): this is Mob { return false; }
   isPlayer(): this is Player { return false; }
   isProjectile(): this is Projectile { return false; }
+  isItem(): this is EntityItem { return false; }
 
   /**
    * Flip coordinates if facing left.

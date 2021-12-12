@@ -70,11 +70,13 @@ export default abstract class Mob extends Entity {
 
   onDamage(scene: LevelScene, amount: number, source: DamageSource): void {}
 
-  cure(scene: LevelScene, amount: number) {
-    if (this.dead) return;
+  cure(scene: LevelScene, amount: number): boolean {
+    if (this.dead) return false;
+    if (this.health === this.maxHealth) return false;
     this.health += amount;
     if (this.health > this.maxHealth)
       this.health = this.maxHealth;
+    return true;
   }
 
   die(scene: LevelScene, source: DamageSource): void {

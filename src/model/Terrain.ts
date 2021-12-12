@@ -328,9 +328,7 @@ export class TerrainFragile extends FragileTerrain {
     super(position, MapTerrainType.fragile, textureManager.get(TerrainFragile.TEXTURE_MAP[variant])!, 60);
   }
 
-  get collisionBox() {
-    if (this.collapsed)
-      return null;
+  get terrainBox() {
     switch (this.variant) {
       case "tree":
         return this.center.expand(4, 4, 4, 2);
@@ -339,12 +337,18 @@ export class TerrainFragile extends FragileTerrain {
     }
   }
 
+  get collisionBox() {
+    return this.collapsed ? null : this.terrainBox;
+  }
+
   tick(scene: LevelScene) {
     if (this.collapsed) {
       this.recoveringTicks++;
-      if (this.recoveringTicks === this.recoverTicks) {
-        this.recoveringTicks = -1;
-        this.collapsed = false;
+      if (this.recoveringTicks >= this.recoverTicks) {
+        if (!scene.getEntitiesInArea(this.terrainBox).length) {
+          this.recoveringTicks = -1;
+          this.collapsed = false;
+        }
       }
     } else if (this.collapsingTicks > 0 && this.collapsingTicks % 3 === 0) {
       this.collapseOffset.x = Math.floor(Math.random() * 3) - 1;

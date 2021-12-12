@@ -1,6 +1,6 @@
 import React from 'react';
 import { AABB, Coord } from '../base/math';
-import { MapBackground, MapData, MapDecoration, MapEntity, MapEntityType, MapLandmark, MapSpawnPoint, MapSprite, MapTerrain, MapTrigger, MapTriggerType, TERRAIN_SIZE } from '../map/interfaces';
+import { MapBackground, MapData, MapDecoration, MapEntity, MapEntityType, MapItemType, MapLandmark, MapSpawnPoint, MapSprite, MapTerrain, MapTrigger, MapTriggerType, TERRAIN_SIZE } from '../map/interfaces';
 import ItemEditor, { EditError, ItemEditorData, ItemEditorDataEntry } from './ItemEditor';
 import './MapEditor.css';
 import parseImage from './parseImage';
@@ -14,7 +14,7 @@ type MapItem = {
   item: MapSprite;
 }
 
-type MapItemType = {
+type MapToolType = {
   category: 'entity';
   type: MapEntityType
 } | {
@@ -35,15 +35,18 @@ const ENTITY_TEMPLATES = new Map([
   [MapEntityType.archer, {}],
   [MapEntityType.wizard, {}],
   [MapEntityType.boss, {}],
+  [MapEntityType.item, {
+    item: MapItemType.flower
+  }],
 ]);
 
 const ENTITY_TYPES: MapEntityType[] = [...ENTITY_TEMPLATES.keys()];
 
-const TOOLS: MapItemType[] = [
+const TOOLS: MapToolType[] = [
   { category: 'decoration' },
   { category: 'landmark' },
   { category: 'spawnPoint' },
-  ...ENTITY_TYPES.map(type => ({ category: 'entity', type } as MapItemType))
+  ...ENTITY_TYPES.map(type => ({ category: 'entity', type } as MapToolType))
 ];
 
 interface MapEditorState {
@@ -68,7 +71,7 @@ interface MapEditorState {
   items: MapItem[];
   selectedItems: MapItem[];
   itemDraft: ItemEditorData | null;
-  currentTool: MapItemType;
+  currentTool: MapToolType;
   sidebarDock: 'l' | 'r';
   dragCorner: Coord | null;
   dragCorner2: Coord | null;
@@ -398,7 +401,7 @@ export default class MapEditor extends React.Component<{}, MapEditorState> {
     this.setState({ selectedItems: items, itemDraft });
   }
 
-  switchTool(tool: MapItemType) {
+  switchTool(tool: MapToolType) {
     this.setState({ currentTool: tool });
   }
 

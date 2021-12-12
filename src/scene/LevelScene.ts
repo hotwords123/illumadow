@@ -4,7 +4,7 @@ import Entity from "../model/Entity";
 import Player from "../model/Player";
 import { RendererContext } from "../render/Renderer";
 import GameManager, { TICK_ELAPSE } from "../GameManager";
-import { MapData, MapEntity, MapEntityPlayer, MapEntityType, TERRAIN_SIZE } from "../map/interfaces";
+import { MapData, MapEntity, MapEntityItem, MapEntityPlayer, MapEntityType, TERRAIN_SIZE } from "../map/interfaces";
 import { Terrain } from "../model/Terrain";
 import Camera from "./Camera";
 import EnemyScout from "../model/enemy/Scout";
@@ -21,6 +21,7 @@ import SpawnPoint from "./SpawnPoint";
 import FocusCircle, { DespawningFocusCircle, OpeningFocusCircle, RespawningFocusCirle } from "./FocusCircle";
 import { ForwardAnimation, GeneratorAnimation } from "../render/Animation";
 import Trigger from "./Trigger";
+import EntityItem from "../model/Item";
 
 let textureHealth: Texture;
 
@@ -151,6 +152,9 @@ export default class LevelScene extends Scene {
 
       case MapEntityType.archer:
         return new EnemyArcher(data as MapEntity);
+
+      case MapEntityType.item:
+        return EntityItem.create(data as MapEntityItem);
 
       default:
         console.warn(`unknown entity type: ${data.type}`);
