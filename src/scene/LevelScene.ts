@@ -318,16 +318,18 @@ export default class LevelScene extends Scene {
 
   render(rctx: RendererContext) {
     rctx.run(({ ctx }) => {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
       rctx.run(() => {
         if (this.focusCircle) {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
           const { center, radius } = this.focusCircle.current();
           ctx.beginPath();
           center.setMinus(this.camera.offset);
           ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
           ctx.clip();
         }
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
         for (const background of this.backgrounds)
           background.render(rctx, this);
         this.camera.render(rctx, () => {
