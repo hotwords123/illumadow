@@ -12,6 +12,7 @@ import { RendererContext } from "../../render/Renderer";
 import EnemyScout from "./Scout";
 import { WitchTeleport } from "../Particle";
 import EnemyArcher from "./Archer";
+import { Terrain } from "../Terrain";
 
 let textureWitch: Texture;
 let textureWitchCurse: Texture;
@@ -39,8 +40,8 @@ const
   CURSE_PREPARE_TICKS = 180,
   CURSE_DAMAGE_TICKS = 120,
   CURSE_DAMAGE = 1,
-  CURSE_IMPULSE_POWER = 2.5,
-  CURSE_IMPULSE_TICKS = 2,
+  CURSE_IMPULSE_POWER = 4,
+  CURSE_IMPULSE_TICKS = 3,
   CURSE_COOLDOWN_TICKS = 90,
   SUMMON_PREPARE_TICKS = 120,
   SUMMON_COOLDOWN_TICKS = 90,
@@ -49,7 +50,10 @@ const
   MIN_SUMMON_DISTANCE = 48,
   MAX_SUMMON_DISTANCE = 96,
   MIN_TELEPORT_DISTANCE = 56,
-  MIN_TELEPORT_LENGTH = 80;
+  MIN_TELEPORT_LENGTH = 80,
+  MAX_TELEPORT_LENGTH = 280,
+  DAMAGE_REBOUNCE_POWER = 2.5,
+  DAMAGE_REBOUNCE_TICKS = 3;
 
 enum State {
   idle = 0,
@@ -130,13 +134,14 @@ export default class EnemyWitch extends Mob {
           this.cooldownTicks--;
         } else {
           let seed = Math.random() * 100;
-          if (seed < 10) {
+          if (seed < 15) {
             if (distance < 0.9 * CURSE_MAX_RANGE) {
               this.state.set(State.cursing);
             }
-          } else if (seed < 20) {
-            this.state.set(State.summoning);
-          } else if (seed < 24) {
+          } else if (seed < 23) {
+            if (scene.getEntitiesWithTag("witch-summon").length < 18)
+              this.state.set(State.summoning);
+          } else if (seed < 25) {
             this.teleport(scene);
           }
         }
@@ -171,7 +176,11 @@ export default class EnemyWitch extends Mob {
 
       case State.summoning: {
         if (this.summonTicks >= SUMMON_PREPARE_TICKS) {
-          let results = [MapEntityType.scout, MapEntityType.archer].map(x => this.summon(scene, x));
+          let types = [MapEntityType.scout, MapEntityType.archer];
+          if (scene.getEntitiesWithTag("witch-summon").length >= 10)
+            types.splice(Math.floor(Math.random() * 2), 1);
+
+          let results = types.map(x => this.summon(scene, x));
           if (results.some(x => x)) {
             this.abort();
           }
@@ -200,7 +209,8 @@ export default class EnemyWitch extends Mob {
         box.bottom
       );
 
-      if (newPos.diff(this.position).length < MIN_TELEPORT_LENGTH)
+      let length = newPos.diff(this.position).length;
+      if (length < MIN_TELEPORT_LENGTH || length > MAX_TELEPORT_LENGTH)
         continue;
 
       if (newPos.diff(scene.player.position).length < MIN_TELEPORT_DISTANCE)
@@ -270,12 +280,21 @@ export default class EnemyWitch extends Mob {
 
   onDamage(scene: LevelScene, amount: number, source: DamageSource) {
     this.damageCount++;
+
+    const { player } = scene;
+
+    if (source === player) {
+      player.knockback(player.position, player.x > this.x ? Facing.right : Facing.left,
+        DAMAGE_REBOUNCE_POWER, DAMAGE_REBOUNCE_TICKS);
+    }
+
     let seed = Math.random();
-    if (seed < Math.pow(0.6, 6 - this.damageCount)) {
-      this.damageCount = 0;
-      this.teleport(scene);
-      if (this.state.current !== State.idle) {
-        this.abort();
+    if (source instanceof Terrain || seed < Math.pow(0.6, 6 - this.damageCount)) {
+      if (this.teleport(scene)) {
+        this.damageCount = 0;
+        if (this.state.current !== State.idle) {
+          this.abort();
+        }
       }
     }
   }
@@ -314,5 +333,10 @@ export default class EnemyWitch extends Mob {
         }
       });
     }
+  }
+
+  die(scene: LevelScene, source: DamageSource) {
+    scene.onBossDie(this);
+    super.die(scene, source);
   }
 }

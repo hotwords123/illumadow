@@ -22,8 +22,9 @@ import FocusCircle, { DespawningFocusCircle, OpeningFocusCircle, RespawningFocus
 import { ForwardAnimation, GeneratorAnimation } from "../render/Animation";
 import Trigger from "./Trigger";
 import EntityItem from "../model/Item";
-import Particle from "../model/Particle";
+import Particle, { WitchTeleport } from "../model/Particle";
 import EnemyWitch from "../model/enemy/Witch";
+import Mob from "../model/Mob";
 
 let textureHealth: Texture;
 
@@ -85,6 +86,7 @@ export default class LevelScene extends Scene {
   paused = false;
   pauseMenu: SelectMenu<MenuItem> | null = null;
   gameOverMenu: SelectMenu<MenuItem> | null = null;
+  gameCompletedMenu: SelectMenu<MenuItem> | null = null;
 
   constructor(gameManager: GameManager, private map: MapData) {
     super(gameManager);
@@ -93,7 +95,7 @@ export default class LevelScene extends Scene {
 
     this.listenAllKeys((...args) => this.player.receiveInput(this, ...args));
     this.listenKey("ui.pause", event => {
-      if (event === "down" && !this.gameOverMenu) this.togglePause();
+      if (event === "down" && !this.gameOverMenu && !this.gameCompletedMenu) this.togglePause();
     });
   }
 
@@ -237,7 +239,7 @@ export default class LevelScene extends Scene {
         {
           action: "retry",
           text: "重试",
-          disabled: this.despawning || this.player.health <= 1
+          disabled: this.despawning || this.animation !== null || this.player.health <= 1
         },
         {
           action: "restart",
@@ -353,6 +355,39 @@ export default class LevelScene extends Scene {
     this.focusCircle = null;
   }
 
+  onBossDie(boss: EnemyWitch) {
+    this.animation = new GeneratorAnimation(this.animateBossDie(boss));
+  }
+
+  *animateBossDie(boss: EnemyWitch) {
+    for (const entity of this.getEntitiesWithTag("witch-summon")) {
+      const mob = entity as Mob;
+      this.addParticle(new WitchTeleport(mob.collisionBox.center));
+      mob.damage(this, Infinity, null, true);
+    }
+
+    let vector = this.player.position.diff(boss.position);
+    this.player.knockback(this.player.position, vector.x > 0 ? Facing.right : Facing.left,
+      250 / (50 + vector.length), 3);
+    this.player.outOfControlTicks = 600;
+
+    const center = boss.collisionBox.center;
+
+    for (let i = 0; i < 8; i++) {
+      let offset = i === 0 ? new Vector(0, 0) :
+        new Vector(Math.random() * 10 - 5, Math.random() * 10 - 5);
+      let particle = new WitchTeleport(center.plus(offset));
+      particle.velocity.x = offset.x / 8;
+      particle.velocity.y = offset.y / 8;
+      this.addParticle(particle);
+      for (let j = 0; j < 6; j++) yield;
+    }
+
+    for (let i = 0; i < 40; i++) yield;
+    
+    yield* this.animateLevelComplete();
+  }
+
   retry() {
     this.player.damage(this, 1, null, true);
   }
@@ -409,6 +444,34 @@ export default class LevelScene extends Scene {
     });
   }
 
+  gameComplete() {
+    this.gameCompletedMenu = new SelectMenu<MenuItem>(this, [
+      {
+        action: "restart",
+        text: "重新开始",
+        disabled: false
+      },
+      {
+        action: "title",
+        text: "返回标题界面",
+        disabled: false
+      }
+    ], ({ action }) => {
+      this.gameCompletedMenu!.cleanup();
+      this.gameCompletedMenu = null;
+
+      switch (action) {
+        case "restart":
+          this.gameManager.startGame();
+          break;
+
+        case "title":
+          this.gameManager.backToTitle();
+          break;
+      }
+    });
+  }
+
   render(rctx: RendererContext) {
     const { viewBox } = this.camera;
 
@@ -446,6 +509,8 @@ export default class LevelScene extends Scene {
         this.renderMenu(rctx, this.pauseMenu, "暂停");
       if (this.gameOverMenu)
         this.renderMenu(rctx, this.gameOverMenu, "挑战失败");
+      if (this.gameCompletedMenu)
+        this.renderMenu(rctx, this.gameCompletedMenu, "挑战成功");
     });
   }
 

@@ -4,7 +4,7 @@ import imgBrick from "../assets/terrain/brick.png";
 import imgSpikes from "../assets/terrain/spikes.png";
 import imgWater from "../assets/terrain/water.png";
 import { Texture, TextureLike, textureManager } from "../render/TextureManager";
-import { MapTerrain, MapTerrainBrick, MapTerrainFragile, MapTerrainSpikes, MapTerrainType, MapTerrainWater, TERRAIN_SIZE } from "../map/interfaces";
+import { MapEntityType, MapTerrain, MapTerrainBrick, MapTerrainFragile, MapTerrainSpikes, MapTerrainType, MapTerrainWater, TERRAIN_SIZE } from "../map/interfaces";
 import Entity from "./Entity";
 import LevelScene from "../scene/LevelScene";
 import Player from "./Player";
@@ -235,7 +235,7 @@ export class TerrainSpikes extends HarmingTerrain {
     if (entity.isPlayer()) {
       entity.damage(scene, 1, this);
     } else if (entity.isMob()) {
-      entity.damage(scene, Infinity, this);
+      entity.damage(scene, entity.type === MapEntityType.witch ? 1 : Infinity, this);
     } else if (entity.isProjectile()) {
       entity.destroy(scene);
     }

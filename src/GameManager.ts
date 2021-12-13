@@ -103,12 +103,11 @@ export default class GameManager {
       case "level1":
         this.startLevel("level2");
         break;
-      case "level2":
-        this.startLevel("level3");
+      case "level2": case "test0": {
+        const scene = this.scene as LevelScene;
+        scene.gameComplete();
         break;
-      case "level3":
-        this.backToTitle();
-        break;
+      }
       default:
         throw new Error(`unknown level: ${name}`);
     }
