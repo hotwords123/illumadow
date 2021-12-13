@@ -4,9 +4,10 @@ import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import { MapEntity } from "../../map/interfaces";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
-import Mob from "../Mob";
+import Mob, { DamageSource } from "../Mob";
 import StateMachine from "../StateMachine";
 import { FrameSequence } from "../../render/Animation";
+import { ItemFlower } from "../Item";
 
 let textureScout: Texture;
 
@@ -123,5 +124,12 @@ export default class EnemyScout extends Mob {
     this.state.next();
 
     super.tick(scene);
+  }
+
+  die(scene: LevelScene, source: DamageSource) {
+    if (this.tags.includes("witch-summon")) {
+      ItemFlower.trySpawnAt(scene, this.collisionBox.center, 0.6, 0.2);
+    }
+    super.die(scene, source);
   }
 }

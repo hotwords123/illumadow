@@ -78,7 +78,7 @@ export default class Player extends Mob {
   get hurtImmuneTicks() { return 60; }
 
   get meleeBoxHorizontal() {
-    return this.boxByFacing(new AABB(0, -12, 20, 0));
+    return this.boxByFacing(new AABB(0, -12, 22, 0));
   }
 
   get diveBoxCenter() {

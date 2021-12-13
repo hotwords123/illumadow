@@ -1,4 +1,4 @@
-import { AABB, Coord, Vector } from "../../base/math";
+import { AABB, Coord, Facing, Vector } from "../../base/math";
 import Mob, { DamageSource } from "../Mob";
 import imgWitch from "../../assets/entity/witch.png";
 import imgWitchCurse from "../../assets/entity/witch-curse.png";
@@ -10,6 +10,8 @@ import StateMachine from "../StateMachine";
 import { FrameSequence } from "../../render/Animation";
 import { RendererContext } from "../../render/Renderer";
 import EnemyScout from "./Scout";
+import { WitchTeleport } from "../Particle";
+import EnemyArcher from "./Archer";
 
 let textureWitch: Texture;
 let textureWitchCurse: Texture;
@@ -39,11 +41,14 @@ const
   CURSE_DAMAGE = 1,
   CURSE_IMPULSE_POWER = 2.5,
   CURSE_IMPULSE_TICKS = 2,
-  SUMMON_PREPARE_TICKS = 160,
-  CURSE_COOLDOWN_TICKS = 180,
-  SUMMON_COOLDOWN_TICKS = 240,
-  TELEPORT_COOLDOWN_TICKS = 300,
-  INITIAL_COOLDOWN_TICKS = 120;
+  CURSE_COOLDOWN_TICKS = 90,
+  SUMMON_PREPARE_TICKS = 120,
+  SUMMON_COOLDOWN_TICKS = 90,
+  TELEPORT_COOLDOWN_TICKS = 120,
+  INITIAL_COOLDOWN_TICKS = 120,
+  MIN_SUMMON_DISTANCE = 48,
+  MIN_TELEPORT_DISTANCE = 56,
+  MIN_TELEPORT_LENGTH = 80;
 
 enum State {
   idle = 0,
@@ -76,14 +81,14 @@ export default class EnemyWitch extends Mob {
     [State.summoning, {
       next: State.idle,
       animation: FrameSequence.fromClipRanges("entity/witch-summon", [
-        ["0", 20],
-        ["1", 20],
-        ["2", 20],
-        ["3", 20],
-        ["4", 20],
-        ["5", 20],
-        ["6", 20],
-        ["7", 20],
+        ["0", 15],
+        ["1", 15],
+        ["2", 15],
+        ["3", 15],
+        ["4", 15],
+        ["5", 15],
+        ["6", 15],
+        ["7", 15],
       ])
     }],
   ], State.idle);
@@ -91,6 +96,7 @@ export default class EnemyWitch extends Mob {
   curseTicks = 0;
   summonTicks = 0;
   cooldownTicks = INITIAL_COOLDOWN_TICKS;
+  damageCount = 0;
 
   curseTarget: Coord | null = null;
 
@@ -123,15 +129,14 @@ export default class EnemyWitch extends Mob {
           this.cooldownTicks--;
         } else {
           let seed = Math.random() * 100;
-          if (seed < 8) {
+          if (seed < 10) {
             if (distance < 0.9 * CURSE_MAX_RANGE) {
               this.state.set(State.cursing);
             }
-          } else if (seed < 16) {
+          } else if (seed < 20) {
             this.state.set(State.summoning);
           } else if (seed < 24) {
             this.teleport(scene);
-            this.cooldownTicks = TELEPORT_COOLDOWN_TICKS;
           }
         }
         break;
@@ -151,8 +156,8 @@ export default class EnemyWitch extends Mob {
 
             if (cursePeriodTicks === 0) {
               if (player.damage(scene, CURSE_DAMAGE, this)) {
-                let impulse = vector.scale(CURSE_IMPULSE_POWER / vector.length);
-                player.setImpulse(impulse.x, impulse.y, CURSE_IMPULSE_TICKS);
+                player.knockback(player.position, player.x > this.x ? Facing.right : Facing.left,
+                  CURSE_IMPULSE_POWER, CURSE_IMPULSE_TICKS);
               }
             }
 
@@ -165,10 +170,8 @@ export default class EnemyWitch extends Mob {
 
       case State.summoning: {
         if (this.summonTicks >= SUMMON_PREPARE_TICKS) {
-          let offsets = [new Vector(40, 0), new Vector(-40, 0)];
-          if (Math.random() < 0.5) offsets.reverse();
-
-          if (offsets.some(x => this.summon(scene, player.position.plus(x)))) {
+          let results = [MapEntityType.scout, MapEntityType.archer].map(x => this.summon(scene, x));
+          if (results.some(x => x)) {
             this.abort();
           }
         } else {
@@ -182,39 +185,69 @@ export default class EnemyWitch extends Mob {
     super.tick(scene);
   }
 
-  teleport(scene: LevelScene) {
+  teleport(scene: LevelScene): boolean {
     const choices = scene.getLandmarksWithTag("tp");
     if (!choices.length) {
       console.warn("failed to teleport");
-      return;
+      return false;
     }
-    const { box } = choices[Math.floor(Math.random() * choices.length)];
 
-    this.position.x = box.left + Math.random() * (box.right - box.left);
-    this.position.y = box.bottom;
+    for (let i = 0; i < 20; i++) {
+      const { box } = choices[Math.floor(Math.random() * choices.length)];
+      let newPos = new Coord(
+        box.left + Math.random() * (box.right - box.left),
+        box.bottom
+      );
+
+      if (newPos.diff(this.position).length < MIN_TELEPORT_LENGTH)
+        continue;
+
+      if (newPos.diff(scene.player.position).length < MIN_TELEPORT_DISTANCE)
+        continue;
+
+      scene.addParticle(new WitchTeleport(this.collisionBox.center));
+      this.position.set(newPos);
+      scene.addParticle(new WitchTeleport(this.collisionBox.center));
+
+      this.cooldownTicks = TELEPORT_COOLDOWN_TICKS;
+      scene.onTickEnd(() => {
+        this.velocity.reset();
+        this.impulseTicks = 0;
+      });
+      return true;
+    }
+
+    return false;
   }
 
-  summon(scene: LevelScene, position: Coord): boolean {
-    const mob = new EnemyScout({
-      x: position.x, y: position.y,
-      tags: [],
-      type: MapEntityType.scout
-    });
-    const { collisionBox } = mob;
-
-    // TODO: Landmark limit scope
-
-    const box = scene.fitTerrain(mob.collisionBox);
-
-    for (let y = box.top; y < box.bottom; y++) {
-      for (let x = box.left; x < box.right; x++) {
-        if (scene.terrains[y][x]?.collisionBox?.intersects(collisionBox))
-          return false;
-      }
+  summon(scene: LevelScene, type: MapEntityType): boolean {
+    const choices = scene.getLandmarksWithTag("summon");
+    if (!choices.length) {
+      console.warn("failed to summon");
+      return false;
     }
 
-    scene.addEntity(mob);
-    return true;
+    for (let i = 0; i < 20; i++) {
+      const { box } = choices[Math.floor(Math.random() * choices.length)];
+
+      let data: MapEntity = {
+        x: box.left + Math.random() * (box.right - box.left),
+        y: box.bottom,
+        tags: ["witch-summon", "enemy"],
+        type
+      };
+      let mob = scene.createEntity(data)!;
+
+      // Should not be too close to player
+      if (mob.position.diff(scene.player.position).length < MIN_SUMMON_DISTANCE)
+        continue;
+  
+      scene.addEntity(mob);
+  
+      return true;
+    }
+
+    return false;
   }
 
   abort() {
@@ -234,8 +267,15 @@ export default class EnemyWitch extends Mob {
   }
 
   onDamage(scene: LevelScene, amount: number, source: DamageSource) {
-    if (this.state.current !== State.idle)
-      this.abort();
+    this.damageCount++;
+    let seed = Math.random();
+    if (seed < Math.pow(0.6, 6 - this.damageCount)) {
+      this.damageCount = 0;
+      this.teleport(scene);
+      if (this.state.current !== State.idle) {
+        this.abort();
+      }
+    }
   }
 
   render(rctx: RendererContext) {
@@ -251,7 +291,7 @@ export default class EnemyWitch extends Mob {
           ctx.lineDashOffset = solid / 2;
         }
         ctx.strokeStyle = `hsl(${this.curseTicks / CURSE_PREPARE_TICKS * 360}, 100%, 50%)`;
-        ctx.lineWidth = 0.9 + 0.3 * Math.sin(this.curseTicks / 60 * Math.PI);
+        ctx.lineWidth = 0.9 - 0.3 * Math.cos(this.curseTicks / CURSE_DAMAGE_TICKS * 2 * Math.PI);
 
         ctx.beginPath();
         ctx.moveTo(center.x, center.y);

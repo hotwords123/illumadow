@@ -4,10 +4,11 @@ import imgArcher from "../../assets/entity/archer.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
-import Mob from "../Mob";
+import Mob, { DamageSource } from "../Mob";
 import Arrow from "../projectile/Arrow";
 import { FrameSequence } from "../../render/Animation";
 import StateMachine from "../StateMachine";
+import { ItemFlower } from "../Item";
 
 let textureArcher: Texture;
 
@@ -123,5 +124,12 @@ export default class EnemyArcher extends Mob {
     this.state.next();
 
     super.tick(scene);
+  }
+
+  die(scene: LevelScene, source: DamageSource) {
+    if (this.tags.includes("witch-summon")) {
+      ItemFlower.trySpawnAt(scene, this.collisionBox.center, 0.25, 0.45);
+    }
+    super.die(scene, source);
   }
 }

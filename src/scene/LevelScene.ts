@@ -40,6 +40,8 @@ interface MenuItem {
   disabled: boolean;
 }
 
+type TickEndHandler = (scene: LevelScene) => void;
+
 export default class LevelScene extends Scene {
   /** Scene width (map.width * TERRAIN_SIZE) */
   width!: number;
@@ -56,6 +58,8 @@ export default class LevelScene extends Scene {
   spawnPoint!: Coord;
   triggers!: Trigger[];
   particles!: Particle[];
+
+  tickEndHandlers: TickEndHandler[] = [];
 
   /** used for block player's move before tasks finished */
   boundary!: AABB;
@@ -89,7 +93,7 @@ export default class LevelScene extends Scene {
 
     this.listenAllKeys((...args) => this.player.receiveInput(this, ...args));
     this.listenKey("ui.pause", event => {
-      if (event === "down") this.togglePause();
+      if (event === "down" && !this.gameOverMenu) this.togglePause();
     });
   }
 
@@ -131,6 +135,8 @@ export default class LevelScene extends Scene {
     this.spawnPoint = this.player.position.clone();
     this.triggers = map.triggers.map(data => Trigger.create(data));
     this.particles = [];
+
+    this.tickEndHandlers = [];
 
     this.boundary = new AABB(0, 0, this.width, this.height);
 
@@ -274,6 +280,10 @@ export default class LevelScene extends Scene {
     this.camera.rumble();
   }
 
+  onTickEnd(handler: TickEndHandler) {
+    this.tickEndHandlers.push(handler);
+  }
+
   tick() {
     const startTime = performance.now();
     this.totalTicks++;
@@ -309,6 +319,11 @@ export default class LevelScene extends Scene {
           // Triggers
           for (const trigger of this.triggers)
             trigger.tick(this);
+
+          // Handlers
+          for (const handler of this.tickEndHandlers)
+            handler(this);
+          this.tickEndHandlers = [];
 
           // Misc
           this.camera.update();

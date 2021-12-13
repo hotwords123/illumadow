@@ -34,6 +34,12 @@ export class Coord {
 
   clone() { return new Coord(this.x, this.y); }
 
+  /** operator = */
+  set(coord: Coord) {
+    this.x = coord.x;
+    this.y = coord.y;
+  }
+
   /** operator + */
   plus(vector: Vector) {
     return new Coord(this.x + vector.x, this.y + vector.y);

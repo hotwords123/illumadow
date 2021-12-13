@@ -1,5 +1,5 @@
-import { AABB } from "../base/math";
-import { MapEntityItem, MapEntityItemFlower, MapItemType } from "../map/interfaces";
+import { AABB, Coord } from "../base/math";
+import { MapEntityItem, MapEntityItemFlower, MapEntityType, MapItemType } from "../map/interfaces";
 import Entity from "./Entity";
 import imgFlower from "../assets/entity/flower.png";
 import { Texture, TextureLike, textureManager } from "../render/TextureManager";
@@ -72,6 +72,19 @@ export class ItemFlower extends EntityItem {
   onPickup(scene: LevelScene) {
     if (scene.player.cure(scene, this.double ? 2 : 1)) {
       super.onPickup(scene);
+    }
+  }
+
+  static trySpawnAt(scene: LevelScene, position: Coord, p1: number, p2: number) {
+    let seed = Math.random();
+    if (seed < p1 + p2) {
+      scene.addEntity(new ItemFlower({
+        x: position.x, y: position.y,
+        tags: ["witch-summon-loot"],
+        type: MapEntityType.item,
+        item: MapItemType.flower,
+        double: seed > p1
+      }));
     }
   }
 }
