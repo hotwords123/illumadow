@@ -6,11 +6,13 @@ import { SCENE_HEIGHT, SCENE_WIDTH } from "./Scene";
 import imgBgForest1 from "../assets/background/forest1.png";
 import imgBgForest2 from "../assets/background/forest2.png";
 import imgBgCloud from "../assets/background/cloud.png";
+import imgBgCastle from "../assets/background/castle.png";
 
 textureManager.loadTextures([
   ["bg/forest1", imgBgForest1],
   ["bg/forest2", imgBgForest2],
-  ["bg/cloud", imgBgCloud]
+  ["bg/cloud", imgBgCloud],
+  ["bg/castle", imgBgCastle]
 ]);
 
 function lerp(a: number, b: number, k: number) {
