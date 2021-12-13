@@ -72,6 +72,7 @@ export default class LevelScene extends Scene {
 
   /** whether the player is despawning */
   despawning = false;
+  won = false;
   animation: ForwardAnimation<void> | null = null;
 
   /** Ticks passed since level started, reset when retry */
@@ -146,6 +147,7 @@ export default class LevelScene extends Scene {
     this.subtitle = new Subtitle(this);
 
     this.despawning = false;
+    this.won = false;
     this.animation = new GeneratorAnimation(this.animateOpening());
 
     this.ticks = 0;
@@ -353,9 +355,15 @@ export default class LevelScene extends Scene {
     this.focusCircle = new RespawningFocusCirle(this.player.collisionBox.center);
     do yield; while (!this.focusCircle.next());
     this.focusCircle = null;
+
+    if (this.won) {
+      for (let i = 0; i < 60; i++) yield;
+      yield* this.animateLevelComplete();
+    }
   }
 
   onBossDie(boss: EnemyWitch) {
+    this.won = true;
     this.animation = new GeneratorAnimation(this.animateBossDie(boss));
   }
 
@@ -397,6 +405,7 @@ export default class LevelScene extends Scene {
   }
 
   levelComplete() {
+    this.won = true;
     this.animation = new GeneratorAnimation(this.animateLevelComplete());
   }
 
