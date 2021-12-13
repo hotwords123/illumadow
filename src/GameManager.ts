@@ -2,6 +2,8 @@ import KeyboardManager from "./input/KeyboardManager";
 import levelManager from "./map/LevelManager";
 import Renderer from "./render/Renderer";
 import { textureManager } from "./render/TextureManager";
+import AboutScene from "./scene/AboutScene";
+import HelpScene from "./scene/HelpScene";
 import LevelScene from "./scene/LevelScene";
 import LoadingScene from "./scene/LoadingScene";
 import Scene from "./scene/Scene";
@@ -115,6 +117,14 @@ export default class GameManager {
 
   startGame() {
     this.startLevel("level1");
+  }
+
+  showHelp() {
+    this.switchScene(() => new HelpScene(this));
+  }
+
+  showAbout() {
+    this.switchScene(() => new AboutScene(this));
   }
 
   backToTitle() {

@@ -54,9 +54,11 @@ export default class StartScene extends Scene {
         break;
 
       case "help":
+        this.gameManager.showHelp();
         break;
 
       case "about":
+        this.gameManager.showAbout();
         break;
     }
   }
@@ -92,9 +94,11 @@ export default class StartScene extends Scene {
         y += header ? 18 : 12;
       }
 
-      ctx.font = "4px 'Noto Sans SC'";
+      ctx.font = "4.5px 'Noto Sans SC'";
       ctx.fillStyle = '#f7f7f7';
-      ctx.fillText("方向键选择，Enter 确定", 290, 170);
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText("方向键选择，Enter 确定", 310, 172);
     });
   }
 }
