@@ -40,7 +40,7 @@ enum State {
   normal = 0,
   walk = 1,
   attack = 2,
-  dash = 3
+  attackReversed = 3
 }
 
 export default class Player extends Mob {
@@ -145,6 +145,15 @@ export default class Player extends Mob {
           ["attack2", 3],
           ["attack1", 3]
         ]);
+
+      case State.attackReversed:
+        return FrameSequence.fromClipRanges("entity/player", [
+          ["attack5", 2],
+          ["attack4", 2],
+          ["attack3", 2],
+          ["attack2", 2],
+          ["attack1", 2]
+        ]);
     }
   }
 
@@ -235,7 +244,7 @@ export default class Player extends Mob {
         this.velocity.y = -DIVE_ATTACK_REBOUNCE_Y;
       }
 
-      this.animation = this.createAnimation(State.attack);
+      this.animation = this.createAnimation(dir === 0 ? State.attackReversed : State.attack);
       if (dir === 0)
         scene.addParticle(new DiveAttackWave(this.position.clone()));
       else
