@@ -87,10 +87,14 @@ export default class StartScene extends Scene {
         ctx.font = `${header ? 9 : 7}px 'Noto Sans SC'`;
         ctx.fillStyle = item === selectedItem ?
           (this.totalTicks % 12 < 6 ? '#90d060' : '#f0e080') :
-          (item.disabled ? '#999' : '#eee');
+          (item.disabled ? '#999' : '#f7f7f7');
         ctx.fillText(item.text, x, y);
         y += header ? 18 : 12;
       }
+
+      ctx.font = "4px 'Noto Sans SC'";
+      ctx.fillStyle = '#f7f7f7';
+      ctx.fillText("方向键选择，Enter 确定", 290, 170);
     });
   }
 }

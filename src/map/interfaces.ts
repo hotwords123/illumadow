@@ -112,7 +112,8 @@ export interface MapEntityPlayer extends MapEntity {
 }
 
 export enum MapItemType {
-  flower = "flower"
+  flower = "flower",
+  ruby = "ruby"
 }
 
 export interface MapEntityItem extends MapEntity {
@@ -127,6 +128,10 @@ export interface MapEntityItemFlower extends MapEntityItem {
 
 export interface MapDecoration extends MapSprite {
   variant: string;
+}
+
+export interface MapDecorationSign extends MapDecoration {
+  text: string;
 }
 
 /* ======== Trigger ======== */

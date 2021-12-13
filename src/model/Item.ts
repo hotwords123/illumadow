@@ -2,17 +2,22 @@ import { AABB, Coord } from "../base/math";
 import { MapEntityItem, MapEntityItemFlower, MapEntityType, MapItemType } from "../map/interfaces";
 import Entity from "./Entity";
 import imgFlower from "../assets/entity/flower.png";
+import imgRuby from "../assets/entity/ruby.png";
 import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
 import { STRINGS } from "../scene/Subtitle";
+import { FrameSequence } from "../render/Animation";
 
 let textureFlower: Texture;
+let textureRuby: Texture;
 
 textureManager.loadTextures([
-  ["entity/flower", imgFlower]
+  ["entity/flower", imgFlower],
+  ["entity/ruby", imgRuby],
 ]).then(textures => {
-  [textureFlower] = textures;
+  [textureFlower, textureRuby] = textures;
   textureFlower.defineClips([["big", "small"]], 8, 8);
+  textureRuby.defineClips([["0", "1", "2"]], 8, 8);
 });
 
 export default abstract class EntityItem extends Entity {
@@ -26,10 +31,16 @@ export default abstract class EntityItem extends Entity {
 
   isItem() { return true; }
 
-  static create(data: MapEntityItem) {
+  static create(data: MapEntityItem): EntityItem {
     switch (data.item) {
       case MapItemType.flower:
         return new ItemFlower(data as MapEntityItemFlower);
+
+      case MapItemType.ruby:
+        return new ItemRuby(data);
+
+      default:
+        throw new Error(`unknown item type: ${data.type}`);
     }
   }
 
@@ -92,5 +103,30 @@ export class ItemFlower extends EntityItem {
         scene.showSubtitle(STRINGS["drop-flower"], 180);
       }
     }
+  }
+}
+
+export class ItemRuby extends EntityItem {
+  animation = FrameSequence.fromClipRanges("entity/ruby", [
+    ["0", 20],
+    ["1", 15],
+    ["2", 20],
+    ["1", 15],
+  ]).setLoop(true);
+
+  get collisionBoxR() {
+    return new AABB(-4, -4, 4, 4);
+  }
+
+  getRenderInfoR() {
+    return {
+      box: this.collisionBoxR,
+      texture: this.animation.current()
+    };
+  }
+
+  tick(scene: LevelScene) {
+    this.animation.next();
+    super.tick(scene);
   }
 }

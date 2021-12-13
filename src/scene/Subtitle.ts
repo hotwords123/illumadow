@@ -47,7 +47,7 @@ export default class Subtitle {
   render(rctx: RendererContext) {
     rctx.run(({ ctx }) => {
       if (this.current) {
-        ctx.font = '4.8px sans-serif'; 
+        ctx.font = "5px 'Noto Sans SC'"; 
         ctx.fillStyle = '#f7f7f7';
         ctx.globalAlpha = this.opacity;
         ctx.textAlign = 'center';
