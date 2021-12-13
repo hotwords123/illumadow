@@ -4,7 +4,7 @@ import imgWitch from "../../assets/entity/witch.png";
 import imgWitchCurse from "../../assets/entity/witch-curse.png";
 import imgWitchSummon from "../../assets/entity/witch-summon.png";
 import { Texture, textureManager } from "../../render/TextureManager";
-import { MapEntity, MapEntityType } from "../../map/interfaces";
+import { MapEntity, MapEntityArcher, MapEntityScout, MapEntityType } from "../../map/interfaces";
 import LevelScene from "../../scene/LevelScene";
 import StateMachine from "../StateMachine";
 import { FrameSequence } from "../../render/Animation";
@@ -13,6 +13,7 @@ import EnemyScout from "./Scout";
 import { WitchTeleport } from "../Particle";
 import EnemyArcher from "./Archer";
 import { Terrain } from "../Terrain";
+import { STRINGS } from "../../scene/Subtitle";
 
 let textureWitch: Texture;
 let textureWitchCurse: Texture;
@@ -241,11 +242,12 @@ export default class EnemyWitch extends Mob {
     for (let i = 0; i < 20; i++) {
       const { box } = choices[Math.floor(Math.random() * choices.length)];
 
-      let data: MapEntity = {
+      let data: MapEntityScout | MapEntityArcher = {
         x: box.left + Math.random() * (box.right - box.left),
         y: box.bottom,
         tags: ["witch-summon", "enemy"],
-        type
+        type,
+        skeleton: Math.random() < 0.5
       };
       let mob = scene.createEntity(data)!;
 
@@ -253,6 +255,11 @@ export default class EnemyWitch extends Mob {
       let distance = mob.position.diff(scene.player.position).length;
       if (distance < MIN_SUMMON_DISTANCE || distance > MAX_SUMMON_DISTANCE)
         continue;
+
+      if (data.skeleton && !scene.skeletonSummoned) {
+        scene.skeletonSummoned = true;
+        scene.showSubtitle(STRINGS["level2-start"], 180);
+      }
   
       scene.addEntity(mob);
   

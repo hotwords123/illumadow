@@ -11,7 +11,7 @@ import EnemyScout from "../model/enemy/Scout";
 import EnemyGuard from "../model/enemy/Guard";
 import SelectMenu from "./SelectMenu";
 import Decoration from "../model/Decoration";
-import Subtitle from "./Subtitle";
+import Subtitle, { STRINGS } from "./Subtitle";
 import EnemyArcher from "../model/enemy/Archer";
 import imgHealth from "../assets/hud/health.png";
 import { Texture, textureManager } from "../render/TextureManager";
@@ -83,6 +83,10 @@ export default class LevelScene extends Scene {
   pauseTicks: number = 0;
 
   tickTime = 0;
+
+  skeletonSummoned = false;
+  skeletonDroppedFlower = false;
+  playerFallenIntoWater = false;
 
   paused = false;
   pauseMenu: SelectMenu<MenuItem> | null = null;
@@ -276,8 +280,8 @@ export default class LevelScene extends Scene {
     this.focusCircle = null;
   }
 
-  showSubtitle(text: string, ms: number) {
-    this.subtitle.show({ text }, Math.round(ms / TICK_ELAPSE));
+  showSubtitle(text: string, ticks: number) {
+    this.subtitle.show({ text }, ticks);
   }
 
   rumble() {
@@ -331,9 +335,10 @@ export default class LevelScene extends Scene {
 
           // Misc
           this.camera.update();
-          this.subtitle.tick();
           this.ticks++;
         }
+
+        this.subtitle.tick();
       }
     }
     const endTime = performance.now();
@@ -381,6 +386,8 @@ export default class LevelScene extends Scene {
 
     const center = boss.collisionBox.center;
 
+    this.showSubtitle(STRINGS["level2-end"], 240);
+
     for (let i = 0; i < 8; i++) {
       let offset = i === 0 ? new Vector(0, 0) :
         new Vector(Math.random() * 10 - 5, Math.random() * 10 - 5);
@@ -391,7 +398,8 @@ export default class LevelScene extends Scene {
       for (let j = 0; j < 6; j++) yield;
     }
 
-    for (let i = 0; i < 40; i++) yield;
+    while (this.subtitle.current) yield;
+    for (let i = 0; i < 20; i++) yield;
     
     yield* this.animateLevelComplete();
   }
@@ -425,7 +433,10 @@ export default class LevelScene extends Scene {
     this.despawning = true;
     this.focusCircle = new DespawningFocusCircle(this.player.collisionBox.center);
     do yield; while (!this.focusCircle.next());
-    for (let i = 0; i < 30; i++) yield;
+    for (let i = 0; i < 20; i++) yield;
+    this.showSubtitle(STRINGS["game-over"], 180);
+    while (this.subtitle.current) yield;
+    for (let i = 0; i < 20; i++) yield;
     this.gameOverMenu = new SelectMenu<MenuItem>(this, [
       {
         action: "restart",
@@ -512,8 +523,8 @@ export default class LevelScene extends Scene {
             particle.render(rctx);
         });
         this.renderHud(rctx);
-        this.subtitle.render(rctx);
       });
+      this.subtitle.render(rctx);
       if (this.pauseMenu)
         this.renderMenu(rctx, this.pauseMenu, "暂停");
       if (this.gameOverMenu)

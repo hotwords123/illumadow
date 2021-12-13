@@ -1,6 +1,7 @@
 import { AABB, Facing } from "../../base/math";
-import { MapEntity } from "../../map/interfaces";
+import { MapEntity, MapEntityArcher } from "../../map/interfaces";
 import imgArcher from "../../assets/entity/archer.png";
+import imgSkeletonArcher from "../../assets/entity/skeleton-archer.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
@@ -11,10 +12,17 @@ import StateMachine from "../StateMachine";
 import { ItemFlower } from "../Item";
 
 let textureArcher: Texture;
+let textureSkeletonArcher: Texture;
 
-textureManager.loadTexture("entity/archer", imgArcher).then(texture => {
-  textureArcher = texture;
+textureManager.loadTextures([
+  ["entity/archer", imgArcher],
+  ["entity/skeleton-archer", imgSkeletonArcher],
+]).then(textures => {
+  [textureArcher, textureSkeletonArcher] = textures;
   textureArcher.defineClips([
+    ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+  ], 8, 10);
+  textureSkeletonArcher.defineClips([
     ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
   ], 8, 10);
 });
@@ -23,6 +31,11 @@ enum State {
   idle = 0,
   drawing = 1,
   shot = 2
+}
+
+enum Variant {
+  normal = 0,
+  skeleton = 1
 }
 
 export default class EnemyArcher extends Mob {
@@ -34,46 +47,54 @@ export default class EnemyArcher extends Mob {
 
   platformWalkGoal = new PlatformWalkGoal(this);
 
-  state = new StateMachine<State>([
-    [State.idle, {
-      next: State.idle,
-      animation: FrameSequence.fromClipRanges("entity/archer", [
-        ["0", 40],
-        ["1", 20]
-      ]).setLoop(true)
-    }],
-    [State.drawing, {
-      next: State.idle,
-      animation: FrameSequence.fromClipRanges("entity/archer", [
-        ["1", 10],
-        ["2", 10],
-        ["3", 90],
-        ["4", 10]
-      ])
-    }],
-    [State.shot, {
-      next: State.idle,
-      animation: FrameSequence.fromClipRanges("entity/archer", [
-        ["5", 6],
-        ["3", 6],
-        ["6", 6],
-        ["7", 6],
-        ["8", 6]
-      ])
-    }]
-  ], State.idle);
+  variant: Variant;
 
-  constructor(data: MapEntity) {
+  state: StateMachine<State>;
+
+  constructor(data: MapEntityArcher) {
     super(data, { maxHealth: 3 });
+
+    this.variant = data.skeleton ? Variant.skeleton : Variant.normal;
+
+    const texture = this.variant === Variant.normal ? "entity/archer" : "entity/skeleton-archer";
+
+    this.state = new StateMachine<State>([
+      [State.idle, {
+        next: State.idle,
+        animation: FrameSequence.fromClipRanges(texture, [
+          ["0", 40],
+          ["1", 20]
+        ]).setLoop(true)
+      }],
+      [State.drawing, {
+        next: State.idle,
+        animation: FrameSequence.fromClipRanges(texture, [
+          ["1", 10],
+          ["2", 10],
+          ["3", 90],
+          ["4", 10]
+        ])
+      }],
+      [State.shot, {
+        next: State.idle,
+        animation: FrameSequence.fromClipRanges(texture, [
+          ["5", 6],
+          ["3", 6],
+          ["6", 6],
+          ["7", 6],
+          ["8", 6]
+        ])
+      }]
+    ], State.idle);
   }
 
   get collisionBoxR() {
-    return new AABB(-5, -10, 3, 0);
+    return this.variant === Variant.normal ? new AABB(-5, -10, 3, 0) : new AABB(-3, -10, 3, 0);
   }
 
   getRenderInfoR() {
     return {
-      box: new AABB(-5, -10, 3, 0),
+      box: this.variant === Variant.normal ? new AABB(-5, -10, 3, 0) : new AABB(-3, -10, 5, 0),
       texture: this.state.animation.current()
     }
   }

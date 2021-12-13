@@ -2,6 +2,7 @@ import { AABB } from "../base/math";
 import { MapTrigger, MapTriggerType } from "../map/interfaces";
 import Landmark from "./Landmark";
 import LevelScene from "./LevelScene";
+import { STRINGS } from "./Subtitle";
 
 export default abstract class Trigger {
   triggered = false;
@@ -35,6 +36,7 @@ export default abstract class Trigger {
     switch (this.id) {
       case "level1:1":
         scene.boundary.right = scene.getLandmark("L2").box.right;
+        scene.showSubtitle(STRINGS["first-enemy"], 150);
         break;
       case "level1:2":
         scene.boundary.right = scene.getLandmark("L4").box.right;
@@ -60,6 +62,15 @@ export default abstract class Trigger {
         break;
       case "level1:8":
         scene.levelComplete();
+        break;
+      case "level1:9":
+        scene.showSubtitle(STRINGS["level1-start"], 180);
+        break;
+      case "level1:10":
+        scene.showSubtitle(STRINGS["flower"], 120);
+        break;
+      case "level1:11":
+        scene.showSubtitle(STRINGS["level1-end"], 240);
         break;
 
       default:

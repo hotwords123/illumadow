@@ -4,6 +4,7 @@ import Entity from "./Entity";
 import imgFlower from "../assets/entity/flower.png";
 import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
+import { STRINGS } from "../scene/Subtitle";
 
 let textureFlower: Texture;
 
@@ -85,6 +86,11 @@ export class ItemFlower extends EntityItem {
         item: MapItemType.flower,
         double: seed > p1
       }));
+
+      if (!scene.skeletonDroppedFlower) {
+        scene.skeletonDroppedFlower = true;
+        scene.showSubtitle(STRINGS["drop-flower"], 180);
+      }
     }
   }
 }

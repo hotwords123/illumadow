@@ -1,8 +1,9 @@
 import { AABB, Coord, Facing } from "../../base/math";
 import imgScout from "../../assets/entity/scout.png";
+import imgSkeletonScout from "../../assets/entity/skeleton-scout.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
-import { MapEntity } from "../../map/interfaces";
+import { MapEntity, MapEntityScout } from "../../map/interfaces";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
 import Mob, { DamageSource } from "../Mob";
 import StateMachine from "../StateMachine";
@@ -10,11 +11,18 @@ import { FrameSequence } from "../../render/Animation";
 import { ItemFlower } from "../Item";
 
 let textureScout: Texture;
+let textureSkeletonScout: Texture;
 
-textureManager.loadTexture("entity/scout", imgScout).then(texture => {
-  textureScout = texture;
+textureManager.loadTextures([
+  ["entity/scout", imgScout],
+  ["entity/skeleton-scout", imgSkeletonScout]
+]).then(textures => {
+  [textureScout, textureSkeletonScout] = textures;
   textureScout.defineClips([
-    ["0", "1", "2", "3"]
+    ["0", "1", "2", "3", "4"]
+  ], 8, 10);
+  textureSkeletonScout.defineClips([
+    ["0", "1", "2", "3", "4"]
   ], 8, 10);
 });
 
@@ -26,6 +34,11 @@ enum State {
   stabbed = 2
 }
 
+enum Variant {
+  normal = 0,
+  skeleton = 1
+}
+
 export default class EnemyScout extends Mob {
   stabbingTicks = 0;
 
@@ -35,37 +48,46 @@ export default class EnemyScout extends Mob {
 
   platformWalkGoal = new PlatformWalkGoal(this);
 
-  state = new StateMachine<State>([
-    [State.idle,
-      {
-        next: State.idle,
-        animation: FrameSequence.fromClipRanges("entity/scout", [
-          ["0", 1]
-        ])
-      }
-    ],
-    [State.stabbing,
-      {
-        next: State.stabbed,
-        animation: FrameSequence.fromClipRanges("entity/scout", [
-          ["0", 1],
-          ["1", 4],
-        ])
-      }
-    ],
-    [State.stabbed,
-      {
-        next: State.idle,
-        animation: FrameSequence.fromClipRanges("entity/scout", [
-          ["2", 5],
-          ["3", 5],
-        ])
-      }
-    ],
-  ], State.idle);
+  variant: Variant;
 
-  constructor(data: MapEntity) {
+  state: StateMachine<State>;
+
+  constructor(data: MapEntityScout) {
     super(data, { maxHealth: 3 });
+
+    this.variant = data.skeleton ? Variant.skeleton : Variant.normal;
+
+    const texture = this.variant === Variant.normal ? "entity/scout" : "entity/skeleton-scout";
+
+    this.state = new StateMachine<State>([
+      [State.idle,
+        {
+          next: State.idle,
+          animation: FrameSequence.fromClipRanges(texture, [
+            ["0", 1]
+          ])
+        }
+      ],
+      [State.stabbing,
+        {
+          next: State.stabbed,
+          animation: FrameSequence.fromClipRanges(texture, [
+            ["0", 1],
+            ["1", 2],
+            ["2", 2],
+          ])
+        }
+      ],
+      [State.stabbed,
+        {
+          next: State.idle,
+          animation: FrameSequence.fromClipRanges(texture, [
+            ["3", 5],
+            ["4", 5],
+          ])
+        }
+      ],
+    ], State.idle);
   }
 
   get collisionBoxR() {

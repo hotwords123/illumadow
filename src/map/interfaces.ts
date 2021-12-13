@@ -98,6 +98,14 @@ export interface MapEntity extends MapSprite {
   [key: string]: any;
 }
 
+export interface MapEntityScout extends MapEntity {
+  skeleton?: boolean;
+}
+
+export interface MapEntityArcher extends MapEntity {
+  skeleton?: boolean;
+}
+
 export interface MapEntityPlayer extends MapEntity {
   health: number;
   maxHealth: number;

@@ -3,12 +3,13 @@ import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import Entity, { EscapeBehaviour, GRAVITY } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
-import { MapEntityPlayer, MapEntityType } from "../map/interfaces";
+import { MapEntityPlayer, MapEntityType, MapTerrainType } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import Mob, { DamageSource } from "./Mob";
 import { Terrain } from "./Terrain";
 import { ForwardAnimation, FrameSequence } from "../render/Animation";
 import { DiveAttackWave, DiveSideAttackWave, MeleeWave } from "./Particle";
+import { STRINGS } from "../scene/Subtitle";
 
 let texturePlayer: Texture;
 
@@ -293,6 +294,10 @@ export default class Player extends Mob {
     if (!this.dead) {
       if (!source || source instanceof Terrain) {
         scene.onPlayerRespawn();
+        if (!scene.playerFallenIntoWater && source instanceof Terrain && source.type === MapTerrainType.water) {
+          scene.playerFallenIntoWater = true;
+          scene.showSubtitle(STRINGS["fall-into-water"], 180);
+        }
       }
     }
   }
