@@ -47,6 +47,7 @@ const
   TELEPORT_COOLDOWN_TICKS = 120,
   INITIAL_COOLDOWN_TICKS = 120,
   MIN_SUMMON_DISTANCE = 48,
+  MAX_SUMMON_DISTANCE = 96,
   MIN_TELEPORT_DISTANCE = 56,
   MIN_TELEPORT_LENGTH = 80;
 
@@ -239,7 +240,8 @@ export default class EnemyWitch extends Mob {
       let mob = scene.createEntity(data)!;
 
       // Should not be too close to player
-      if (mob.position.diff(scene.player.position).length < MIN_SUMMON_DISTANCE)
+      let distance = mob.position.diff(scene.player.position).length;
+      if (distance < MIN_SUMMON_DISTANCE || distance > MAX_SUMMON_DISTANCE)
         continue;
   
       scene.addEntity(mob);
