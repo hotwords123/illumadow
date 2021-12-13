@@ -18,6 +18,7 @@ class App extends React.PureComponent {
     return (
       <div className="App">
         <canvas ref={this.refCanvas}></canvas>
+        <audio src="/music/bgm.mp3" style={{ display: "none" }} autoPlay={true} loop={true}></audio>
       </div>
     );
   }
