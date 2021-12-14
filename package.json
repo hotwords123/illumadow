@@ -1,7 +1,10 @@
 {
   "name": "illumadow",
   "version": "0.1.0",
-  "private": true,
+  "author": "hotwords",
+  "contributors": ["hotwords", "Smokey_Days"],
+  "repository": "https://github.com/hotwords123/illumadow.git",
+  "homepage": "/illumadow",
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
