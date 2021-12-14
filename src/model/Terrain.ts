@@ -1,4 +1,4 @@
-import { AABB, Axis, Coord, Side, DIRECTION_VECTORS, Vector, Direction } from "../base/math";
+import { AABB, Axis, Coord, Side, Vector } from "../base/math";
 import Sprite from "./Sprite";
 import imgBrick from "../assets/terrain/brick.png";
 import imgSpikes from "../assets/terrain/spikes.png";
@@ -7,10 +7,7 @@ import { Texture, TextureLike, textureManager } from "../render/TextureManager";
 import { MapEntityType, MapTerrain, MapTerrainBrick, MapTerrainFragile, MapTerrainSpikes, MapTerrainType, MapTerrainWater, TERRAIN_SIZE } from "../map/interfaces";
 import Entity from "./Entity";
 import LevelScene from "../scene/LevelScene";
-import Player from "./Player";
 import { RendererContext } from "../render/Renderer";
-import Mob from "./Mob";
-import Projectile from "./projectile";
 
 let textureBrick: Texture;
 let textureSpikes: Texture;
@@ -218,7 +215,7 @@ export class TerrainSpikes extends HarmingTerrain {
     super(position, MapTerrainType.spikes, textureSpikes.getClip(Side[side])!)
   }
 
-  get hurtBox() {
+  get hurtBox(): AABB {
     switch (this.side) {
       case Side.left:
         return this.center.plus2(-3, 0).expand(1, 3);
@@ -228,6 +225,8 @@ export class TerrainSpikes extends HarmingTerrain {
         return this.center.plus2(3, 0).expand(1, 3);
       case Side.bottom:
         return this.center.plus2(0, 3).expand(3, 1);
+      default:
+        throw new Error(`unknown side: ${this.side}`);
     }
   }
 

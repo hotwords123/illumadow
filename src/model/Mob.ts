@@ -1,4 +1,4 @@
-import { AABB, Coord, Facing, Side, Vector } from "../base/math";
+import { AABB, Side } from "../base/math";
 import { MapEntity, MapEntityType } from "../map/interfaces";
 import LevelScene from "../scene/LevelScene";
 import Entity, { EscapeBehaviour } from "./Entity";

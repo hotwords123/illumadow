@@ -1,4 +1,3 @@
-import { AABB, Coord } from "../base/math";
 import { MapDecoration, MapDecorationSign, TERRAIN_SIZE } from "../map/interfaces";
 import Model from "./Model";
 import imgTree from "../assets/decoration/tree.png";
@@ -6,7 +5,6 @@ import imgBrickWall from "../assets/decoration/brick-wall.png";
 import imgBrickWallLight from "../assets/decoration/brick-wall-light.png";
 import imgSign from "../assets/decoration/sign.png";
 import { Texture, TextureLike, textureManager } from "../render/TextureManager";
-import { RenderInfo } from "./Sprite";
 import { RendererContext } from "../render/Renderer";
 
 export let textureTree: Texture;

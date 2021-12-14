@@ -1,9 +1,9 @@
-import { AABB, Coord, Facing } from "../../base/math";
+import { AABB } from "../../base/math";
 import imgScout from "../../assets/entity/scout.png";
 import imgSkeletonScout from "../../assets/entity/skeleton-scout.png";
 import { Texture, textureManager } from "../../render/TextureManager";
 import LevelScene from "../../scene/LevelScene";
-import { MapEntity, MapEntityScout } from "../../map/interfaces";
+import { MapEntityScout } from "../../map/interfaces";
 import PlatformWalkGoal from "../../ai/PlatformWalkGoal";
 import Mob, { DamageSource } from "../Mob";
 import StateMachine from "../StateMachine";

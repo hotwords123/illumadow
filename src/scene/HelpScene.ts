@@ -1,5 +1,5 @@
 import { RendererContext } from "../render/Renderer";
-import Scene, { SCENE_HEIGHT, SCENE_WIDTH } from "./Scene";
+import Scene from "./Scene";
 import bg from "../assets/background/help.png";
 import { Texture, textureManager } from "../render/TextureManager";
 import GameManager from "../GameManager";

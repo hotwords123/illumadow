@@ -1,4 +1,4 @@
-import { AABB, Coord, Facing, Vector } from "../../base/math";
+import { AABB, Coord, Facing } from "../../base/math";
 import Mob, { DamageSource } from "../Mob";
 import imgWitch from "../../assets/entity/witch.png";
 import imgWitchCurse from "../../assets/entity/witch-curse.png";
@@ -9,9 +9,7 @@ import LevelScene from "../../scene/LevelScene";
 import StateMachine from "../StateMachine";
 import { FrameSequence } from "../../render/Animation";
 import { RendererContext } from "../../render/Renderer";
-import EnemyScout from "./Scout";
 import { WitchTeleport } from "../Particle";
-import EnemyArcher from "./Archer";
 import { Terrain } from "../Terrain";
 import { STRINGS } from "../../scene/Subtitle";
 

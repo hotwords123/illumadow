@@ -1,8 +1,8 @@
 import { Coord, Facing } from "../base/math";
-import { MapEntityType, MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
+import { MapTerrainType, TERRAIN_SIZE } from "../map/interfaces";
 import Entity from "../model/Entity";
 import Mob from "../model/Mob";
-import { Terrain, TerrainBrick } from "../model/Terrain";
+import { Terrain } from "../model/Terrain";
 import LevelScene from "../scene/LevelScene";
 
 export default class PlatformWalkGoal {

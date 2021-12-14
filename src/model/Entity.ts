@@ -1,5 +1,5 @@
 import { AABB, Axis, Coord, Facing, Side, Vector } from "../base/math";
-import { MapEntity, MapEntityType, TERRAIN_SIZE } from "../map/interfaces";
+import { MapEntity, MapEntityType } from "../map/interfaces";
 import { RendererContext } from "../render/Renderer";
 import { TextureLike } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
@@ -11,6 +11,20 @@ import Projectile from "./projectile";
 import { Terrain } from "./Terrain";
 
 export const GRAVITY = 0.2;
+
+export interface RenderInfoR {
+  box: AABB;
+  texture: TextureLike;
+}
+
+/**
+ * The behaviour entity will follow when escaping the world border.
+ */
+export enum EscapeBehaviour {
+  /** do nothing */ none,
+  /** blocked by the border */ block,
+  /** deleted if completely out of scene */ delete
+}
 
 /**
  * Entity:
@@ -276,18 +290,4 @@ export default abstract class Entity extends Model {
       });
     }
   }
-}
-
-export interface RenderInfoR {
-  box: AABB;
-  texture: TextureLike;
-}
-
-/**
- * The behaviour entity will follow when escaping the world border.
- */
-export enum EscapeBehaviour {
-  /** do nothing */ none,
-  /** blocked by the border */ block,
-  /** deleted if completely out of scene */ delete
 }

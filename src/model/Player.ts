@@ -1,5 +1,5 @@
-import { AABB, Facing, Side, Vector } from "../base/math";
-import { Texture, TextureLike, textureManager } from "../render/TextureManager";
+import { AABB, Facing, Side } from "../base/math";
+import { Texture, textureManager } from "../render/TextureManager";
 import Entity, { EscapeBehaviour, GRAVITY } from "./Entity";
 import imgPlayer from "../assets/entity/player.png";
 import LevelScene from "../scene/LevelScene";
@@ -7,7 +7,7 @@ import { MapEntityPlayer, MapEntityType, MapTerrainType } from "../map/interface
 import { RendererContext } from "../render/Renderer";
 import Mob, { DamageSource } from "./Mob";
 import { Terrain } from "./Terrain";
-import { ForwardAnimation, FrameSequence } from "../render/Animation";
+import { FrameSequence } from "../render/Animation";
 import { DiveAttackWave, DiveSideAttackWave, MeleeWave } from "./Particle";
 import { STRINGS } from "../scene/Subtitle";
 

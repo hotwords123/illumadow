@@ -1,10 +1,8 @@
-
-import { AABB, Coord, Vector, Facing } from "../base/math";
+import { AABB, Vector, Facing } from "../base/math";
 import { RendererContext } from "../render/Renderer";
 import LevelScene from "./LevelScene";
 import { SCENE_WIDTH, SCENE_HEIGHT } from "./Scene";
 
-const ORIGIN_CENTER = new Coord(SCENE_WIDTH / 2, SCENE_HEIGHT / 2);
 const ORIGIN_BOX = AABB.origin(SCENE_WIDTH, SCENE_HEIGHT);
 
 const

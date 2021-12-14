@@ -1,5 +1,5 @@
 import { AABB, Facing } from "../../base/math";
-import { MapEntity, MapEntityArcher } from "../../map/interfaces";
+import { MapEntityArcher } from "../../map/interfaces";
 import imgArcher from "../../assets/entity/archer.png";
 import imgSkeletonArcher from "../../assets/entity/skeleton-archer.png";
 import { Texture, textureManager } from "../../render/TextureManager";

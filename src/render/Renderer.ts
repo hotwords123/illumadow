@@ -1,4 +1,3 @@
-import GameManager from "../GameManager";
 import LevelScene from "../scene/LevelScene";
 import Scene, { SCENE_HEIGHT, SCENE_WIDTH } from "../scene/Scene";
 

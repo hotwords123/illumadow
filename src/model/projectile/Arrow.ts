@@ -2,7 +2,6 @@ import { AABB, Coord, Facing, Side } from "../../base/math";
 import { MapEntityType } from "../../map/interfaces";
 import Mob from "../Mob";
 import Projectile from ".";
-import Player from "../Player";
 import LevelScene from "../../scene/LevelScene";
 import { Terrain } from "../Terrain";
 import imgArrow from "../../assets/entity/arrow.png";

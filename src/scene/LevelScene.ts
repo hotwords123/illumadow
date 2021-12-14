@@ -3,7 +3,7 @@ import Scene, { SCENE_HEIGHT, SCENE_WIDTH } from "./Scene";
 import Entity from "../model/Entity";
 import Player from "../model/Player";
 import { RendererContext } from "../render/Renderer";
-import GameManager, { TICK_ELAPSE } from "../GameManager";
+import GameManager from "../GameManager";
 import { MapData, MapEntity, MapEntityItem, MapEntityPlayer, MapEntityType, TERRAIN_SIZE } from "../map/interfaces";
 import { Terrain } from "../model/Terrain";
 import Camera from "./Camera";

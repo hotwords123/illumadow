@@ -1,8 +1,8 @@
 import { AABB, Coord, Facing, Vector } from "../base/math";
 import { FrameSequence } from "../render/Animation";
-import { Texture, TextureLike, textureManager } from "../render/TextureManager";
+import { Texture, textureManager } from "../render/TextureManager";
 import LevelScene from "../scene/LevelScene";
-import Sprite, { RenderInfo } from "./Sprite";
+import Sprite from "./Sprite";
 import imgMeleeWave from "../assets/entity/melee-wave.png";
 import imgDiveAttackWave from "../assets/entity/dive-attack-wave.png";
 import imgDiveSideAttackWave from "../assets/entity/dive-side-attack-wave.png";

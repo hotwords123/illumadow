@@ -7,8 +7,6 @@ class TextureManager {
   private tasks: Promise<Texture>[] = [];
   private textures = new Map<string, Texture>();
 
-  constructor() {}
-
   loadTexture(name: string, path: string): Promise<Texture> {
     const promise = new Promise<Texture>((resolve, reject) => {
       const img = new Image();
