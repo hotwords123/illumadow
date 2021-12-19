@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/illumadow/static/css/main.997e77af.chunk.css",
-    "main.js": "/illumadow/static/js/main.ed976d71.chunk.js",
-    "main.js.map": "/illumadow/static/js/main.ed976d71.chunk.js.map",
+    "main.js": "/illumadow/static/js/main.f28fb8d7.chunk.js",
+    "main.js.map": "/illumadow/static/js/main.f28fb8d7.chunk.js.map",
     "runtime-main.js": "/illumadow/static/js/runtime-main.9e1132ac.js",
     "runtime-main.js.map": "/illumadow/static/js/runtime-main.9e1132ac.js.map",
     "static/js/2.ae996e3a.chunk.js": "/illumadow/static/js/2.ae996e3a.chunk.js",
@@ -17,6 +17,6 @@
     "static/js/runtime-main.9e1132ac.js",
     "static/js/2.ae996e3a.chunk.js",
     "static/css/main.997e77af.chunk.css",
-    "static/js/main.ed976d71.chunk.js"
+    "static/js/main.f28fb8d7.chunk.js"
   ]
 }
